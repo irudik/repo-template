@@ -8,6 +8,6 @@ To clone:
 3. Open Git Bash
 4. cd to the `git/` folder
 5. Type `git clone --bare https://github.com/cornell-seere/repo-template.git`
-6. Type `cd folder-template.git`
+6. Type `cd repo-template.git`
 7. Type `git push --mirror https://github.com/irudik/project-name`
 8. Remove the old repository, by typing `cd..`, then `rm -rf repo-template.git`
