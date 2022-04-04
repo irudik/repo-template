@@ -3,6 +3,10 @@
 #######################
 .DS_Store
 data
+latex/latex_figures
+latex/latex_tables
+latex/figures
+latex/tables
 latex_figures
 latex_tables
 figures
