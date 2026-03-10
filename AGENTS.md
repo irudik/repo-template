@@ -111,6 +111,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
 | `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
 | `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
+| `/thorny-loop` | Optional sparse GPT Pro planner + Codex escalation path for thorny tasks |
 
 ---
 
@@ -290,6 +291,36 @@ Plan approved -> orchestrator activates
 - [ ] Tolerance checks pass (if applicable)
 - [ ] No hardcoded computed results in manuscript prose
 - [ ] Quality score >= 80
+
+---
+
+## Optional Thorny Loop
+
+Use the ordinary contractor workflow by default. The thorny loop is an optional external escalation path for hard, high-risk, or repeatedly failing tasks.
+
+### When to Suggest It
+
+Use `tools/thorny_loop/` or the root `make thorny` entrypoints when any of these are true:
+
+- task spans multiple directories or both `code/` and `latex/`
+- verify/review failures repeat across ordinary iterations
+- root cause is still unclear after two ordinary iterations
+- the change could alter econometric correctness, simulation logic, or manuscript claims
+- the task requires coordinating code edits, Make targets, generated outputs, and review artifacts
+- the user explicitly asks for GPT Pro, a thorny loop, or a planner-coder loop
+
+Otherwise, stay on the standard contractor workflow.
+
+### How It Works
+
+- Runs externally by default via `python3 tools/thorny_loop/main.py --task "..."` or `make thorny TASK="..."`
+- Uses sparse `gpt-5.4-pro` planner calls only when the problem is thorny enough to justify cost
+- Uses a persistent Codex MCP session for execution in the current repo
+- Reuses the existing Make-first verification workflow and review skills
+- Saves artifacts under `quality_reports/thorny_loop/`
+- Does not replace contractor mode, does not modify `make all`, and does not auto-commit in v1
+
+Nested invocation from inside an active Codex session is opt-in, not default. Prefer the external repo command unless the user explicitly asks for nested execution and network access is available.
 
 ---
 

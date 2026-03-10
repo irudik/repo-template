@@ -80,6 +80,7 @@ Manifest.toml
 
 # Environment / secrets
 .env*
+!.env.example
 
 # Data / Output — ignore contents but keep directory structure
 data/*
@@ -88,3 +89,13 @@ output/
 # Output artifacts (uncomment as needed)
 # *.rds
 # output/**/*.rds
+
+# Quality report runtime artifacts — keep directory structure only
+quality_reports/merges/*
+!quality_reports/merges/.gitkeep
+quality_reports/plans/*
+!quality_reports/plans/.gitkeep
+quality_reports/session_logs/*
+!quality_reports/session_logs/.gitkeep
+quality_reports/thorny_loop/*
+!quality_reports/thorny_loop/.gitkeep

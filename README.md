@@ -207,6 +207,44 @@ You describe a task. Claude:
 
 If the score meets threshold, Claude presents a summary. Say "just do it" and it auto-commits too.
 
+### Thorny Problems: Sparse GPT Pro Planner + Codex Loop
+
+Some problems justify a more explicit escalation loop, but it should stay optional. This template includes a repo-local thorny-loop tool that uses:
+
+- `gpt-5.4-pro` sparingly for diagnosis and next-step planning
+- a persistent Codex MCP session for execution in the current repo
+- the existing Make-first verification workflow
+- the existing review skills (`review-r`, `review-julia`, `review-tex`, `review-comments`)
+
+Use it for hard cross-cutting problems, repeated verification failures, unclear root causes, or tasks that could affect econometric correctness, simulation logic, or manuscript claims. Do **not** use it for routine edits.
+
+**Prerequisites**
+
+- Python 3.10+
+- Codex CLI
+- Node 18+ only if you need the `npx` fallback for Codex MCP startup
+- `OPENAI_API_KEY` for live planner calls
+
+**Cost / latency tradeoff**
+
+The planner is intentionally sparse. It is called only when the task is thorny enough to justify the extra cost and latency. Ordinary tasks should stay on the normal contractor workflow.
+
+**Examples**
+
+```bash
+python3 tools/thorny_loop/main.py --task "Fix why simulation outputs and manuscript numbers disagree" --scope code/simulation latex/manuscript.tex
+```
+
+```bash
+make thorny TASK="Fix why simulation outputs and manuscript numbers disagree" SCOPE="code/simulation latex/manuscript.tex"
+```
+
+**Artifacts**
+
+- Per-run artifacts: `quality_reports/thorny_loop/<timestamp>_<slug>/`
+- Initial plan record: `quality_reports/plans/`
+- Templates: `templates/thorny_loop_*.md`
+
 ### PR Review (`/review-pr`)
 
 When reviewers leave comments on a pull request, `/review-pr <PR#>` automates the triage-fix-reply loop:
