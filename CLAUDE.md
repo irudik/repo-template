@@ -117,3 +117,11 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | Manuscript | `latex/manuscript.tex` | Template | Paper skeleton with standard sections |
 | Slides | `latex/slides.tex` | Template | Presentation template |
 | Code pipeline | `code/` | Template | Sub-Makefiles to be added per project |
+
+---
+
+## Optional Thorny Loop
+
+This template also includes a Codex-first sparse thorny-loop tool under `tools/thorny_loop/`, with the root `make thorny` entrypoint, for hard repo-local problems. It is optional, runs externally by default, and reuses the existing Make-first verification plus review-skill workflow.
+
+Do not create a parallel Claude-specific orchestrator in this change. Keep ordinary tasks on the standard contractor workflow.
