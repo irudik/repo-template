@@ -1,7 +1,10 @@
 ---
 paths:
   - "latex/**/*.tex"
+  - "**/*.R"
   - "**/*.jl"
+  - "**/*.do"
+  - "**/*.ado"
   - "**/*.m"
   - "code/**"
   - "code/**/Makefile"
@@ -54,6 +57,20 @@ paths:
 | Major | Missing persistence (no CSV/JLD2 export) | -5 |
 | Minor | Unfused broadcasts (`.+` instead of `@.`) | -2 |
 | Minor | Globals captured in loops without `let` | -2 |
+
+## Stata Scripts (.do / .ado)
+
+| Severity | Issue | Deduction |
+|----------|-------|-----------|
+| Critical | Runtime errors | -100 |
+| Critical | Domain-specific bugs (wrong estimand, incorrect formula) | -30 |
+| Critical | Unchecked merge/reshape invariants (keys, `_merge`, panel state) | -25 |
+| Critical | Hardcoded absolute paths or `cd` | -20 |
+| Major | Missing `version` | -10 |
+| Major | Missing `set seed` (if stochastic) | -10 |
+| Major | `capture` without `_rc` checks or heavy global macro dependence | -5 |
+| Major | Missing output persistence | -5 |
+| Minor | Noisy `display` / `pause` / `set trace on` in production | -2 |
 
 ## MATLAB Scripts (.m)
 

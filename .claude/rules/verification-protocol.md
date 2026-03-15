@@ -35,6 +35,17 @@ If a Makefile governs the files being modified:
 3. Check file sizes are plausible (not suspiciously small or empty)
 4. If stochastic, verify reproducibility: run twice with same seed, diff outputs
 
+## For Stata Scripts:
+1. Prefer `make -C code/[subdir] [target]` if a Makefile governs the script; fall back to `stata -b do path/to/script.do`
+2. Verify output files (`.dta`, `.csv`, `.tex`, `.txt`, or logs used downstream) were created with non-zero size
+3. Check the batch log for Stata error codes and unexpected warnings
+4. Spot-check key counts, merge assertions, or exported estimates for reasonable magnitude
+
+## For MATLAB Scripts:
+1. Prefer `make -C code/[subdir] [target]` if a Makefile governs the script; fall back to `matlab -batch "run('path/to/script.m')"`
+2. Verify output files (`.mat`, `.csv`, `.tex`, or figures) were created with non-zero size
+3. Check file sizes are plausible and solver output/logs show successful convergence where relevant
+
 ## Common Pitfalls:
 - **Relative paths**: Always use paths relative to the Makefile's directory
 - **Assuming success**: Always verify output files exist AND contain correct content

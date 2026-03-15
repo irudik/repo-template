@@ -1,6 +1,6 @@
 # Orchestrator Protocol: Contractor Mode
 
-> **Routing:** Use this full loop for multi-file or cross-cutting changes. For single-file R/Julia script tasks, use `orchestrator-research.md` instead.
+> **Routing:** Use this full loop for multi-file or cross-cutting changes. For single-file R/Julia/Stata/MATLAB script tasks, use `orchestrator-research.md` instead.
 
 **After a plan is approved, the orchestrator takes over autonomously.**
 

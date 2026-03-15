@@ -218,6 +218,85 @@ Prefer JLD2 for Julia-native objects. Use CSV for model output. When saving para
 
 ---
 
+## Stata Code Standards
+
+**Standard:** Senior Principal Econometrician + PhD researcher quality
+
+### 1. Reproducibility
+
+- `version` pinned near the top of each script or program
+- `set more off` in batch scripts
+- `set seed` called ONCE at top if stochastic operations are present
+- All paths relative to repository root
+- No hardcoded absolute paths and no `cd`
+- Prefer local macros and program arguments over global macros
+- Rely on the Makefile to make directories
+
+### 2. Program Design
+
+- Wrap reusable logic in `program define`
+- Use `syntax` to validate arguments and options for non-trivial programs
+- Use `tempfile`, `tempname`, and `tempvar` for temporary state
+- Keep locals descriptive and scoped tightly
+- Avoid magic numbers; lift them into named locals or documented parameters
+
+### 3. Data Integrity & Domain Correctness
+
+- Verify estimators and transformations match paper formulas (`latex/manuscript.tex`)
+- Check merge keys with `isid`, `duplicates report`, or `assert`
+- After `merge`, inspect `_merge` and assert the expected match pattern
+- After `reshape`, assert the expected observation count and key uniqueness
+- Set `xtset` / `tsset` explicitly for panel or time-series work
+- Match cluster, FE, and weight choices to the intended estimand
+
+### 4. Output Paths
+
+All code outputs go to canonical subdirectories under `output/`:
+
+```stata
+save "output/tables/my_results.dta", replace
+export delimited using "output/tables/my_results.csv", replace
+
+file open fh using "output/numbers/my_estimate.txt", write text replace
+file write fh "\newcommand{\myEstimate}{2.31}" _n
+file close fh
+```
+
+**Heavy computations should be saved to disk; downstream scripts should load pre-computed data where possible.**
+
+### 5. Common Pitfalls
+
+| Pitfall | Impact | Prevention |
+|---------|--------|------------|
+| Missing `version` | Results may change across Stata releases | Pin `version` at top |
+| Hardcoded paths or `cd` | Breaks on other machines | Use repo-relative paths only |
+| Unchecked `_merge` after `merge` | Silent sample corruption | Assert expected `_merge` values |
+| Globals for routine state | Hidden dependencies across scripts | Prefer locals and `syntax` |
+| `capture` without `_rc` check | Real failures get silenced | Check `_rc` immediately |
+| Unbalanced `preserve` / `restore` | Wrong dataset state later in script | Keep blocks tight and paired |
+| Hidden sort dependence | Wrong grouped calculations | Use `sort` / `bysort` explicitly |
+
+### 6. Line Length & Continuations
+
+**Standard:** Keep lines <= 100 characters where practical. Use `///` continuations consistently, and align long option lists when that improves readability.
+
+### 7. Code Quality Checklist
+
+```
+[ ] version pinned at top
+[ ] set more off in batch scripts
+[ ] set seed once at top if stochastic
+[ ] All paths relative and no cd
+[ ] Programs documented and arguments validated with syntax
+[ ] merge/reshape steps checked with assert/isid/duplicates logic
+[ ] Outputs saved to output/
+[ ] Comments explain WHY not WHAT
+[ ] capture followed by _rc checks
+[ ] preserve/restore blocks are balanced
+```
+
+---
+
 ## MATLAB Code Standards
 
 **Standard:** Senior Principal Computational Scientist + PhD researcher quality
@@ -352,6 +431,9 @@ output/tables/%.rds: code/%.R | output/tables
 
 output/tables/%.csv: code/%.jl | output/tables
 	julia $<
+
+output/tables/%.dta: code/%.do | output/tables
+	$(STATA) -b do $<
 ```
 
 ### Joint Production
@@ -362,6 +444,7 @@ When a single script produces multiple outputs, declare one primary target with 
 
 - R scripts: `Rscript $<`
 - Julia scripts: `julia $<`
+- Stata scripts: `$(STATA) -b do $<` with `STATA ?= stata-mp` (or your local Stata binary)
 - MATLAB scripts: `matlab -batch "run('$<')"`
 - Always use `$<` (first prerequisite) and `$@` (target) automatic variables
 - Never use absolute paths
@@ -389,4 +472,4 @@ The `code/Makefile` in turn delegates to sub-Makefiles in each task-group direct
 ### Validation
 
 - `make -n` (dry-run) must produce a valid plan
-- Every `.R`, `.jl`, and `.m` file under `code/` should appear as a prerequisite in some Makefile target -- orphaned scripts are a warning sign
+- Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file under `code/` should appear as a prerequisite in some Makefile target -- orphaned scripts are a warning sign

@@ -57,6 +57,11 @@ output/tables/%.rds: code/%.R | output/tables
 # Julia pattern rule
 output/tables/%.csv: code/%.jl | output/tables
 	julia $<
+
+# Stata pattern rule
+STATA ?= stata-mp
+output/tables/%.dta: code/%.do | output/tables
+	$(STATA) -b do $<
 ```
 
 ## Joint Production
@@ -73,6 +78,7 @@ output/figures/diagnostics.pdf: output/tables/results.csv ;
 
 - R scripts: `Rscript $<`
 - Julia scripts: `julia $<` (or `julia +release -t auto $<` for threaded workloads)
+- Stata scripts: `$(STATA) -b do $<` with `STATA ?= stata-mp` (or your local Stata binary)
 - Always use `$<` (first prerequisite) and `$@` (target) automatic variables
 - Never use absolute paths — all paths are relative to the Makefile's directory
 
@@ -148,4 +154,4 @@ List all `.tex` and `.bib` dependencies in `MAIN_SOURCES` and `SLIDES_SOURCES` s
 ## Validation
 
 - `make -n` (dry-run) must produce a valid, readable plan with no errors
-- Every `.R` and `.jl` file under `code/` should appear as a prerequisite in some Makefile target — orphaned scripts are a warning sign
+- Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file under `code/` should appear as a prerequisite in some Makefile target — orphaned scripts are a warning sign
