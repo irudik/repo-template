@@ -33,9 +33,9 @@
 ├── .agents/                     # Codex CLI: skill definitions
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── Makefile                 # Delegates to sub-Makefiles
-│   ├── [task_group]/            # e.g., data cleaning (R) or simulation (Julia)
+│   ├── [task_group]/            # e.g., data cleaning (R/Stata), simulation (Julia), or structural model (MATLAB)
 │   │   ├── Makefile
-│   │   └── *.R or *.jl
+│   │   └── *.R, *.jl, *.do, *.ado, or *.m
 │   └── [task_group]/
 │       ├── Makefile
 │       └── ...
@@ -101,6 +101,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/setup-makefile [dir]` | Generate Makefile from directory contents |
 | `/review-r [file]` | R code quality review |
 | `/review-julia [file]` | Julia code quality review |
+| `/review-stata [file]` | Stata code quality review |
 | `/review-matlab [file]` | MATLAB code quality review |
 | `/review-tex [file]` | LaTeX manuscript review |
 | `/review-makefile [file]` | Makefile conventions review |

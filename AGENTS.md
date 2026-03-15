@@ -37,11 +37,11 @@
 │   └── skills/                  # Skill definitions
 ├── .claude/                     # Claude Code rules, skills, agents, hooks
 ├── code/                        # Analysis code with sub-Makefiles
-│   ├── AGENTS.md                # R/Julia/Makefile conventions (Codex)
+│   ├── AGENTS.md                # R/Julia/Stata/MATLAB/Makefile conventions (Codex)
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   └── [task_group]/            # e.g., data cleaning, estimation, figures
 │       ├── Makefile
-│       └── *.R or *.jl
+│       └── *.R, *.jl, *.do, *.ado, or *.m
 ├── latex/                       # Paper manuscript and slides
 │   ├── AGENTS.md                # LaTeX conventions (Codex)
 │   ├── Makefile                 # pdflatex 3-pass build
@@ -105,6 +105,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/setup-makefile [dir]` | Generate Makefile from directory contents |
 | `/review-r [file]` | R code quality review |
 | `/review-julia [file]` | Julia code quality review |
+| `/review-stata [file]` | Stata code quality review |
 | `/review-matlab [file]` | MATLAB code quality review |
 | `/review-tex [file]` | LaTeX manuscript review |
 | `/review-makefile [file]` | Makefile conventions review |
@@ -126,7 +127,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 
 ## Orchestrator Protocol: Contractor Mode
 
-> Use this full loop for multi-file or cross-cutting changes. For single-file R/Julia script tasks, use the simplified research orchestrator below.
+> Use this full loop for multi-file or cross-cutting changes. For single-file R/Julia/Stata/MATLAB script tasks, use the simplified research orchestrator below.
 
 **After a plan is approved, the orchestrator takes over autonomously.**
 
@@ -142,7 +143,7 @@ Plan approved -> orchestrator activates
   |         Otherwise: compile/render/run directly
   |         If verification fails -> fix -> re-verify
   |
-  Step 3: REVIEW -- Run appropriate review skill (/review-r, /review-julia, /review-tex)
+  Step 3: REVIEW -- Run appropriate review skill (/review-r, /review-julia, /review-stata, /review-matlab, /review-tex)
   |
   Step 4: FIX -- Apply fixes (critical -> major -> minor)
   |
@@ -243,6 +244,7 @@ When comparing outputs before and after code changes:
 |--------|-----------------|----------------|
 | CSV/TSV | Yes | MD5 checksum |
 | RDS | No (R-version dependent) | Read and compare values, or convert to CSV |
+| .dta | Partially | Read and compare values, or export to CSV first |
 | .mat | Partially | Load and compare specific variables |
 | JLD2 | Yes (Julia-version dependent) | MD5 or load-and-compare |
 | PDF/PNG | No (renderer dependent) | Visual diff only |
@@ -254,7 +256,7 @@ When comparing outputs before and after code changes:
 
 ## Research Orchestrator (Simplified)
 
-> Use this simplified loop for single-file R/Julia script tasks.
+> Use this simplified loop for single-file R/Julia/Stata/MATLAB script tasks.
 
 ```
 Plan approved -> orchestrator activates
@@ -263,10 +265,12 @@ Plan approved -> orchestrator activates
   |
   Step 2: VERIFY -- Run `make -n` to check staleness; build stale targets
   |         If Makefile exists: `make -C code/[dir] [target]` or `make -C latex`
-  |         Otherwise: `Rscript` / `julia` / `pdflatex` directly
+  |         Otherwise: `Rscript` / `julia` / `stata -b do` / `matlab -batch` / `pdflatex` directly
   |         R scripts: runs without error, outputs created
   |         Julia scripts: runs without error, CSV/JLD2 created
-  |         Simulations: set.seed / Random.seed! reproducibility
+  |         Stata scripts: runs without error, .dta/.csv/.tex outputs created
+  |         MATLAB scripts: runs without error, .mat/.csv outputs created
+  |         Simulations: set.seed / Random.seed! / set seed / rng reproducibility
   |         Plots: PDF/PNG created, correct format
   |         If verification fails -> fix -> re-verify
   |
@@ -282,10 +286,10 @@ Plan approved -> orchestrator activates
 ### Verification Checklist
 
 - [ ] `make -n` shows no stale targets (or targets rebuilt successfully)
-- [ ] Script runs without errors (R and/or Julia)
-- [ ] All packages loaded at top (R: `library()`, Julia: top-level `using`)
+- [ ] Script runs without errors (R, Julia, Stata, and/or MATLAB)
+- [ ] Language setup is explicit at top (`library()`, `using`, `version`, `rng`)
 - [ ] No hardcoded absolute paths
-- [ ] `set.seed()` / `Random.seed!()` once at top if stochastic
+- [ ] `set.seed()` / `Random.seed!()` / `set seed` / `rng()` once at top if stochastic
 - [ ] Output files created at expected paths
 - [ ] Tolerance checks pass (if applicable)
 - [ ] No hardcoded computed results in manuscript prose
@@ -373,6 +377,20 @@ After compression or a new session:
 | Minor | Unfused broadcasts (`.+` instead of `@.`) | -2 |
 | Minor | Globals captured in loops without `let` | -2 |
 
+### Stata Scripts (.do / .ado)
+
+| Severity | Issue | Deduction |
+|----------|-------|-----------|
+| Critical | Runtime errors | -100 |
+| Critical | Domain-specific bugs (wrong estimand, incorrect formula) | -30 |
+| Critical | Unchecked merge/reshape invariants (keys, `_merge`, panel state) | -25 |
+| Critical | Hardcoded absolute paths or `cd` | -20 |
+| Major | Missing `version` | -10 |
+| Major | Missing `set seed` (if stochastic) | -10 |
+| Major | `capture` without `_rc` checks or heavy global macro dependence | -5 |
+| Major | Missing output persistence | -5 |
+| Minor | Noisy `display` / `pause` / `set trace on` in production | -2 |
+
 ### MATLAB Scripts (.m)
 
 | Severity | Issue | Deduction |
@@ -449,6 +467,17 @@ If a Makefile governs the files being modified:
 2. Verify output files (CSV, JLD2) were created with non-zero size
 3. Check file sizes are plausible (not suspiciously small or empty)
 4. If stochastic, verify reproducibility: run twice with same seed, diff outputs
+
+### For Stata Scripts:
+1. Prefer `make -C code/[subdir] [target]`; fall back to `stata -b do path/to/script.do`
+2. Verify output files (`.dta`, `.csv`, `.tex`, `.txt`, or logs used downstream) were created with non-zero size
+3. Check the batch log for Stata error codes and unexpected warnings
+4. Spot-check key counts, merge assertions, or exported estimates for reasonable magnitude
+
+### For MATLAB Scripts:
+1. Prefer `make -C code/[subdir] [target]`; fall back to `matlab -batch "run('path/to/script.m')"`
+2. Verify output files (`.mat`, `.csv`, `.tex`, or figures) were created with non-zero size
+3. Check file sizes are plausible and solver output/logs show successful convergence where relevant
 
 ### Verification Checklist:
 ```

@@ -1,8 +1,8 @@
-# AI-Assisted Academic Research Template (Make + R/Julia)
+# AI-Assisted Academic Research Template (Make + R/Julia/Stata/MATLAB)
 
-> **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R and Julia scripts, and managing build dependencies. I keep updating these files as I learn new things.
+> **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia** build systems. You describe what you want; the assistant plans the approach, implements it, builds via Make, runs specialized review skills, fixes issues, and presents results — like a contractor who handles the entire job.
+A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant plans the approach, implements it, builds via Make, runs specialized review skills, fixes issues, and presents results — like a contractor who handles the entire job.
 
 **Both tools are supported.** Claude Code uses `.claude/` + `CLAUDE.md`; Codex CLI uses `.codex/` + `.agents/` + `AGENTS.md`. The same workflow, quality gates, and skills work with either.
 
@@ -123,7 +123,7 @@ Then paste the same project-description prompt as the Claude Code section above.
 Codex project configuration lives in:
 
 - **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
-- **`code/AGENTS.md`** — R, Julia, and Makefile conventions (loaded when working in `code/`)
+- **`code/AGENTS.md`** — R, Julia, Stata, MATLAB, and Makefile conventions (loaded when working in `code/`)
 - **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
 - **`.codex/config.toml`** — model, sandbox, and approval settings
 - **`.codex/rules/default.rules`** — command execution permissions (Starlark format)
@@ -164,7 +164,7 @@ my-project/
 │   ├── Makefile          # Delegates to sub-Makefiles
 │   ├── data_prep/
 │   │   ├── Makefile      # Targets for cleaning raw data
-│   │   ├── clean.R
+│   │   ├── clean.do
 │   │   └── merge.R
 │   ├── estimation/
 │   │   ├── Makefile      # Targets for running models
@@ -174,9 +174,12 @@ my-project/
 │   │   ├── Makefile      # Targets for trade model simulation
 │   │   ├── simulate_trade.jl
 │   │   └── process_results.jl
+│   ├── structural_model/
+│   │   ├── Makefile      # Targets for numerical optimization
+│   │   └── solve_equilibrium.m
 │   ├── tables/
 │   │   ├── Makefile      # Targets for regression tables
-│   │   └── reg_tables.R
+│   │   └── reg_tables.do
 │   └── figures/
 │       ├── Makefile      # Targets for generating plots
 │       └── main_figures.R
@@ -201,7 +204,7 @@ You describe a task. Claude:
 1. **Plans** the approach (enter plan mode, save to disk)
 2. **Implements** the code
 3. **Verifies** via `make -n` then `make` — builds stale targets (including `make -C latex` for the manuscript), checks exit codes
-4. **Reviews** with specialized agents (r-reviewer, julia-reviewer, verifier)
+4. **Reviews** with specialized agents (r-reviewer, julia-reviewer, stata-reviewer, matlab-reviewer, verifier)
 5. **Fixes** issues found by reviewers
 6. **Scores** against quality gates
 
@@ -230,11 +233,12 @@ Focused agents each check one dimension:
 |-------|---------------|
 | `r-reviewer` | R code quality, reproducibility, domain correctness |
 | `julia-reviewer` | Julia code quality, type stability, performance |
+| `stata-reviewer` | Stata code quality, data integrity, and research workflow safety |
 | `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
 | `verifier` | End-to-end build verification, orphaned script detection |
 
-The verifier runs an **orphaned script check**: every `.R` and `.jl` file under `code/` must appear as a prerequisite in some Makefile. Scripts with no Makefile target get flagged.
+The verifier runs an **orphaned script check**: every `.R`, `.jl`, `.do`, `.ado`, and `.m` file under `code/` must appear as a prerequisite in some Makefile. Scripts with no Makefile target get flagged.
 
 ### Quality Gates
 
@@ -243,7 +247,7 @@ Every file gets a score (0–100). Scores below threshold block the action:
 - **90** — PR threshold
 - **95** — excellence (aspirational)
 
-Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.claude/rules/quality-gates.md` for the full deduction table.
+Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles, and LaTeX manuscripts. See `.claude/rules/quality-gates.md` for the full deduction table.
 
 ---
 
@@ -258,6 +262,7 @@ Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.
 |-------|-------------|
 | `r-reviewer` | R code quality, reproducibility, and domain correctness |
 | `julia-reviewer` | Julia code quality, type stability, and performance |
+| `stata-reviewer` | Stata code quality, data integrity, and research workflow safety |
 | `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
 | `tex-reviewer` | LaTeX manuscript quality, hardcoded numbers, citation consistency |
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
@@ -277,6 +282,7 @@ Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.
 | `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
 | `/review-r [file]` | R code quality review via r-reviewer agent |
 | `/review-julia [file]` | Julia code quality review via julia-reviewer agent |
+| `/review-stata [file]` | Stata code quality review via stata-reviewer agent |
 | `/review-matlab [file]` | MATLAB code quality review via matlab-reviewer agent |
 | `/review-tex [file]` | LaTeX manuscript review via tex-reviewer agent |
 | `/review-makefile [file]` | Makefile conventions review via makefile-reviewer agent |
@@ -290,14 +296,15 @@ Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.
 | `makefile-conventions` | Standard Make patterns: `.PHONY`, order-only prereqs, pattern rules, joint production |
 | `r-code-conventions` | R coding standards, Makefile-based directory creation |
 | `julia-code-conventions` | Julia coding standards, Makefile-based directory creation |
+| `stata-code-conventions` | Stata coding standards, merge safety, and batch workflow discipline |
 | `matlab-code-conventions` | MATLAB coding standards, solver configuration, derivative correctness |
 | `refactoring-protocol` | Verify-refactor-verify loop, prohibited/approved transformations |
 | `solver-debugging-protocol` | Systematic diagnostic checklist for numerical solver failures |
 | `verification-formats` | Which output formats are checksum-stable and how to compare each |
-| `quality-gates` | 80/90/95 scoring for R, Julia, MATLAB, Makefiles, and LaTeX |
+| `quality-gates` | 80/90/95 scoring for R, Julia, Stata, MATLAB, Makefiles, and LaTeX |
 | `verification-protocol` | Make-first verification, then file-specific checks |
 | `orchestrator-protocol` | Contractor mode: implement, verify via Make, review, fix, score |
-| `orchestrator-research` | Simplified loop for R/Julia scripts |
+| `orchestrator-research` | Simplified loop for R/Julia/Stata/MATLAB scripts |
 | `plan-first-workflow` | Plan mode for non-trivial tasks |
 | `session-logging` | Proactive session logging: post-plan, incremental, end-of-session |
 | `bash-conventions` | One command per Bash call for permission glob matching |
@@ -308,11 +315,11 @@ Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | `AGENTS.md` (root) | Project root | Core instructions + workflow rules |
-| `code/AGENTS.md` | `code/` | R, Julia, Makefile conventions |
+| `code/AGENTS.md` | `code/` | R, Julia, Stata, MATLAB, and Makefile conventions |
 | `latex/AGENTS.md` | `latex/` | LaTeX conventions |
 | `.codex/config.toml` | `.codex/` | Optional Codex project overrides for sandbox, approval, and model behavior |
 | `.codex/rules/default.rules` | `.codex/rules/` | Command execution permissions (Starlark) |
-| `.agents/skills/*/SKILL.md` | `.agents/skills/` | 15 reusable skills (same as Claude) |
+| `.agents/skills/*/SKILL.md` | `.agents/skills/` | 16 reusable skills (same as Claude) |
 
 </details>
 
@@ -326,6 +333,8 @@ Rubrics cover R scripts, Julia scripts, Makefiles, and LaTeX manuscripts. See `.
 | [GNU Make](https://www.gnu.org/software/make/) | Build system | Pre-installed on macOS/Linux |
 | R | Data analysis, figures | [r-project.org](https://www.r-project.org/) |
 | Julia | Computation, simulation | [julialang.org](https://julialang.org/downloads/) |
+| Stata | Replication, cleaning, and panel workflows | Vendor installer; ensure `stata-mp`, `stata-se`, or `stata` is on `PATH` |
+| MATLAB | Numerical optimization and structural models | MathWorks installer; ensure `matlab` is on `PATH` |
 | pdflatex | Manuscript compilation | Included with TeX Live / MacTeX |
 | [gh CLI](https://cli.github.com/) | PR workflow | `brew install gh` (macOS) |
 | [jq](https://jqlang.github.io/jq/) | Claude Code hooks (3 of 4 use it) | `brew install jq` (macOS) |
@@ -357,6 +366,20 @@ The pipeline keeps computed results out of your `.tex` source by writing `\newco
    end
    ```
 
+   **Stata:**
+   ```stata
+   file open fh using "output/numbers/revenue_estimate.txt", write text replace
+   file write fh "\newcommand{\revenueEstimate}{4.72}" _n
+   file close fh
+   ```
+
+   **MATLAB:**
+   ```matlab
+   fid = fopen(fullfile("output", "numbers", "revenue_estimate.txt"), "w");
+   fprintf(fid, '\\newcommand{\\revenueEstimate}{4.72}\n');
+   fclose(fid);
+   ```
+
 2. **The manuscript inputs the file** (plain filename — no path prefix needed):
    ```latex
    \input{revenue_estimate.txt}
@@ -371,7 +394,7 @@ The pipeline keeps computed results out of your `.tex` source by writing `\newco
 
 ### Adding a new dynamic number
 
-1. Add the write call to your R or Julia script
+1. Add the write call to your R, Julia, Stata, or MATLAB script
 2. Add the `.txt` file as a prerequisite in the relevant `code/` Makefile
 3. Add `\input{filename.txt}` in the manuscript preamble (or wherever the macro is first used)
 4. Use the macro (`\revenueEstimate`) in prose
@@ -383,7 +406,7 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 ## Adapting for Your Field
 
-1. **Add field-specific pitfalls** to `.claude/rules/r-code-conventions.md` and `.claude/rules/julia-code-conventions.md`
+1. **Add field-specific pitfalls** to `.claude/rules/r-code-conventions.md`, `.claude/rules/julia-code-conventions.md`, `.claude/rules/stata-code-conventions.md`, and `.claude/rules/matlab-code-conventions.md`
 2. **Adjust tolerance thresholds** in `.claude/rules/quality-gates.md` for your domain's precision requirements
 3. **Set up the `code/` directory** with sub-Makefiles matching your pipeline stages
 
@@ -401,15 +424,15 @@ my-project/
 ├── .agents/                     # Codex CLI: skill definitions
 ├── code/
 │   ├── Makefile                 # Delegates to sub-Makefiles
-│   ├── [task_group_a]/          # e.g., data cleaning (R)
+│   ├── [task_group_a]/          # e.g., data cleaning (R or Stata)
 │   │   ├── Makefile
-│   │   └── *.R or *.jl
-│   ├── [task_group_b]/          # e.g., simulation (Julia)
+│   │   └── *.R, *.jl, *.do, *.ado, or *.m
+│   ├── [task_group_b]/          # e.g., simulation (Julia or MATLAB)
 │   │   ├── Makefile
-│   │   └── *.R or *.jl
-│   └── [task_group_c]/          # e.g., figures (R)
+│   │   └── *.R, *.jl, *.do, *.ado, or *.m
+│   └── [task_group_c]/          # e.g., figures (R or Stata)
 │       ├── Makefile
-│       └── *.R or *.jl
+│       └── *.R, *.jl, *.do, *.ado, or *.m
 ├── latex/
 │   ├── Makefile                 # pdflatex 3-pass build
 │   ├── manuscript.tex           # Main paper

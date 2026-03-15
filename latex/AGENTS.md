@@ -80,13 +80,13 @@ The pipeline keeps computed results out of `.tex` source by writing `\newcommand
 
 ### How It Works
 
-1. **Code generates a `.txt` file** with a `\newcommand` (R or Julia)
+1. **Code generates a `.txt` file** with a `\newcommand` (R, Julia, Stata, or MATLAB)
 2. **The manuscript inputs the file**: `\input{revenue_estimate.txt}`
 3. **`TEXINPUTS` resolves the path** -- pdflatex finds the file in `../output/numbers/`
 
 ### Adding a New Dynamic Number
 
-1. Add the write call to your R or Julia script
+1. Add the write call to your R, Julia, Stata, or MATLAB script
 2. Add the `.txt` file as a prerequisite in the relevant `code/` Makefile
 3. Add `\input{filename.txt}` in the manuscript preamble
 4. Use the macro in prose
