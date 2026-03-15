@@ -426,6 +426,8 @@ Mark expensive-to-produce files as `.PRECIOUS` so Make does not delete them on i
 ### Pattern Rules
 
 ```make
+STATA ?= stata-mp
+
 output/tables/%.rds: code/%.R | output/tables
 	Rscript $<
 
