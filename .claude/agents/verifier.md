@@ -57,15 +57,38 @@ julia path/to/script.jl 2>&1 | tail -20
 - Check file sizes > 0
 - If stochastic, verify reproducibility with fixed seed
 
+### For `.do` / `.ado` files (Stata scripts):
+```bash
+# Prefer Make if a Makefile governs this script:
+make -C code/[subdir] [target] 2>&1 | tail -20
+# Otherwise fall back to:
+stata -b do path/to/script.do 2>&1 | tail -20
+```
+- Check exit code
+- Verify output files (DTA, CSV, TXT) were created
+- Check file sizes > 0
+- Inspect the `.log` file for `r(...)` error codes
+
+### For `.m` files (MATLAB scripts):
+```bash
+# Prefer Make if a Makefile governs this script:
+make -C code/[subdir] [target] 2>&1 | tail -20
+# Otherwise fall back to:
+matlab -batch "run('path/to/script.m')" 2>&1 | tail -20
+```
+- Check exit code
+- Verify output files (CSV, MAT) were created
+- Check file sizes > 0
+
 ### For bibliography:
 - Check that all `\cite` / `@key` references in modified files have entries in the .bib file
 
 ### Orphaned Script Check
 
-For every `.R` and `.jl` file under `code/`, verify it appears as a prerequisite in a Makefile target. Flag orphaned scripts (no Makefile reference) as a warning — they may be dead code or missing from the build.
+For every `.R`, `.jl`, `.do`, `.ado`, and `.m` file under `code/`, verify it appears as a prerequisite in a Makefile target. Flag orphaned scripts (no Makefile reference) as a warning — they may be dead code or missing from the build.
 
 ```bash
-# Find all R/Julia scripts under code/
+# Find all R/Julia/Stata/MATLAB scripts under code/
 # For each, grep across Makefiles for its filename
 # Report any that have zero matches
 ```

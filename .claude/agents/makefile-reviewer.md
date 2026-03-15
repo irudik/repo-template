@@ -49,7 +49,7 @@ Produce a thorough, actionable review report. You do NOT edit files -- you ident
 **Flag:** Circular deps, missing prerequisites leading to stale builds, phantom targets.
 
 ### 4. SCRIPT COVERAGE
-- [ ] Every `.R`, `.jl`, and `.m` file in the directory appears as a prerequisite in some target
+- [ ] Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file in the directory appears as a prerequisite in some target
 - [ ] No orphaned scripts (scripts with no Makefile target)
 - [ ] Scripts excluded from coverage (e.g., utility functions, shared libraries) are documented
 
@@ -65,6 +65,7 @@ Produce a thorough, actionable review report. You do NOT edit files -- you ident
 ### 6. RECIPE CONVENTIONS
 - [ ] R scripts: `Rscript $<`
 - [ ] Julia scripts: `julia $<`
+- [ ] Stata scripts: `$(STATA) -b do $<`
 - [ ] MATLAB scripts: `matlab -batch "run('$<')"`
 - [ ] Automatic variables used (`$<`, `$@`, `$^`) instead of hardcoded filenames
 - [ ] No absolute paths in recipes

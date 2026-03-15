@@ -434,6 +434,8 @@ output/tables/%.rds: code/%.R | output/tables
 output/tables/%.csv: code/%.jl | output/tables
 	julia $<
 
+STATA ?= stata-mp
+
 output/tables/%.dta: code/%.do | output/tables
 	$(STATA) -b do $<
 ```
