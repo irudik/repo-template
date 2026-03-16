@@ -1,6 +1,6 @@
 SUBDIRS = code latex
 
-.PHONY: all clean $(SUBDIRS)
+.PHONY: all clean check-template $(SUBDIRS)
 
 all: $(SUBDIRS)
 
@@ -9,6 +9,9 @@ latex: code
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+
+check-template:
+	python3 tools/check_template_consistency.py
 
 clean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done

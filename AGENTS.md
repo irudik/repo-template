@@ -29,13 +29,16 @@
 ├── CLAUDE.md                    # Claude Code instructions
 ├── MEMORY.md                    # Persistent [LEARN] entries across sessions
 ├── Makefile                     # Root -- delegates to code/ and latex/
+├── protocols/                   # Canonical shared skill bodies
+│   └── skills/
+│       └── *.md
 ├── .codex/                      # Codex CLI config and rules
 │   ├── config.toml              # Model, sandbox, approval settings
 │   └── rules/
 │       └── default.rules        # Command execution permissions (Starlark)
-├── .agents/                     # Codex skills
+├── .agents/                     # Codex skill wrappers
 │   └── skills/                  # Skill definitions
-├── .claude/                     # Claude Code rules, skills, agents, hooks
+├── .claude/                     # Claude Code rules, wrappers, agents, hooks
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── AGENTS.md                # R/Julia/Stata/MATLAB/Makefile conventions (Codex)
 │   ├── Makefile                 # Delegates to sub-Makefiles
@@ -65,6 +68,7 @@
 # Make (preferred -- builds everything)
 make                               # Build all (code + latex)
 make -n                            # Dry-run: show what would be built
+make check-template                # Validate shared-skill and permission sync
 make -C code                       # Build all code targets
 make -C code/[task_group] all      # Build one task group
 make -C latex                      # Compile manuscript
@@ -114,6 +118,14 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/proofread [file]` | Grammar, typos, overflow, consistency check -- opt-in |
 | `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
 | `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
+
+---
+
+## Shared Skill Protocols
+
+- Canonical shared skill bodies live in `protocols/skills/`
+- `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
+- Review-oriented agents in `.claude/agents/` execute the same canonical protocols
 
 ---
 

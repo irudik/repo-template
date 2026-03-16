@@ -125,9 +125,10 @@ Codex project configuration lives in:
 - **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
 - **`code/AGENTS.md`** — R, Julia, Stata, MATLAB, and Makefile conventions (loaded when working in `code/`)
 - **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
+- **`protocols/skills/*.md`** — canonical shared skill bodies for both tools
 - **`.codex/config.toml`** — model, sandbox, and approval settings
 - **`.codex/rules/default.rules`** — command execution permissions (Starlark format)
-- **`.agents/skills/*/SKILL.md`** — reusable skill definitions
+- **`.agents/skills/*/SKILL.md`** — thin Codex wrappers around the shared protocols
 
 ### Codex vs Claude Code: Key Differences
 
@@ -136,9 +137,10 @@ Codex project configuration lives in:
 | Instructions file | `CLAUDE.md` | `AGENTS.md` (hierarchical) |
 | Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) |
 | Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) |
-| Behavioral rules | `.claude/rules/*.md` (separate files) | Inlined into `AGENTS.md` hierarchy |
-| Agent definitions | `.claude/agents/*.md` | Inlined into review skills |
-| Skills | `.claude/skills/*/SKILL.md` | `.agents/skills/*/SKILL.md` |
+| Project conventions | `.claude/rules/*.md` (separate files) | Inlined into `AGENTS.md` hierarchy |
+| Shared skill bodies | `protocols/skills/*.md` | `protocols/skills/*.md` |
+| Agent definitions | `.claude/agents/*.md` | Not supported |
+| Skills | Thin wrappers in `.claude/skills/*/SKILL.md` | Thin wrappers in `.agents/skills/*/SKILL.md` |
 | Hooks | `.claude/hooks/*` | Not supported (use git hooks) |
 
 ### Known Limitations (Codex)
@@ -301,6 +303,10 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
 | `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
 
+### Shared Skill Protocols (`protocols/skills/`)
+
+Canonical bodies for all 18 shared skills. Both `.claude/skills/` and `.agents/skills/` point at these files, and Claude review agents execute the same protocol files rather than owning separate copies.
+
 ### Key Rules (`.claude/rules/`)
 
 | Rule | What It Enforces |
@@ -329,9 +335,10 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `AGENTS.md` (root) | Project root | Core instructions + workflow rules |
 | `code/AGENTS.md` | `code/` | R, Julia, Stata, MATLAB, and Makefile conventions |
 | `latex/AGENTS.md` | `latex/` | LaTeX conventions |
+| `protocols/skills/*.md` | `protocols/skills/` | Canonical shared skill bodies |
 | `.codex/config.toml` | `.codex/` | Optional Codex project overrides for sandbox, approval, and model behavior |
 | `.codex/rules/default.rules` | `.codex/rules/` | Command execution permissions (Starlark) |
-| `.agents/skills/*/SKILL.md` | `.agents/skills/` | 17 reusable skills (same as Claude) |
+| `.agents/skills/*/SKILL.md` | `.agents/skills/` | 18 thin wrappers around the shared protocols |
 
 </details>
 
@@ -416,32 +423,48 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 ---
 
-## Maintenance: Keeping `.claude/` and `.agents/` in Sync
+## Maintenance: Keeping Claude and Codex in Sync
 
-This repo maintains parallel configuration for two AI coding tools:
+This repo now uses a three-layer skill architecture:
 
-- **`.claude/`** — source of truth for **Claude Code** (rules, skills, agents, hooks)
-- **`.agents/`** — source of truth for **Codex CLI** (skills with embedded protocols)
+- **`protocols/skills/`** — canonical shared skill bodies
+- **`.claude/skills/`** — Claude wrappers
+- **`.agents/skills/`** — Codex wrappers
+
+Claude also has a tool-specific execution layer in **`.claude/agents/`** for review-oriented skills. Those agents execute the same shared protocol files rather than owning separate checklists.
 
 ### What must stay in sync
 
-| Component | `.claude/` location | `.agents/` / `.codex/` location | Keep in sync? |
-|-----------|--------------------|---------------------------------|---------------|
-| Command permissions | `settings.json.example` | `.codex/rules/default.rules` | Yes — same commands must be allowed in both |
-| Convention files | `.claude/rules/*.md` | Inlined in `code/AGENTS.md` | Yes — same standards apply to both tools |
-| Skill names and descriptions | `.claude/skills/*/SKILL.md` | `.agents/skills/*/SKILL.md` | Yes — users expect the same `/skill` commands |
+| Component | Location | Keep in sync? |
+|-----------|----------|---------------|
+| Command permissions | `.claude/settings.json.example` and `.codex/rules/default.rules` | Yes |
+| Shared skill bodies | `protocols/skills/*.md` | Yes |
+| Skill wrapper names and descriptions | `.claude/skills/*/SKILL.md` and `.agents/skills/*/SKILL.md` | Yes |
+| Project conventions | `.claude/rules/*.md` and the `AGENTS.md` hierarchy | Yes |
 
 ### What intentionally differs
 
-- **Review skill internals.** Claude Code skills delegate to dedicated reviewer agents (e.g., `r-reviewer`). Codex CLI skills embed the full review protocol inline because Codex does not support agent definitions. The protocol content should match, but the delivery mechanism differs.
-- **Frontmatter format.** Claude Code uses `disable-model-invocation` + `allowed-tools`. Codex uses `workflow_stage` + `compatibility` + `tags`. Both are present in `.claude/skills/` for cross-compatibility; only the relevant keys are read by each tool.
-- **Hooks.** Claude Code supports hooks (`.claude/hooks/`). Codex CLI does not — use git hooks or manual procedures instead.
+- **Frontmatter format.** Claude wrappers use Claude frontmatter; Codex wrappers use Codex frontmatter.
+- **Agent layer.** Claude has `.claude/agents/` for review-oriented execution surfaces. Codex does not.
+- **Hooks.** Claude supports `.claude/hooks/`; Codex does not.
 
 ### When adding a new skill or convention
 
-1. Write the canonical version in `.claude/skills/` (or `.claude/rules/`)
-2. Copy the protocol content into `.agents/skills/` (or the relevant `AGENTS.md` section), adapting the frontmatter
-3. If the skill needs new command permissions, add them to both `settings.json.example` and `default.rules`
+1. Add or update the canonical body in `protocols/skills/<name>.md`
+2. Update `.claude/skills/<name>/SKILL.md`
+3. Update `.agents/skills/<name>/SKILL.md`
+4. If it is a review-oriented Claude agent surface, update the matching file in `.claude/agents/`
+5. If the skill needs new commands, update both permission config files
+6. Run `make check-template`
+
+## Template Consistency Checker
+
+Run `make check-template` to validate:
+
+- permission parity between Claude and Codex configs
+- shared protocol and wrapper inventory parity
+- wrapper references to `protocols/skills/*.md`
+- Claude review-agent references to the same canonical protocol files
 
 ---
 
@@ -452,9 +475,11 @@ my-project/
 ├── CLAUDE.md                    # Claude Code instructions (loaded every session)
 ├── AGENTS.md                    # Codex CLI instructions (loaded every session)
 ├── Makefile                     # Root — delegates to code/ and latex/
-├── .claude/                     # Claude Code: rules, skills, agents, hooks
+├── protocols/
+│   └── skills/                  # Canonical shared skill bodies
+├── .claude/                     # Claude Code: rules, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex CLI: skill definitions
+├── .agents/                     # Codex CLI: thin skill wrappers
 ├── code/
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   ├── [task_group_a]/          # e.g., data cleaning (R or Stata)

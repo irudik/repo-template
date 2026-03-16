@@ -1,0 +1,116 @@
+# Review LaTeX Files Protocol
+
+Run the LaTeX review protocol focused on hardcoded numeric results.
+
+## Steps
+
+1. **Identify files to review:**
+   - If an argument is a specific `.tex` filename, review that file only.
+   - If the argument is `all`, review all `.tex` files in `latex/`.
+
+2. **For each file, follow the review protocol below:**
+   - Save the report to `quality_reports/[FILENAME_WITHOUT_EXT]_tex_review.md`.
+
+3. **After all reviews complete, present a summary:**
+   - Total issues found per file
+   - Breakdown by severity
+   - Top three most critical issues
+
+4. **Do not edit LaTeX source files** unless the protocol reaches an
+   unambiguous auto-fix step.
+
+## Review Protocol
+
+Detect hardcoded numeric results in LaTeX prose and, when possible, replace
+them with dynamically generated macros from the code pipeline.
+
+### Background
+
+The project's code pipeline in R, Julia, Stata, or MATLAB can generate `.txt`
+files containing `\newcommand` definitions in `output/numbers/`. The
+`latex/Makefile` exposes those files through `TEXINPUTS`.
+
+```latex
+\input{revenue_estimate.txt}
+% Then in prose:
+% a U.S. carbon tariff raises \$\revenueEstimate\ billion
+```
+
+### Phase 1: Detection
+
+#### Step 1: Build the Dynamic Value Registry
+
+1. Glob for `output/numbers/*.txt`.
+2. Read all `\input{...}` lines in the relevant `.tex` files.
+3. Extract `\newcommand` definitions and build a macro registry.
+
+#### Step 2: Scan Prose Sections
+
+Skip lines inside:
+
+- Math environments
+- Table environments
+- The preamble
+- Comment lines
+- Reference and citation commands
+- Layout commands such as `\vspace`, `\hspace`, `\setcounter`, and
+  `\setlength`
+
+#### Step 3: Classify Numbers
+
+Always acceptable:
+
+- Section, equation, figure, and table references
+- Years
+- Structural descriptors like `12-sector`
+- Numbers inside math or table environments
+- Page numbers and ordinals
+
+Suspicious:
+
+- Dollar amounts with `million`, `billion`, or `trillion`
+- Percentages
+- Parenthetical standard-error-like values
+- Numbers preceded by result verbs
+- Decimal numbers in prose context
+
+#### Step 4: Cross-Reference Against the Registry
+
+- If an existing macro matches approximately, flag a Critical issue.
+- Otherwise, proceed to source tracing.
+
+### Phase 2: Source Tracing and Auto-Fix
+
+#### Step 1: Trace the Source
+
+1. Search `code/` for the numeric value and contextual keywords.
+2. Examine Makefiles to find producer scripts.
+3. Identify the likely computation line.
+
+#### Step 2: Decide
+
+- Auto-fix if exactly one script clearly produces the value.
+- Escalate if multiple candidates exist, no source is found, or the number is
+  external.
+
+#### Step 3: Auto-Fix When the Source Is Clear
+
+1. Add dynamic-number generation to the source script.
+2. Update the relevant Makefile dependencies.
+3. Replace the hardcoded number with the macro.
+4. Rebuild and verify the generated number matches.
+
+### Template State
+
+If `output/numbers/` does not exist and `code/` has no scripts, report that
+hardcoded-number detection is informational only.
+
+## Report Format
+
+Include:
+
+- Auto-fixed items
+- Escalated issues
+- Severity classification
+- File and line references
+- Candidate sources and required user action when unresolved

@@ -13,26 +13,13 @@ tags:
   - citations
 ---
 
-# Proofread Academic Documents
+# Proofread Wrapper
 
-Run the expert proofreading protocol on academic writing.
+Use the canonical shared protocol in `protocols/skills/proofread.md`.
 
-## Steps
+## Wrapper Workflow
 
-1. **Identify files to proofread:**
-   - If an argument is a specific filename: proofread that file only
-   - If the argument is `all`: proofread all `.tex` files in `latex/` (excluding `latex/latex_extras/`) plus any `.qmd` files
-
-2. **For each file, follow the proofreading protocol:**
-   - Check all 5 categories: Grammar, Typos, Overflow/Formatting, Consistency, Academic Quality
-   - Cross-reference citation keys against the bibliography file
-   - Save report to `quality_reports/[FILENAME_WITHOUT_EXT]_proofread_report.md`
-
-3. **After all reviews complete**, present a summary:
-   - Total issues found per file
-   - Breakdown by category (Grammar / Typo / Overflow / Consistency / Academic Quality)
-   - Breakdown by severity (High / Medium / Low)
-   - Top 3 most critical issues
-
-4. **IMPORTANT: Do NOT edit any source files.**
-   Only produce reports. Fixes are applied after user review.
+1. Read `protocols/skills/proofread.md`.
+2. Treat that file as the single source of truth for the substantive workflow.
+3. Apply the protocol to the provided argument(s).
+4. Keep this file limited to Codex metadata and wrapper guidance.

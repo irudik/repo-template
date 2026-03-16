@@ -15,39 +15,13 @@ tags:
   - review
 ---
 
-# Comment and Doc Cleanup
+# Review Comments Wrapper
 
-## Purpose
+Use the canonical shared protocol in `protocols/skills/review-comments.md`.
 
-Clean up stale or misleading comments/docstrings, remove commented-out code, and align documentation with code reality.
+## Wrapper Workflow
 
-## When to Use
-
-- You want a pass over comments/docstrings for correctness.
-- You need to remove commented-out code blocks.
-- You want to sync README/docs with the codebase.
-
-## Workflow
-
-1. Identify scope: ask which files or directory to review. Default to the current working directory.
-2. Identify style reference: if the user provides a reference file, read it and extract style conventions (comment density, section headers, inline comments, docstring format).
-3. Explore files: for each file in scope, note:
-   - Commented-out code blocks (comment lines containing code)
-   - Comments referencing non-existent features or files
-   - Docstrings that conflict with behavior
-   - Verbose comments that restate mechanics
-4. Check documentation: read README/docs and verify referenced files exist.
-5. Present findings: summarize issues with file paths and line numbers, grouped by issue type.
-6. Get approval: ask for confirmation before editing.
-7. Make edits: remove commented-out code entirely, rewrite stale/misleading comments, fix docstrings.
-8. Verify: run checks to confirm stale references are gone.
-
-## Default Style (override with reference file)
-
-- Section headers: `# ============================================================================`
-- Inline comments: short, explain domain logic not code mechanics
-- Do not prefix with "Economic intuition:"
-- Use Unicode math notation where appropriate
-- Delete rather than comment out unused code
-- Docstrings: structured with `Arguments`/`Returns` sections
-- Target ~15-20% comment density
+1. Read `protocols/skills/review-comments.md`.
+2. Treat that file as the single source of truth for the substantive workflow.
+3. Apply the protocol to the provided argument(s).
+4. Keep this file limited to Codex metadata and wrapper guidance.

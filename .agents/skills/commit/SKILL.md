@@ -13,64 +13,13 @@ tags:
   - merge
 ---
 
-# Commit, PR, and Merge
+# Commit Wrapper
 
-Stage changes, commit with a descriptive message, create a PR, and merge to main.
+Use the canonical shared protocol in `protocols/skills/commit.md`.
 
-## Steps
+## Wrapper Workflow
 
-1. **Check current state:**
-
-```bash
-git status
-git diff --stat
-git log --oneline -5
-```
-
-**Staleness check:** If a root Makefile exists, run `make -n` to check for stale targets. If stale targets exist, warn the user before proceeding (soft gate -- warn, don't block).
-
-2. **Create a branch** from the current state:
-
-```bash
-git checkout -b <short-descriptive-branch-name>
-```
-
-3. **Stage files** -- add specific files (never use `git add -A`):
-
-```bash
-git add <file1> <file2> ...
-```
-
-Do NOT stage `.claude/settings.local.json`, `.codex/` local state, or any files containing secrets.
-
-4. **Commit** with a descriptive message:
-
-If an argument is provided, use it as the commit message. Otherwise, analyze the staged changes and write a message that explains *why*, not just *what*.
-
-```bash
-git commit -m "<commit message>"
-```
-
-5. **Push and create PR:**
-
-```bash
-git push -u origin <branch-name>
-gh pr create --title "<short title>" --body "<summary and test plan>"
-```
-
-6. **Merge and clean up:**
-
-```bash
-gh pr merge <pr-number> --merge --delete-branch
-git checkout main
-git pull
-```
-
-7. **Report** the PR URL and what was merged.
-
-## Important
-
-- Always create a NEW branch -- never commit directly to main
-- Exclude sensitive files from staging
-- Use `--merge` (not `--squash` or `--rebase`) unless asked otherwise
-- If a commit message argument is provided, use it exactly
+1. Read `protocols/skills/commit.md`.
+2. Treat that file as the single source of truth for the substantive workflow.
+3. Apply the protocol to the provided argument(s).
+4. Keep this file limited to Codex metadata and wrapper guidance.
