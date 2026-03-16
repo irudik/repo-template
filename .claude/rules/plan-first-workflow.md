@@ -8,10 +8,14 @@
 2. **Check MEMORY.md** — read any `[LEARN]` entries relevant to this task
 3. **Draft the plan** — what changes, which files, in what order
 4. **Save to disk** — write to `quality_reports/plans/YYYY-MM-DD_short-description.md`
-5. **Present to user** — wait for approval
-6. **Exit plan mode** — only after approval
-7. **Save initial session log** — capture goal and key context while fresh
-8. **Implement via orchestrator** — see `orchestrator-protocol.md`
+5. **Manuscript review opt-in** — if the task touches manuscript or slides (`latex/`), ask:
+   - "Include domain substance review?" (runs `domain-reviewer` agent — identification, derivations, citations, code-theory alignment)
+   - "Include proofreading?" (runs `proofreader` agent — grammar, typos, overflow, consistency)
+   - Record the answers in the saved plan under an `## Optional Reviews` section
+6. **Present to user** — wait for approval
+7. **Exit plan mode** — only after approval
+8. **Save initial session log** — capture goal and key context while fresh
+9. **Implement via orchestrator** — see `orchestrator-protocol.md`
 
 ## Plans on Disk
 

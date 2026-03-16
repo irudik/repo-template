@@ -110,6 +110,8 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/review-tex [file]` | LaTeX manuscript review |
 | `/review-makefile [file]` | Makefile conventions review |
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
+| `/review-domain [file]` | Substantive domain review (identification, citations, code-theory) -- opt-in |
+| `/proofread [file]` | Grammar, typos, overflow, consistency check -- opt-in |
 | `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
 | `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
 
@@ -152,9 +154,18 @@ Plan approved -> orchestrator activates
   Step 6: SCORE -- Apply quality-gates rubric
   |
   └── Score >= threshold?
-        YES -> Present summary to user
+        YES -> Continue to Step 7
         NO  -> Loop back to Step 3 (max 5 rounds)
-              After max rounds -> present with remaining issues
+              After max rounds -> continue to Step 7 with remaining issues
+  |
+  Step 7: OPTIONAL REVIEWS -- If the approved plan requests them:
+  |         * Domain substance review -> run domain-reviewer agent
+  |         * Proofreading -> run proofreader agent
+  |         These run once on the final state, after the review-fix loop.
+  |         They produce reports only -- fixes require user review.
+  |         Skip this step if the plan does not request optional reviews.
+  |
+  Step 8: Present summary to user (including optional review reports)
 ```
 
 ### Limits
@@ -307,8 +318,12 @@ Plan approved -> orchestrator activates
 2. **Check MEMORY.md** for `[LEARN]` entries relevant to this task
 3. **Draft the plan** -- what changes, which files, in what order
 4. **Save to disk** -- write to `quality_reports/plans/YYYY-MM-DD_short-description.md`
-5. **Present to user** -- wait for approval
-6. **Implement via orchestrator** after approval
+5. **Manuscript review opt-in** -- if the task touches manuscript or slides (`latex/`), ask:
+   - "Include domain substance review?" (runs `domain-reviewer` agent)
+   - "Include proofreading?" (runs `proofreader` agent)
+   - Record the answers in the saved plan under an `## Optional Reviews` section
+6. **Present to user** -- wait for approval
+7. **Implement via orchestrator** after approval
 
 ### Plans on Disk
 
