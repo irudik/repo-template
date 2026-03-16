@@ -13,9 +13,8 @@ Extract the PR number from the argument. Error if it is missing.
 Derive owner and repo:
 
 ```bash
-OWNER_REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
-OWNER=$(echo "$OWNER_REPO" | cut -d'/' -f1)
-REPO=$(echo "$OWNER_REPO" | cut -d'/' -f2)
+OWNER=$(gh repo view --json owner -q '.owner.login')
+REPO=$(gh repo view --json name -q '.name')
 ```
 
 ### Step 2: Check Out the PR Branch

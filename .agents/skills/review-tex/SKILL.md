@@ -1,6 +1,6 @@
 ---
 name: review-tex
-description: Run the LaTeX review protocol on manuscript and slides. Detects hardcoded numbers, checks citation consistency, and verifies compilation. Can auto-fix when the source is unambiguous.
+description: Run the LaTeX review protocol on manuscript and slides. Detects hardcoded numeric results, distinguishes manuscript from slide contexts, and auto-fixes unambiguous values when the source is clear.
 workflow_stage: review
 compatibility:
   - codex
@@ -8,9 +8,9 @@ compatibility:
 version: 1.0.0
 tags:
   - latex
-  - manuscript
+  - slides
   - hardcoded-numbers
-  - citations
+  - manuscript
 ---
 
 # Review LaTeX Wrapper

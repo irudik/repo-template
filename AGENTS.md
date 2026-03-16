@@ -111,7 +111,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/review-julia [file]` | Julia code quality review |
 | `/review-stata [file]` | Stata code quality review |
 | `/review-matlab [file]` | MATLAB code quality review |
-| `/review-tex [file]` | LaTeX manuscript review |
+| `/review-tex [file]` | LaTeX hardcoded-number review for manuscripts and slides |
 | `/review-makefile [file]` | Makefile conventions review |
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
 | `/review-domain [file]` | Substantive domain review (identification, citations, code-theory) -- opt-in |

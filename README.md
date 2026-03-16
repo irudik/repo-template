@@ -276,7 +276,7 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
 | `domain-reviewer` | Substantive review for manuscripts, slides, and teaching materials |
 | `proofreader` | Academic proofreading for manuscripts, slides, and notes |
-| `tex-reviewer` | LaTeX manuscript quality, hardcoded numbers, citation consistency |
+| `tex-reviewer` | LaTeX hardcoded-number review for manuscripts and slides |
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
 | `verifier` | End-to-end build verification with orphaned script check |
 
@@ -296,7 +296,7 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `/review-julia [file]` | Julia code quality review via julia-reviewer agent |
 | `/review-stata [file]` | Stata code quality review via stata-reviewer agent |
 | `/review-matlab [file]` | MATLAB code quality review via matlab-reviewer agent |
-| `/review-tex [file]` | LaTeX manuscript review via tex-reviewer agent |
+| `/review-tex [file]` | LaTeX hardcoded-number review for manuscripts and slides via tex-reviewer agent |
 | `/review-makefile [file]` | Makefile conventions review via makefile-reviewer agent |
 | `/review-domain [file]` | Opt-in substantive domain review via domain-reviewer agent |
 | `/proofread [file]` | Opt-in proofreading review via proofreader agent |
@@ -356,7 +356,7 @@ Canonical bodies for all 18 shared skills. Both `.claude/skills/` and `.agents/s
 | MATLAB | Numerical optimization and structural models | MathWorks installer; ensure `matlab` is on `PATH` |
 | pdflatex | Manuscript compilation | Included with TeX Live / MacTeX |
 | [gh CLI](https://cli.github.com/) | PR workflow | `brew install gh` (macOS) |
-| [jq](https://jqlang.github.io/jq/) | Claude Code hooks (3 of 4 use it) | `brew install jq` (macOS) |
+| [jq](https://jqlang.github.io/jq/) | Claude Code hooks and `/review-pr` thread parsing | `brew install jq` (macOS) |
 
 Not all tools are needed — install only what your project uses. Either Claude Code or Codex CLI is the only hard requirement.
 

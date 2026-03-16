@@ -1,6 +1,6 @@
 ---
 name: proofread
-description: Run expert proofreading on academic documents. Checks grammar, typos, overflow risks, citation consistency, and academic quality. Supports LaTeX, Quarto, PDF, and Markdown. Produces a report without editing files.
+description: Run expert proofreading on academic documents. Checks grammar, typos, overflow risks, citation consistency, and academic quality for LaTeX, Quarto, and directly provided text-based files. Produces a report without editing files.
 disable-model-invocation: true
 argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]

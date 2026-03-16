@@ -25,6 +25,7 @@
       "Bash(sort *)",
       "Bash(grep *)",
       "Bash(awk *)",
+      "Bash(jq *)",
       "Bash(chmod *)",
       "Bash(cp *)",
       "Bash(mv *)",
