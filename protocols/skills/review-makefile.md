@@ -12,6 +12,8 @@ Run the comprehensive Makefile review protocol.
    - Read `.claude/rules/makefile-conventions.md` or the Makefile section of
      `code/AGENTS.md`.
    - Scan scripts in the same directory for coverage checking.
+   - Derive `dir_name` from the Makefile's containing directory path relative to
+     the repo root, replacing `/` with `_`; use `root` for the repository root.
    - Save the report to `quality_reports/[dir_name]_makefile_review.md`.
 
 3. **After all reviews complete, present a summary:**
@@ -50,7 +52,7 @@ research pipelines.
 
 #### 4. Script Coverage
 
-- Every `.R`, `.jl`, and `.m` file has a corresponding target
+- Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file has a corresponding target
 - No orphaned scripts
 - Excluded helper scripts are documented
 
@@ -61,7 +63,8 @@ research pipelines.
 
 #### 6. Recipe Conventions
 
-- `Rscript $<`, `julia $<`, `matlab -batch "run('$<')"` as appropriate
+- `Rscript $<`, `julia $<`, `$(STATA) -b do $<`, and
+  `matlab -batch "run('$<')"` as appropriate
 - Automatic variables such as `$<` and `$@`
 - No absolute paths
 
@@ -83,6 +86,10 @@ research pipelines.
 ## Report Format
 
 Save the report to `quality_reports/[dir_name]_makefile_review.md`.
+
+For nested directories, flatten the relative path to derive `dir_name`; for
+example, `code/estimation/bootstrap/Makefile` maps to
+`quality_reports/code_estimation_bootstrap_makefile_review.md`.
 
 Include:
 

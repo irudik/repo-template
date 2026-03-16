@@ -7,7 +7,7 @@ conventions.
 
 ### 1. Scan the Directory
 
-Glob for `.R`, `.jl`, and `.m` files.
+Glob for `.R`, `.jl`, `.do`, `.ado`, and `.m` files.
 
 ### 2. Parse Output Paths
 
@@ -15,7 +15,17 @@ For each script, scan for write calls:
 
 - R: `write.csv`, `write_csv`, `saveRDS`, `ggsave`, `writeLines`
 - Julia: `CSV.write`, `jldsave`, `savefig`, `open(..., "w")`
+- Stata: `save`, `export delimited`, `putexcel`, `esttab`, `file write`
 - MATLAB: `writetable`, `writematrix`, `save`, `saveas`
+
+Concrete patterns to match include:
+
+- R: `write.csv(df, file.path("output", "tables", "results.csv"))`
+- Julia: `CSV.write(joinpath("output", "tables", "results.csv"), df)`
+- Stata: `save "output/tables/results.dta", replace`
+- Stata: `export delimited using "output/tables/results.csv", replace`
+- Stata: `file open fh using "output/numbers/estimate.txt", write text replace`
+- MATLAB: `writetable(tbl, fullfile("output", "tables", "results.csv"))`
 
 Also scan for input paths to determine dependencies.
 
@@ -42,4 +52,6 @@ Write the Makefile and update the parent `code/Makefile` delegation if needed.
 
 - Always present for review before writing.
 - Follow Makefile conventions exactly.
+- Use the existing Stata recipe convention `$(STATA) -b do $<` when a generated
+  Makefile includes Stata targets.
 - Flag scripts whose outputs cannot be parsed reliably.

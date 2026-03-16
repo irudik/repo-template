@@ -44,6 +44,31 @@ COMMIT_PROTOCOL_FORBIDDEN_PATTERNS = (
     re.compile(r"(?<!\.)codex/"),
 )
 
+PROTOCOL_REQUIRED_SNIPPETS = {
+    "protocols/skills/compare-branches.md": (
+        "run `make -n`",
+        "rebuild them with `make`",
+        "Output Verification Formats guidance in `AGENTS.md` or",
+        "`.claude/rules/verification-formats.md`",
+    ),
+    "protocols/skills/setup-makefile.md": (
+        "`.R`, `.jl`, `.do`, `.ado`, and `.m`",
+        "`export delimited`",
+        "`file write`",
+        "`$(STATA) -b do $<`",
+    ),
+    "protocols/skills/verify-outputs.md": (
+        "`export delimited`",
+        "`putexcel`",
+        "`esttab`",
+        "`file write`",
+    ),
+    "protocols/skills/review-makefile.md": (
+        "`.R`, `.jl`, `.do`, `.ado`, and `.m`",
+        "`$(STATA) -b do $<`",
+    ),
+}
+
 
 def load_claude_bash_permissions() -> set[str]:
     settings_path = REPO_ROOT / ".claude/settings.json.example"
@@ -142,6 +167,18 @@ def check_commit_protocol_branch_policy(errors: list[str]) -> None:
             )
 
 
+def check_protocol_required_snippets(errors: list[str]) -> None:
+    for relative_path, snippets in PROTOCOL_REQUIRED_SNIPPETS.items():
+        protocol_path = REPO_ROOT / relative_path
+        protocol_text = protocol_path.read_text()
+
+        for snippet in snippets:
+            if snippet not in protocol_text:
+                errors.append(
+                    f"{protocol_path.relative_to(REPO_ROOT)} is missing required protocol text: {snippet!r}"
+                )
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -178,6 +215,7 @@ def main() -> int:
     check_wrapper_protocol_refs(REPO_ROOT / ".agents/skills", errors)
     check_agent_protocol_refs(errors)
     check_commit_protocol_branch_policy(errors)
+    check_protocol_required_snippets(errors)
 
     if errors:
         print("Template consistency check failed:")

@@ -29,7 +29,7 @@ Abort if the checked-out branch is `main`.
 ### Step 3: Fetch Unresolved Threads via GraphQL
 
 ```bash
-gh api graphql -f query='
+THREADS_JSON=$(gh api graphql -f query='
 query($owner: String!, $repo: String!, $pr: Int!) {
   repository(owner: $owner, name: $repo) {
     pullRequest(number: $pr) {
@@ -52,13 +52,15 @@ query($owner: String!, $repo: String!, $pr: Int!) {
       }
     }
   }
-}' -F owner="$OWNER" -F repo="$REPO" -F pr=$PR_NUM
+}' -F owner="$OWNER" -F repo="$REPO" -F pr=$PR_NUM)
 ```
 
 ### Step 4: Filter and Categorize
 
 - Skip resolved threads.
 - Flag outdated threads as informational only.
+- For each actionable HIGH- or MEDIUM-confidence thread, keep the matching
+  thread JSON object so you can extract IDs later.
 - Classify remaining threads:
 
 | Confidence | Criteria | Action |
@@ -71,6 +73,17 @@ query($owner: String!, $repo: String!, $pr: Int!) {
 
 Group actionable HIGH and MEDIUM threads by file path. Each group becomes one
 atomic commit unit.
+
+For each HIGH-confidence thread selected for reply and resolution, extract the
+IDs from the saved thread JSON object:
+
+```bash
+THREAD_ID=$(echo "$THREAD_JSON" | jq -r '.id')
+COMMENT_DB_ID=$(echo "$THREAD_JSON" | jq -r '.comments.nodes[-1].databaseId')
+```
+
+If a thread has multiple comments, set `COMMENT_DB_ID` to the specific review
+comment you are addressing rather than assuming the last comment is correct.
 
 ### Step 6: Implement, Verify, and Commit per Group
 

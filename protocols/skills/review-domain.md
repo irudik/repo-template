@@ -9,11 +9,12 @@ materials.
    - If an argument is a specific filename such as `.tex`, `.qmd`, or `.md`,
      review that file only.
    - If the argument is `all`, review all `.tex` files in `latex/` excluding
-     `latex/latex_extras/`, plus any `.qmd` files.
+     `latex/latex_extras/`, plus any `.qmd` files if the project contains them.
 
 2. **For each file, follow the domain review protocol:**
    - Apply all five lenses.
-   - Check `literature/` for citation fidelity when available.
+   - Check `literature/` for citation fidelity if that directory exists in the
+     project.
    - Check `code/` for code-theory alignment.
    - Check `latex/references/references.bib` for bibliography cross-referencing.
    - Save the report to

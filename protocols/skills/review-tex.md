@@ -46,6 +46,16 @@ files containing `\newcommand` definitions in `output/numbers/`. The
 
 #### Step 2: Scan Prose Sections
 
+Determine the document type before flagging issues:
+
+- For `latex/manuscript.tex` and other manuscript-like `.tex` files, review
+  prose results aggressively. Hardcoded empirical values in running text should
+  be treated as suspicious by default.
+- For `latex/slides.tex` and other presentation decks, be more conservative.
+  Ignore slide numbers, agenda counts, dates, and simple orientation numbers
+  unless they are clearly empirical results, estimates, standard errors, or
+  policy quantities that should come from the code pipeline.
+
 Skip lines inside:
 
 - Math environments
@@ -73,6 +83,9 @@ Suspicious:
 - Parenthetical standard-error-like values
 - Numbers preceded by result verbs
 - Decimal numbers in prose context
+
+For slides, only flag these when the surrounding text indicates that the number
+is a substantive result rather than presentational scaffolding.
 
 #### Step 4: Cross-Reference Against the Registry
 

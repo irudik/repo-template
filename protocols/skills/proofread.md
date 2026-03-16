@@ -64,3 +64,27 @@ Run the expert proofreading protocol on academic writing.
 - Paragraph structure
 - Transition quality between sections
 - Abstract-content alignment
+
+## Report Format
+
+Save the report to `quality_reports/[FILENAME_WITHOUT_EXT]_proofread_report.md`.
+
+Use this minimal structure:
+
+```text
+## Proofread Report: [filename]
+### Summary
+- Total issues
+- Most severe issue
+
+### Issues by Category
+- Grammar
+- Typos
+- Overflow/Formatting
+- Consistency
+- Academic Quality
+
+### Detailed Findings
+| Severity | Category | Line | Issue | Suggested Fix |
+|----------|----------|------|-------|---------------|
+```
