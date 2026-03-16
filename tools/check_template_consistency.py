@@ -30,6 +30,20 @@ REVIEW_AGENT_PROTOCOLS = {
     "tex-reviewer": "review-tex",
 }
 
+COMMIT_PROTOCOL_REQUIRED_SNIPPETS = (
+    "If the current branch is a non-`main` branch, keep using it.",
+    "If the current branch is `main`, detached, or the user explicitly asks for a",
+    "Keep branch naming tool-neutral.",
+)
+
+COMMIT_PROTOCOL_FORBIDDEN_SNIPPETS = (
+    "Always create a new branch.",
+)
+
+COMMIT_PROTOCOL_FORBIDDEN_PATTERNS = (
+    re.compile(r"(?<!\.)codex/"),
+)
+
 
 def load_claude_bash_permissions() -> set[str]:
     settings_path = REPO_ROOT / ".claude/settings.json.example"
@@ -105,6 +119,29 @@ def check_agent_protocol_refs(errors: list[str]) -> None:
                 )
 
 
+def check_commit_protocol_branch_policy(errors: list[str]) -> None:
+    commit_protocol_path = REPO_ROOT / "protocols/skills/commit.md"
+    commit_protocol_text = commit_protocol_path.read_text()
+
+    for snippet in COMMIT_PROTOCOL_REQUIRED_SNIPPETS:
+        if snippet not in commit_protocol_text:
+            errors.append(
+                f"{commit_protocol_path.relative_to(REPO_ROOT)} is missing branch-policy text: {snippet!r}"
+            )
+
+    for snippet in COMMIT_PROTOCOL_FORBIDDEN_SNIPPETS:
+        if snippet in commit_protocol_text:
+            errors.append(
+                f"{commit_protocol_path.relative_to(REPO_ROOT)} still contains forbidden branch-policy text: {snippet!r}"
+            )
+
+    for pattern in COMMIT_PROTOCOL_FORBIDDEN_PATTERNS:
+        if pattern.search(commit_protocol_text):
+            errors.append(
+                f"{commit_protocol_path.relative_to(REPO_ROOT)} still contains a tool-specific branch prefix matching {pattern.pattern!r}"
+            )
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -140,6 +177,7 @@ def main() -> int:
     check_wrapper_protocol_refs(REPO_ROOT / ".claude/skills", errors)
     check_wrapper_protocol_refs(REPO_ROOT / ".agents/skills", errors)
     check_agent_protocol_refs(errors)
+    check_commit_protocol_branch_policy(errors)
 
     if errors:
         print("Template consistency check failed:")

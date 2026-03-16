@@ -7,6 +7,7 @@ Stage changes, commit with a descriptive message, create a PR, and merge to `mai
 1. **Check current state:**
 
 ```bash
+git branch --show-current
 git status
 git diff --stat
 git log --oneline -5
@@ -15,11 +16,17 @@ git log --oneline -5
 If a root `Makefile` exists, run `make -n` to check for stale targets. If stale
 targets exist, warn the user before proceeding. This is a soft gate.
 
-2. **Create a branch** from the current state:
+2. **Choose the working branch:**
 
-```bash
-git checkout -b <short-descriptive-branch-name>
-```
+- If the current branch is a non-`main` branch, keep using it.
+- If the current branch is `main`, detached, or the user explicitly asks for a
+  new branch, create one first:
+
+  ```bash
+  git switch -c <short-descriptive-branch-name>
+  ```
+
+- Never commit directly to `main`.
 
 3. **Stage files** with specific `git add` targets. Never use `git add -A`.
 
@@ -38,16 +45,19 @@ git commit -m "<commit message>"
 
 5. **Push and create the PR:**
 
-```bash
-git push -u origin <branch-name>
-gh pr create --title "<short title>" --body "<summary and test plan>"
-```
+- Push the branch you committed on. If it does not already track a remote branch,
+  set the upstream on first push:
+
+  ```bash
+  git push -u origin <branch-name>
+  gh pr create --title "<short title>" --body "<summary and test plan>"
+  ```
 
 6. **Merge and clean up:**
 
 ```bash
 gh pr merge <pr-number> --merge --delete-branch
-git checkout main
+git switch main
 git pull
 ```
 
@@ -55,7 +65,11 @@ git pull
 
 ## Important
 
-- Always create a new branch. Never commit directly to `main`.
+- Reuse the current non-`main` branch by default.
+- Create a new branch only when on `main`, in detached HEAD, or when the user
+  explicitly asks for one.
+- Keep branch naming tool-neutral. Any Codex or Claude client naming
+  preferences are local constraints, not shared protocol rules.
 - Exclude sensitive files from staging.
 - Use `--merge` unless the user explicitly asks for `--squash` or `--rebase`.
 - If a commit-message argument is provided, use it exactly.

@@ -284,7 +284,7 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 
 | Skill | What It Does |
 |-------|-------------|
-| `/commit` | Stage, commit, PR, merge (with `make -n` staleness warning) |
+| `/commit` | Stage, commit, PR, merge on the current non-`main` branch; create a branch only when needed |
 | `/data-analysis` | End-to-end R analysis workflow |
 | `/refactor [file-or-dir]` | Verify-refactor-verify loop for safe style changes |
 | `/verify-outputs [script]` | Checksum outputs, compare to reference |

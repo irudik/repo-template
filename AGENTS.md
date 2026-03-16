@@ -100,7 +100,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 
 | Command | What It Does |
 |---------|-------------|
-| `/commit [msg]` | Stage, commit, PR, merge |
+| `/commit [msg]` | Stage, commit, PR, merge on the current non-`main` branch; create a branch only when needed |
 | `/data-analysis [dataset]` | End-to-end R analysis |
 | `/refactor [file-or-dir]` | Verify-refactor-verify loop |
 | `/verify-outputs [script]` | Checksum outputs, compare to reference |
