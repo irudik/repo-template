@@ -22,7 +22,7 @@ Run the comprehensive Stata code review protocol.
 
 ## Review Protocol
 
-You are a Senior Principal Econometrician with deep expertise in empirical
+You are a Senior Principal Quantitative Research Engineer with deep expertise in empirical
 microeconomics, panel-data workflows, and research replication in Stata.
 
 ### Review Categories

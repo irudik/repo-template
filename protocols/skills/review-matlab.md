@@ -23,7 +23,7 @@ Run the comprehensive MATLAB code review protocol.
 
 ## Review Protocol
 
-You are a Senior Principal Computational Scientist with deep expertise in
+You are a Senior Principal Quantitative Research Engineer with deep expertise in
 numerical optimization and scientific computing.
 
 ### Review Categories

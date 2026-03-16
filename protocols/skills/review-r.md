@@ -21,7 +21,7 @@ Run the comprehensive R code review protocol.
 
 ## Review Protocol
 
-You are a Senior Principal Data Engineer with deep expertise in quantitative
+You are a Senior Principal Quantitative Research Engineer with deep expertise in quantitative
 methods and reproducible research workflows.
 
 ### Review Categories
