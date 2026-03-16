@@ -70,10 +70,26 @@ PROTOCOL_REQUIRED_SNIPPETS = {
 }
 
 
-def load_claude_bash_permissions() -> set[str]:
+def load_claude_bash_permissions(errors: list[str]) -> set[str]:
     settings_path = REPO_ROOT / ".claude/settings.json.example"
-    settings = json.loads(settings_path.read_text())
-    permissions = settings["permissions"]["allow"]
+    try:
+        text = settings_path.read_text()
+    except OSError as exc:
+        errors.append(f"{settings_path.relative_to(REPO_ROOT)} could not be read: {exc}")
+        return set()
+    try:
+        settings = json.loads(text)
+    except json.JSONDecodeError as exc:
+        errors.append(f"{settings_path.relative_to(REPO_ROOT)} is not valid JSON: {exc}")
+        return set()
+    try:
+        permissions = settings["permissions"]["allow"]
+    except (KeyError, TypeError):
+        errors.append(
+            f"{settings_path.relative_to(REPO_ROOT)} is missing expected structure:"
+            " 'permissions.allow'"
+        )
+        return set()
     pattern = re.compile(r"Bash\(([^ ]+) \*\)")
     command_prefixes = set()
 
@@ -85,12 +101,17 @@ def load_claude_bash_permissions() -> set[str]:
     return command_prefixes
 
 
-def load_codex_prefix_rules() -> set[str]:
+def load_codex_prefix_rules(errors: list[str]) -> set[str]:
     rules_path = REPO_ROOT / ".codex/rules/default.rules"
+    try:
+        text = rules_path.read_text()
+    except OSError as exc:
+        errors.append(f"{rules_path.relative_to(REPO_ROOT)} could not be read: {exc}")
+        return set()
     pattern = re.compile(r'prefix_rule\(pattern=\["([^"]+)"\]')
     command_prefixes = set()
 
-    for line in rules_path.read_text().splitlines():
+    for line in text.splitlines():
         match = pattern.search(line)
         if match:
             command_prefixes.add(match.group(1))
@@ -182,8 +203,8 @@ def check_protocol_required_snippets(errors: list[str]) -> None:
 def main() -> int:
     errors: list[str] = []
 
-    claude_permissions = load_claude_bash_permissions()
-    codex_permissions = load_codex_prefix_rules()
+    claude_permissions = load_claude_bash_permissions(errors)
+    codex_permissions = load_codex_prefix_rules(errors)
 
     only_in_claude = sorted(claude_permissions - codex_permissions)
     only_in_codex = sorted(codex_permissions - claude_permissions)
