@@ -17,9 +17,9 @@ Run the substantive domain review protocol (empirical microeconomics referee rev
    - If `$ARGUMENTS` is `all`: review all `.tex` files in `latex/` (excluding `latex/latex_extras/`) plus any `.qmd` files
 
 2. **For each file, launch the `domain-reviewer` agent** with instructions to:
-   - Follow the full 5-lens protocol in the agent instructions
+   - Apply all 5 lenses of the domain review protocol (see below)
    - Check `literature/` for PDFs to verify citation fidelity (Lens 3)
-   - Check `code/` for R scripts to verify code-theory alignment (Lens 4)
+   - Check `code/` for scripts to verify code-theory alignment (Lens 4)
    - Check `latex/references/references.bib` for bibliography cross-referencing
    - Save report to `quality_reports/[FILENAME_WITHOUT_EXT]_substance_review.md`
 
@@ -31,3 +31,32 @@ Run the substantive domain review protocol (empirical microeconomics referee rev
 
 4. **IMPORTANT: Do NOT edit any source files.**
    Only produce reports. Fixes are applied after user review.
+
+---
+
+## The 5-Lens Protocol
+
+### Lens 1: Identification & Causal Claims
+- Are causal claims supported by the identification strategy?
+- Are assumptions (parallel trends, exclusion restriction, etc.) stated and plausible?
+- Are threats to identification discussed?
+
+### Lens 2: Derivations & Mathematical Correctness
+- Do derivations follow from stated assumptions?
+- Are boundary conditions and edge cases handled?
+- Are approximations acknowledged and bounded?
+
+### Lens 3: Citation Fidelity
+- Do cited claims match the original source?
+- Are key methodological references included?
+- Are any claims attributed to the wrong paper?
+
+### Lens 4: Code-Theory Alignment
+- Does the code implement exactly what the paper claims?
+- Do variable names and transformations match the model?
+- Are estimation commands consistent with the stated specification?
+
+### Lens 5: Backward Logic & Internal Consistency
+- Do conclusions follow from the reported results?
+- Are any results contradicted elsewhere in the document?
+- Is the narrative consistent from introduction through conclusion?

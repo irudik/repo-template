@@ -80,14 +80,16 @@ All code outputs go to canonical subdirectories under `output/`:
 
 ```matlab
 % Tables / CSV
-writetable(results, fullfile(Params.datadir, 'model', 'results.csv'));
+writetable(results, fullfile("output", "tables", "results.csv"));
 
 % Matrix data
-writematrix(data, fullfile(Params.datadir, 'model', 'output.csv'));
+writematrix(data, fullfile("output", "tables", "output.csv"));
 
 % MATLAB binary
-save(fullfile(Params.datadir, 'matlab', 'results.mat'), 'results', 'params');
+save(fullfile("output", "tables", "results.mat"), "results", "params");
 ```
+
+Projects with a `Params` struct may wrap these paths (e.g., `Params.outputdir` instead of `"output"`), but the canonical subdirectories (`tables/`, `figures/`, `numbers/`) remain the same.
 
 ## 6. Common Pitfalls
 

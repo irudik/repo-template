@@ -34,7 +34,7 @@ git checkout -b <short-descriptive-branch-name>
 git add <file1> <file2> ...
 ```
 
-Do NOT stage `.claude/settings.local.json` or any files containing secrets.
+Do NOT stage `.claude/settings.local.json`, `.codex/` local state, or any files containing secrets.
 
 4. **Commit** with a descriptive message:
 

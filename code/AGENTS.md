@@ -350,10 +350,12 @@ Projects using optimization should follow a dual-solver pattern (e.g., KNITRO + 
 All code outputs go to canonical subdirectories under `output/`:
 
 ```matlab
-writetable(results, fullfile(Params.datadir, 'model', 'results.csv'));
-writematrix(data, fullfile(Params.datadir, 'model', 'output.csv'));
-save(fullfile(Params.datadir, 'matlab', 'results.mat'), 'results', 'params');
+writetable(results, fullfile("output", "tables", "results.csv"));
+writematrix(data, fullfile("output", "tables", "output.csv"));
+save(fullfile("output", "tables", "results.mat"), "results", "params");
 ```
+
+Projects with a `Params` struct may wrap these paths (e.g., `Params.outputdir` instead of `"output"`), but the canonical subdirectories (`tables/`, `figures/`, `numbers/`) remain the same.
 
 ### 6. Common Pitfalls
 

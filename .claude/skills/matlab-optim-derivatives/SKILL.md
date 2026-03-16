@@ -1,6 +1,9 @@
 ---
 name: matlab-optim-derivatives
 description: Audit MATLAB optimization derivatives and KNITRO integration with finite-difference validation
+disable-model-invocation: true
+argument-hint: "[path to MATLAB objective/constraint files]"
+allowed-tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]
 workflow_stage: solver-debug
 compatibility:
   - codex

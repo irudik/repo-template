@@ -16,7 +16,7 @@ Run an end-to-end data analysis in R: load, explore, analyze, and produce public
 
 ## Constraints
 
-- **Follow R code conventions** in `.claude/rules/r-code-conventions.md`
+- **Follow R code conventions** in `.claude/rules/r-code-conventions.md` (or `code/AGENTS.md`)
 - **Save all scripts** to the appropriate `code/[task_group]/` directory
 - **Save all outputs** to `output/` (figures, tables, numbers subdirs)
 - **Use `saveRDS()`** for every computed object

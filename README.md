@@ -416,11 +416,32 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 ---
 
-## Adapting for Your Field
+## Maintenance: Keeping `.claude/` and `.agents/` in Sync
 
-1. **Add field-specific pitfalls** to `.claude/rules/r-code-conventions.md`, `.claude/rules/julia-code-conventions.md`, `.claude/rules/stata-code-conventions.md`, and `.claude/rules/matlab-code-conventions.md`
-2. **Adjust tolerance thresholds** in `.claude/rules/quality-gates.md` for your domain's precision requirements
-3. **Set up the `code/` directory** with sub-Makefiles matching your pipeline stages
+This repo maintains parallel configuration for two AI coding tools:
+
+- **`.claude/`** — source of truth for **Claude Code** (rules, skills, agents, hooks)
+- **`.agents/`** — source of truth for **Codex CLI** (skills with embedded protocols)
+
+### What must stay in sync
+
+| Component | `.claude/` location | `.agents/` / `.codex/` location | Keep in sync? |
+|-----------|--------------------|---------------------------------|---------------|
+| Command permissions | `settings.json.example` | `.codex/rules/default.rules` | Yes — same commands must be allowed in both |
+| Convention files | `.claude/rules/*.md` | Inlined in `code/AGENTS.md` | Yes — same standards apply to both tools |
+| Skill names and descriptions | `.claude/skills/*/SKILL.md` | `.agents/skills/*/SKILL.md` | Yes — users expect the same `/skill` commands |
+
+### What intentionally differs
+
+- **Review skill internals.** Claude Code skills delegate to dedicated reviewer agents (e.g., `r-reviewer`). Codex CLI skills embed the full review protocol inline because Codex does not support agent definitions. The protocol content should match, but the delivery mechanism differs.
+- **Frontmatter format.** Claude Code uses `disable-model-invocation` + `allowed-tools`. Codex uses `workflow_stage` + `compatibility` + `tags`. Both are present in `.claude/skills/` for cross-compatibility; only the relevant keys are read by each tool.
+- **Hooks.** Claude Code supports hooks (`.claude/hooks/`). Codex CLI does not — use git hooks or manual procedures instead.
+
+### When adding a new skill or convention
+
+1. Write the canonical version in `.claude/skills/` (or `.claude/rules/`)
+2. Copy the protocol content into `.agents/skills/` (or the relevant `AGENTS.md` section), adapting the frontmatter
+3. If the skill needs new command permissions, add them to both `settings.json.example` and `default.rules`
 
 ---
 

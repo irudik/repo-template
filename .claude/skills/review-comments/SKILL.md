@@ -1,6 +1,9 @@
 ---
 name: review-comments
 description: Review and clean up comments, docstrings, and documentation across specified files or directories
+disable-model-invocation: true
+argument-hint: "[file or directory path]"
+allowed-tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]
 workflow_stage: review
 compatibility:
   - codex
