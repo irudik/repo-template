@@ -532,6 +532,14 @@ If a Makefile governs the files being modified:
 Generated **only at merge time** -- not at every commit or PR.
 Save to `quality_reports/merges/YYYY-MM-DD_[branch-name].md` using `templates/quality-report.md`.
 
+### Template Repo Hygiene
+
+When maintaining this template repository itself, treat ad hoc files under
+`quality_reports/` as branch-local artifacts. Before merging back to `main`,
+remove task-specific plans, session logs, merge reports, and scratch
+directories so the template stays fresh. Keep only `.gitkeep` placeholders and
+intentional template assets.
+
 ---
 
 ## Command Conventions

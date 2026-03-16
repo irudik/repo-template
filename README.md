@@ -466,6 +466,14 @@ Run `make check-template` to validate:
 - wrapper references to `protocols/skills/*.md`
 - Claude review-agent references to the same canonical protocol files
 
+## Fresh Main Branch
+
+When maintaining this template repo itself, treat ad hoc files under
+`quality_reports/` as branch-local working artifacts rather than permanent
+template content. Before merging back to `main`, remove task-specific plans,
+session logs, merge reports, and scratch directories so the default branch ships
+clean. Keep only placeholder `.gitkeep` files and intentional template assets.
+
 ---
 
 ## Project Structure

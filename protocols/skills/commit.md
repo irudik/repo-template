@@ -55,6 +55,13 @@ git commit -m "<commit message>"
 
 6. **Merge and clean up:**
 
+- For template-maintenance branches in this repository, remove branch-specific
+  working artifacts before merging to `main`. In particular, clear ad hoc files
+  under `quality_reports/plans/`, `quality_reports/session_logs/`,
+  `quality_reports/merges/`, and scratch directories such as
+  `quality_reports/thorny_loop/` unless they are intentional template assets.
+  Keep placeholder `.gitkeep` files and durable templates.
+
 ```bash
 gh pr merge <pr-number> --merge --delete-branch
 git switch main
@@ -70,6 +77,9 @@ git pull
   explicitly asks for one.
 - Keep branch naming tool-neutral. Any Codex or Claude client naming
   preferences are local constraints, not shared protocol rules.
+- For template-maintenance work in this repo, merge back to `main` with a fresh
+  tree: branch-local `quality_reports` artifacts should not land on `main`
+  unless they are intentional template files.
 - Exclude sensitive files from staging.
 - Use `--merge` unless the user explicitly asks for `--squash` or `--rebase`.
 - If a commit-message argument is provided, use it exactly.
