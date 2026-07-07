@@ -29,7 +29,8 @@ microeconomics, panel-data workflows, and research replication in Stata.
 
 #### 1. Script Structure and Header
 
-- Header block with title, author, purpose, inputs, outputs
+- Clean, self-contained header block with title, author, purpose, inputs,
+  outputs, and key assumptions or runtime notes
 - Numbered top-level sections
 - Logical flow from setup through export
 
@@ -91,6 +92,13 @@ microeconomics, panel-data workflows, and research replication in Stata.
 - Consistent lower-case command style
 - Correct macro quoting
 - Explicit `sort` or `bysort` before order-dependent grouped work
+- Clear explicit steps preferred over clever compact code
+- One data operation per line; avoid hiding sample construction or estimator
+  setup in dense command blocks
+- Long commands split with aligned `///` continuations, one substantive option
+  per line when readable
+- Descriptive `snake_case` locals, variables, and program names that read like
+  prose
 
 ## Report Format
 

@@ -29,7 +29,8 @@ numerical optimization and scientific computing.
 
 #### 1. Script Structure and Header
 
-- Header comment block with title, author, purpose, inputs, outputs
+- Clean, self-contained header comment block with title, author, purpose,
+  inputs, outputs, and key assumptions or runtime notes
 - Numbered top-level sections
 - Logical flow from setup through export
 
@@ -109,6 +110,12 @@ Any derivative failure is commit-blocking.
 - Reasonable line lengths except justified mathematical cases
 - Semicolons used consistently to suppress output
 - Avoid `i` and `j` as loop variables
+- Clear explicit steps preferred over clever compact expressions
+- One operation per line; avoid hiding data construction, objective logic, or
+  solver setup in dense expressions
+- Long multi-argument calls split one substantive argument per line when
+  readable
+- Descriptive `snake_case` names matching the existing codebase
 
 ## Report Format
 

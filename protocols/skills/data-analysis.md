@@ -15,6 +15,10 @@ goal.
 - Save all outputs to `output/` under the appropriate subdirectory.
 - Use `saveRDS()` for every computed object.
 - Use the project theme for all figures.
+- Prefer clear, explicit steps over clever compact expressions.
+- Use one operation per line, and split long calls one argument per line when
+  it improves scanability.
+- Use descriptive `snake_case` names that read like prose.
 - Run `/review-r` on the generated script before presenting results.
 
 ## Workflow Phases
@@ -22,8 +26,8 @@ goal.
 ### Phase 1: Setup and Data Loading
 
 1. Read the applicable R conventions.
-2. Create an R script with a proper header: title, author, purpose, inputs,
-   outputs.
+2. Create an R script with a clean header: title, author, purpose, inputs,
+   outputs, and key assumptions or runtime notes.
 3. Load required packages at the top with `library()`.
 4. Set the seed once at the top in `YYYYMMDD` format.
 5. Load and inspect the dataset.
@@ -83,6 +87,7 @@ Choose the main design based on the research question:
 # Purpose: [What this script does]
 # Inputs: [Data files]
 # Outputs: [Figures, tables, RDS files]
+# Assumptions: [Key sample, timing, or model assumptions]
 # ============================================================
 
 # 0. Setup ----
@@ -108,3 +113,4 @@ set.seed(20260211)  # YYYYMMDD format
 - Check for multicollinearity, outliers, and separation issues.
 - Use relative paths throughout.
 - Avoid hardcoded analysis values.
+- Keep code readable enough for a coauthor or referee to audit line by line.

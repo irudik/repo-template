@@ -15,6 +15,9 @@
 
 - **Plan first** -- think through the approach before non-trivial tasks; save plans to `quality_reports/plans/`
 - **Verify after** -- compile/render and confirm output at the end of every task
+- **Readable research code** -- prefer clear, reproducible, prose-like code
+  over clever compactness; code should be easy for coauthors, referees, and
+  future selves to audit
 - **Single source of truth** -- `latex/manuscript.tex` is authoritative for the paper
 - **Quality gates** -- nothing ships below 80/100
 - **Structured [LEARN] tags** -- when corrected or when you discover a durable lesson, save a structured `[LEARN:category]` entry to `MEMORY.md`

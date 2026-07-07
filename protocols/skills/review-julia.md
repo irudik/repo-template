@@ -28,7 +28,8 @@ quantitative methods and numerical computing.
 
 #### 1. Script Structure and Header
 
-- Header block present with title, author, purpose, inputs, outputs
+- Clean, self-contained header block present with title, author, purpose,
+  inputs, outputs, and key assumptions or runtime notes
 - Numbered top-level sections
 - Logical flow from setup through export
 
@@ -81,6 +82,13 @@ quantitative methods and numerical computing.
 - Lines under 92 characters except justified math-heavy cases
 - `eachindex(x)` preferred over `1:length(x)`
 - Unicode Greek only when it improves clarity
+- Clear explicit steps preferred over clever one-liners
+- One operation per line; avoid hiding data construction or numerical logic in
+  dense expressions
+- Long multi-argument calls split one substantive argument per line when
+  readable
+- Descriptive names that read like prose, using `snake_case` for values and
+  functions and `CamelCase` only where Julia convention calls for it
 
 #### 10. Type Stability and Performance
 
