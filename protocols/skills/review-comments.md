@@ -31,6 +31,8 @@ and align documentation with code reality.
 
 - Section headers:
   `# ============================================================================`
+- File headers: clean and self-contained, with purpose, inputs, outputs, and
+  assumptions when relevant
 - Inline comments: short, explain domain logic rather than code mechanics
 - Do not prefix with "Economic intuition:"
 - Use Unicode math notation where appropriate

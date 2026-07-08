@@ -14,6 +14,9 @@
 
 - **Plan first** -- enter plan mode before non-trivial tasks; save plans to `quality_reports/plans/`
 - **Verify after** -- compile/render and confirm output at the end of every task
+- **Readable research code** -- prefer clear, reproducible, prose-like code
+  over clever compactness; code should be easy for coauthors, referees, and
+  future selves to audit
 - **Single source of truth** -- `latex/manuscript.tex` is authoritative for the paper
 - **Quality gates** -- nothing ships below 80/100
 - **Template hygiene** -- in this template repo, remove branch-specific files under `quality_reports/` before merging to `main`; keep `main` fresh

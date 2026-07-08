@@ -28,7 +28,8 @@ methods and reproducible research workflows.
 
 #### 1. Script Structure and Header
 
-- Header block with title, author, purpose, inputs, outputs
+- Clean, self-contained header block with title, author, purpose, inputs,
+  outputs, and key assumptions or runtime notes
 - Numbered top-level sections
 - Logical flow from setup through export
 
@@ -100,6 +101,13 @@ methods and reproducible research workflows.
 - Native `|>` pipe style
 - `=` assignment style when that is the project rule
 - No legacy `T` and `F`
+- Clear explicit steps preferred over clever one-liners
+- One operation per line; avoid combining load, mutate, summarize, estimate,
+  and export logic in one expression
+- Long multi-argument calls split one substantive argument per line when
+  readable
+- Descriptive `snake_case` names that read like prose; no ambiguous `tmp`,
+  `df`, `x1`, or throwaway names in production logic
 
 ## Report Format
 

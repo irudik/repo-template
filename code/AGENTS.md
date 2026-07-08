@@ -14,6 +14,34 @@ These conventions apply to all scripts in `code/` and its subdirectories.
 
 ---
 
+## Shared Research Code Style
+
+These standards apply across R, Julia, Stata, MATLAB, and Makefiles unless a
+language-specific section below gives a narrower convention.
+
+- Prefer clarity over cleverness. Slightly longer code is better than a dense
+  expression that hides data construction, identification logic, or output
+  provenance.
+- Reproducibility is the deliverable. Code must run from the Makefile-driven
+  pipeline on a clean checkout without hidden state, manual steps, absolute
+  paths, or hand-edited outputs.
+- Use one operation per line. Do not combine loading, filtering, mutating,
+  summarizing, estimating, and exporting into compact one-liners.
+- For long calls or commands, put one substantive argument or option per line
+  when it improves scanability and version-control diffs.
+- Use names that read like prose. Prefer descriptive `snake_case` names for
+  files, data objects, variables, locals, and functions unless the language
+  convention below explicitly differs, such as Julia `CamelCase` types.
+- Every analysis file should start with a clean header block that states the
+  title or purpose, inputs, outputs, and any key assumptions or runtime notes.
+  Do not include user-specific absolute paths in headers.
+- Use section headers to mark workflow stages such as setup, data construction,
+  estimation, diagnostics, and export.
+- Comments should explain economic intuition, data logic, identifying
+  assumptions, and non-obvious transformations rather than restating syntax.
+
+---
+
 ## R Code Standards
 
 **Standard:** Senior Principal Data Engineer + PhD researcher quality
@@ -134,8 +162,11 @@ writeLines("\\newcommand{\\myEstimate}{2.31}",
 ```
 [ ] Packages at top via library()
 [ ] set.seed() once at top
+[ ] Clean header block with purpose, inputs, outputs, and assumptions
 [ ] All paths relative to the script working directory
 [ ] Functions documented (Roxygen)
+[ ] One operation per line; long calls split by argument where readable
+[ ] Descriptive snake_case names that read like prose
 [ ] Figures: transparent bg, explicit dimensions
 [ ] RDS: every computed object saved
 [ ] Comments explain WHY not WHAT
@@ -229,8 +260,11 @@ Prefer JLD2 for Julia-native objects. Use CSV for model output. When saving para
 ```
 [ ] Dependencies loaded at top via using/import
 [ ] Random.seed!() once at top
+[ ] Clean header block with purpose, inputs, outputs, and assumptions
 [ ] All paths relative via joinpath() from the script working directory
 [ ] Functions documented (triple-quoted docstrings)
+[ ] One operation per line; long calls split by argument where readable
+[ ] Descriptive snake_case names for values/functions and CamelCase types
 [ ] JLD2: every computed object saved
 [ ] Comments explain WHY not WHAT
 [ ] Struct fields have concrete types
@@ -313,10 +347,13 @@ file close fh
 [ ] version pinned at top
 [ ] set more off in batch scripts
 [ ] set seed once at top if stochastic
+[ ] Clean header block with purpose, inputs, outputs, and assumptions
 [ ] All paths relative and no cd
 [ ] Programs documented and arguments validated with syntax
 [ ] merge/reshape steps checked with assert/isid/duplicates logic
 [ ] Outputs saved under the repo-root output/ directory via relative paths
+[ ] One operation per line; long commands split with aligned /// continuations
+[ ] Descriptive snake_case locals, variables, and program names
 [ ] Comments explain WHY not WHAT
 [ ] capture followed by _rc checks
 [ ] preserve/restore blocks are balanced
@@ -411,8 +448,11 @@ instead of `output_root`), but the canonical subdirectories (`tables/`,
 
 ```
 [ ] rng() once at top (if stochastic)
+[ ] Clean header block with purpose, inputs, outputs, and assumptions
 [ ] All paths relative with filesep/fullfile() from the script working directory
 [ ] Functions documented (comment-block docstrings)
+[ ] One operation per line; long calls split by argument where readable
+[ ] Descriptive snake_case names matching the existing codebase
 [ ] Solver exitflag checked after every optimization call
 [ ] NaN/Inf guards on data input and solver output
 [ ] Hessian symmetry verified

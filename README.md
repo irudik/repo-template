@@ -34,7 +34,7 @@ Then paste the following, filling in your project details:
 
 > I am starting to work on **[PROJECT NAME]** in this repo. **[Describe your project in 2–3 sentences — what you're building, what data you use, what your pipeline stages are (e.g., data cleaning, estimation, figures).]**
 >
-> I want our collaboration to be structured, precise, and rigorous. Code should be reproducible and build-system driven.
+> I want our collaboration to be structured, precise, and rigorous. Code should be reproducible, build-system driven, and written for clarity over cleverness.
 >
 > I've set up the Claude Code academic workflow (forked from `irudik/repo-template`). The configuration files are already in this repo. Please read them, understand the workflow, and then **update all configuration files to fit my project** — fill in placeholders in `CLAUDE.md`, set up the `code/` directory structure with sub-Makefiles for my pipeline stages, and propose any customizations specific to my use case.
 >
@@ -341,7 +341,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | File | What It Covers |
 |------|----------------|
 | `AGENTS.md` | Core workflow, orchestrators, quality gates, verification, and session logging |
-| `code/AGENTS.md` | Shared R, Julia, Stata, MATLAB, path, and Makefile conventions |
+| `code/AGENTS.md` | Shared research-code style plus R, Julia, Stata, MATLAB, path, and Makefile conventions |
 | `latex/AGENTS.md` | Shared LaTeX build, manuscript, and dynamic-number conventions |
 | `CLAUDE.md` | Claude-specific loading model, plan-mode notes, and tool-specific mechanics |
 | `code/CLAUDE.md` | Claude entry point that loads the shared code conventions |
