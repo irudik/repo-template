@@ -42,6 +42,17 @@ Then paste the following, filling in your project details:
 >
 > Enter plan mode and start by adapting the workflow configuration for this project.
 
+**Optional for Claude Code + Codex plugin users:** Add this to the prompt when
+you want Claude to plan but Codex to execute and verify:
+
+> During planning, mark the implementation and verification steps that Codex
+> should own with `[codex]`. After I approve the saved plan, hand those steps to
+> Codex through the Codex plugin
+> (`codex:codex-rescue`) in write-capable mode. Codex should implement the
+> changes, add or update the tests/checks needed to verify them, run that
+> proof-of-correctness itself, report exact evidence, and leave changes
+> uncommitted unless I explicitly ask for a commit.
+
 **What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
 tool-specific `.claude/` configuration, sets up your `code/` directory with
 sub-Makefiles for each pipeline stage, fills in your project details, then
@@ -219,6 +230,26 @@ You describe a task. Claude:
 8. **Scores** against quality gates
 
 If the score meets threshold, Claude presents a summary. Say "just do it" and it auto-commits too.
+
+### Claude + Codex Handoff
+
+When using Claude Code with the Codex plugin available, you can explicitly ask
+Claude to plan and then delegate execution to Codex. Put the request in the
+original task or planning prompt with language such as "hand this to Codex",
+"delegate execution to Codex", "Codex executes", or by marking plan steps with
+`[codex]`.
+
+For those marked steps, Claude records the Codex-owned scope and acceptance
+criteria in the saved plan. After approval, Claude hands the plan to
+`codex:codex-rescue`; Codex implements the feature/fix and implements the
+verification needed to prove it, such as unit tests, fixtures, Makefile targets,
+checksum scripts, or data-property checks. Codex then runs the tests/builds/checks
+and reports the evidence. Claude reviews the changed code, the verification
+design, and the reported results against the acceptance criteria instead of
+writing the verification code or rerunning the full verification loop.
+
+This is intentionally Claude-only and does not live in `AGENTS.md`, so Codex
+does not read Claude orchestration instructions as its own operating procedure.
 
 ### PR Review (`/review-pr`)
 
