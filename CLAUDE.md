@@ -152,6 +152,31 @@ pdflatex -interaction=nonstopmode manuscript.tex
   `quality_reports/handoffs/` if one exists, then inspect
   `git log --oneline -10` and `git diff`
 
+## Explicit Codex Handoff
+
+Delegate execution to Codex ONLY if the user explicitly asks during the original
+task, planning prompt, or approval step, using phrasing such as "hand this to
+Codex", "delegate execution to Codex", "Codex executes", or a `[codex]` marker
+on plan steps. Otherwise follow the normal Claude flow.
+
+During planning, record a `Codex Handoff` section with Codex-owned steps, the
+saved plan path, acceptance criteria, expected verification commands, no-commit
+default, and cautious handling for `data/` and `output/` symlinks. After plan
+approval, send the approved plan to the `codex:codex-rescue` subagent in
+write-capable mode.
+
+Codex is the implementer for both the feature/fix and its verification. Instruct
+Codex to add or update the verification code needed to make the acceptance
+criteria checkable, such as unit tests, fixtures, Makefile targets,
+data-property checks, checksum scripts, or build checks. Codex then runs those
+tests/builds/checks and reports exact evidence.
+
+Claude is the planner and reviewer. Claude reviews Codex's code changes,
+verification design, and reported results against the acceptance criteria,
+confirms that relevant tests pass, and flags gaps for Codex to fix. Claude does
+not implement verification code or rerun full verification unless the user
+explicitly asks.
+
 ---
 
 ## Current Project State
