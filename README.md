@@ -50,8 +50,9 @@ you want Claude to plan but Codex to execute and verify:
 > Codex through the Codex plugin
 > (`codex:codex-rescue`) in write-capable mode. Codex should implement the
 > changes, add or update the tests/checks needed to verify them, run that
-> proof-of-correctness itself, report exact evidence, and leave changes
-> uncommitted unless I explicitly ask for a commit.
+> proof-of-correctness itself, self-review the diff and verification design,
+> report exact evidence, and fix Claude-identified gaps for up to five review
+> rounds. Leave changes uncommitted unless I explicitly ask for a commit.
 
 **What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
 tool-specific `.claude/` configuration, sets up your `code/` directory with
@@ -243,10 +244,14 @@ For those marked steps, Claude records the Codex-owned scope and acceptance
 criteria in the saved plan. After approval, Claude hands the plan to
 `codex:codex-rescue`; Codex implements the feature/fix and implements the
 verification needed to prove it, such as unit tests, fixtures, Makefile targets,
-checksum scripts, or data-property checks. Codex then runs the tests/builds/checks
-and reports the evidence. Claude reviews the changed code, the verification
-design, and the reported results against the acceptance criteria instead of
-writing the verification code or rerunning the full verification loop.
+checksum scripts, or data-property checks. Codex then self-reviews its diff and
+verification design, runs the tests/builds/checks, fixes obvious gaps, and
+reports the evidence. Claude reviews the changed code, the verification design,
+and the reported results against the acceptance criteria. If Claude flags gaps,
+the task goes back to Codex. That Codex implementation/self-review/verification
+plus Claude review loop repeats until Claude is satisfied or the standard
+five-round contractor review-fix limit is reached. Claude does not write the
+verification code or rerun the full verification loop unless explicitly asked.
 
 This is intentionally Claude-only and does not live in `AGENTS.md`, so Codex
 does not read Claude orchestration instructions as its own operating procedure.
