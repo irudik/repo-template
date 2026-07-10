@@ -39,6 +39,10 @@ language-specific section below gives a narrower convention.
   estimation, diagnostics, and export.
 - Comments should explain economic intuition, data logic, identifying
   assumptions, and non-obvious transformations rather than restating syntax.
+- Comments and docstrings must be self-contained. Never reference issue or
+  ticket numbers, commit hashes, pull requests, or conversations with Claude or
+  Codex. The reader is a coauthor, referee, or future self without access to the
+  repository history or an AI transcript.
 
 ---
 

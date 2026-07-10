@@ -21,6 +21,8 @@ and align documentation with code reality.
    - Comments referencing non-existent features or files
    - Docstrings that conflict with behavior
    - Verbose comments that restate mechanics
+   - Comments or docstrings that reference issue or ticket numbers, commit
+     hashes, pull requests, or conversations with Claude or Codex
 4. Check documentation files and verify referenced paths exist.
 5. Present findings grouped by issue type with file paths and line numbers.
 6. Get approval before editing.
@@ -34,6 +36,8 @@ and align documentation with code reality.
 - File headers: clean and self-contained, with purpose, inputs, outputs, and
   assumptions when relevant
 - Inline comments: short, explain domain logic rather than code mechanics
+- Comments self-contained: strip references to issues, commit hashes, pull
+  requests, or Claude/Codex conversations
 - Do not prefix with "Economic intuition:"
 - Use Unicode math notation where appropriate
 - Delete rather than comment out unused code
