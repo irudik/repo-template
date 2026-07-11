@@ -39,6 +39,18 @@ language-specific section below gives a narrower convention.
   estimation, diagnostics, and export.
 - Comments should explain economic intuition, data logic, identifying
   assumptions, and non-obvious transformations rather than restating syntax.
+- Use plain language or terminology standard in modern economics. Avoid
+  programmer jargon and software-style shorthand. A term fails this rule if an
+  economics PhD would not understand it immediately from ordinary research
+  practice. Examples to avoid include `harness`, `fixture`, `scaffold`,
+  `canonical`, and `legacy`. Write `test setup`, `example input`, `initial
+  structure`, `main specification`, or `earlier method` instead. Name the
+  object or task directly. If a precise software term must appear, explain it
+  in plain language in the same comment or docstring.
+- Comments and docstrings must be self-contained. Never reference issue or
+  ticket numbers, commit hashes, pull requests, or conversations with Claude or
+  Codex. The reader is a coauthor, referee, or future self without access to the
+  repository history or an AI transcript.
 
 ---
 
