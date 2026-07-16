@@ -72,8 +72,24 @@ PROTOCOL_REQUIRED_SNIPPETS = {
 }
 
 PATH_MODEL_REQUIRED_SNIPPETS = {
+    "AGENTS.md": (
+        "Run all Make commands below from the repository root.",
+        "`make -C path` changes Make's working directory",
+        "`code/[subdir]/` as the command's working directory",
+        "`Rscript script.R`",
+        "`julia script.jl`",
+        "`stata -b do script.do`",
+        "`matlab -batch \"run('script.m')\"`",
+    ),
+    "CLAUDE.md": (
+        "Run all Make commands below from the repository root.",
+        "`make -C path` changes Make's working directory",
+    ),
     "code/AGENTS.md": (
         "script working directory",
+        "paths in task-group Makefiles",
+        "the scripts they run are relative to the task-group directory",
+        "Do not add a `PROJECT_ROOT` variable merely",
         'output_root = file.path("..", "..", "output")',
         'output_root = joinpath("..", "..", "output")',
         'local output_root "../../output"',
@@ -82,6 +98,8 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
         "Use forward slashes in any literal filepath",
     ),
     "README.md": (
+        "Run these Make commands from the project root.",
+        "targets, prerequisites, and scripts use paths",
         "working-directory-relative",
         'output_root = file.path("..", "..", "output")',
         'output_root = joinpath("..", "..", "output")',
@@ -91,8 +109,15 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
 }
 
 PATH_MODEL_FORBIDDEN_SNIPPETS = {
+    "AGENTS.md": (
+        "fall back to `Rscript path/to/script.R`",
+        "fall back to `julia path/to/script.jl`",
+        "fall back to `stata -b do path/to/script.do`",
+        "fall back to `matlab -batch",
+    ),
     "code/AGENTS.md": (
         "relative to repository root",
+        "Use repo-relative paths only",
         "code/analysis.R | output/tables",
         'file.path("output", "figures", "my_plot.pdf")',
         'joinpath("output", "figures", "my_plot.pdf")',
