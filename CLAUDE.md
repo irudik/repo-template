@@ -66,6 +66,11 @@
 
 ## Commands
 
+Run all Make commands below from the repository root.
+`make -C path` changes Make's working directory to `path`, so paths in that
+Makefile and in the scripts its recipes run are relative to `path`, not to the
+repository root.
+
 ```bash
 # Make (preferred — builds everything)
 make                               # Build all (code + latex)

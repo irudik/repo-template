@@ -6,6 +6,12 @@ These conventions apply to all scripts in `code/` and its subdirectories.
 
 ## Path Style
 
+- Invoke builds from the repository root with `make -C code/[task_group]`.
+  Because `make -C` changes Make's working directory, paths in task-group Makefiles
+  and the scripts they run are relative to the task-group directory.
+- In the standard `code/[task_group]/` layout, use `../../output` to reach the
+  repository-root output directory. Do not add a `PROJECT_ROOT` variable merely
+  to implement this standard two-level layout.
 - Use forward slashes in any literal filepath on every platform, including
   Windows (for example `../../output/tables/results.csv`)
 - Never write Windows-style backslashes in path literals
@@ -342,7 +348,7 @@ file close fh
 | Pitfall | Impact | Prevention |
 |---------|--------|------------|
 | Missing `version` | Results may change across Stata releases | Pin `version` at top |
-| Hardcoded paths or `cd` | Breaks on other machines | Use repo-relative paths only |
+| Hardcoded paths or `cd` | Breaks on other machines | Use working-directory-relative paths only |
 | Unchecked `_merge` after `merge` | Silent sample corruption | Assert expected `_merge` values |
 | Globals for routine state | Hidden dependencies across scripts | Prefer locals and `syntax` |
 | `capture` without `_rc` check | Real failures get silenced | Check `_rc` immediately |

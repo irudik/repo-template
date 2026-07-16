@@ -67,6 +67,11 @@
 
 ## Commands
 
+Run all Make commands below from the repository root.
+`make -C path` changes Make's working directory to `path`, so paths in that
+Makefile and in the scripts its recipes run are relative to `path`, not to the
+repository root.
+
 ```bash
 # Make (preferred -- builds everything)
 make                               # Build all (code + latex)
@@ -159,7 +164,7 @@ Plan approved -> orchestrator activates
   |
   Step 2: VERIFY -- Run `make -n` to check staleness; build stale targets
   |         If Makefile exists: `make -C code/[dir] [target]` or `make -C latex`
-  |         Otherwise: compile/render/run directly
+  |         Otherwise: run directly from the source directory
   |         If verification fails -> fix -> re-verify
   |
   Step 3: REVIEW -- Run appropriate review skill (/review-r, /review-julia, /review-stata, /review-matlab, /review-tex)
@@ -355,7 +360,7 @@ Plan approved -> orchestrator activates
   |
   Step 2: VERIFY -- Run `make -n` to check staleness; build stale targets
   |         If Makefile exists: `make -C code/[dir] [target]` or `make -C latex`
-  |         Otherwise: `Rscript` / `julia` / `stata -b do` / `matlab -batch` / `pdflatex` directly
+  |         Otherwise: run the source from its containing directory
   |         R scripts: runs without error, outputs created
   |         Julia scripts: runs without error, CSV/JLD2 created
   |         Stata scripts: runs without error, .dta/.csv/.tex outputs created
@@ -539,7 +544,8 @@ After compression or a new session:
 ### Make-First Verification
 
 If a Makefile governs the files being modified:
-1. Run `make -n` from the relevant directory to check what is stale
+1. From the repository root, run `make -n` for the full build or
+   `make -C code/[subdir] -n` for a scoped build
 2. Build stale targets: `make -C code/[subdir] [target]` or `make -C latex`
 3. Check exit code -- non-zero is a hard failure
 4. Then proceed to file-specific checks below
@@ -553,24 +559,29 @@ If a Makefile governs the files being modified:
 6. Verify all dynamic number `\input{...}` files exist in `output/numbers/`
 
 ### For R Scripts:
-1. Prefer `make -C code/[subdir] [target]`; fall back to `Rscript path/to/script.R`
+1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
+   `code/[subdir]/` as the command's working directory and run `Rscript script.R`
 2. Verify output files (PDF, RDS, CSV) were created with non-zero size
 3. Spot-check estimates for reasonable magnitude
 
 ### For Julia Scripts:
-1. Prefer `make -C code/[subdir] [target]`; fall back to `julia path/to/script.jl`
+1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
+   `code/[subdir]/` as the command's working directory and run `julia script.jl`
 2. Verify output files (CSV, JLD2) were created with non-zero size
 3. Check file sizes are plausible (not suspiciously small or empty)
 4. If stochastic, verify reproducibility: run twice with same seed, diff outputs
 
 ### For Stata Scripts:
-1. Prefer `make -C code/[subdir] [target]`; fall back to `stata -b do path/to/script.do`
+1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
+   `code/[subdir]/` as the command's working directory and run `stata -b do script.do`
 2. Verify output files (`.dta`, `.csv`, `.tex`, `.txt`, or logs used downstream) were created with non-zero size
 3. Check the batch log for Stata error codes and unexpected warnings
 4. Spot-check key counts, merge assertions, or exported estimates for reasonable magnitude
 
 ### For MATLAB Scripts:
-1. Prefer `make -C code/[subdir] [target]`; fall back to `matlab -batch "run('path/to/script.m')"`
+1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
+   `code/[subdir]/` as the command's working directory and run
+   `matlab -batch "run('script.m')"`
 2. Verify output files (`.mat`, `.csv`, `.tex`, or figures) were created with non-zero size
 3. Check file sizes are plausible and solver output/logs show successful convergence where relevant
 

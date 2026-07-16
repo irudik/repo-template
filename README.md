@@ -218,6 +218,12 @@ my-project/
 - `make -C latex` compiles the manuscript
 - Scripts never create directories — Makefiles own that via order-only prerequisites
 
+Run these Make commands from the project root. `make -C path` changes Make's
+working directory to `path`, so targets, prerequisites, and scripts use paths
+relative to that directory. For example, code under `code/estimation/` reaches
+the project output directory through `../../output`; it does not treat
+`output/` as relative to the project root.
+
 ### Contractor Mode
 
 You describe a task. Claude:
