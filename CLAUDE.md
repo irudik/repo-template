@@ -12,13 +12,15 @@
 
 ## Core Principles
 
-- **Plan first** -- enter plan mode before non-trivial tasks; save plans to `quality_reports/plans/`
+- **Match process to risk** -- use the risk-based workflow in `AGENTS.md`; file
+  count alone does not determine planning or review effort
 - **Verify after** -- compile/render and confirm output at the end of every task
 - **Readable research code** -- prefer clear, reproducible, prose-like code
   over clever compactness; code should be easy for coauthors, referees, and
   future selves to audit
 - **Single source of truth** -- `latex/manuscript.tex` is authoritative for the paper
-- **Quality gates** -- nothing ships below 80/100
+- **Quality gates** -- apply scoring before commit or merge when it adds value;
+  do not score every routine edit
 - **Template hygiene** -- in this template repo, remove branch-specific files under `quality_reports/` before merging to `main`; keep `main` fresh
 - **Structured [LEARN] tags** -- when corrected or when you discover a durable lesson, save a structured `[LEARN:category]` entry to `MEMORY.md`
 
@@ -39,7 +41,9 @@
 ├── .codex/                      # Codex CLI: config and permission rules
 ├── .agents/                     # Codex CLI: thin skill wrappers
 ├── code/                        # Analysis code with sub-Makefiles
-│   ├── CLAUDE.md                # Claude loads this when working in code/
+│   ├── CLAUDE.md                # Claude entry point for code conventions
+│   ├── AGENTS.md                # Routes by file type
+│   ├── conventions/             # Shared and language-specific conventions
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   ├── [task_group]/            # e.g., data cleaning (R/Stata), simulation (Julia), or structural model (MATLAB)
 │   │   ├── Makefile
@@ -141,17 +145,26 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Root `CLAUDE.md` sets project-wide workflow rules
 - `code/CLAUDE.md` loads when Claude works in `code/`
 - `latex/CLAUDE.md` loads when Claude works in `latex/`
-- Shared local conventions live in `AGENTS.md`, `code/AGENTS.md`, and
+- `code/AGENTS.md` routes code work to `code/conventions/shared.md` and only
+  the applicable language or Makefile convention
+- Shared local conventions live in `AGENTS.md`, `code/conventions/`, and
   `latex/AGENTS.md`
 - `.claude/agents/` and `.claude/hooks/` remain Claude-only execution surfaces
   and mechanics
 
 ## Claude-Specific Notes
 
-- Enter plan mode before non-trivial tasks and exit only after the user
-  approves the plan
-- Prefer auto-compression over `/clear`; use `/clear` only when context is
-  genuinely polluted
+- Follow the risk-based workflow in `AGENTS.md`: routine work needs no plan
+  artifact; substantive single-module work needs a brief in-conversation plan;
+  high-risk, cross-cutting, numerical, or pre-merge work needs a saved plan and
+  approval
+- Prefer automatic compression while continuing the same task on the same
+  branch. Start a fresh session, or use `/clear`, when changing task or branch
+- If the user starts an unrelated task or switches branches mid-session, state
+  the boundary, recommend a fresh session, and pause until the user says whether
+  to continue in the current session
+- Do not pin Claude's `effortLevel` or model in tracked Claude project
+  settings. Select task-specific effort outside repository configuration
 - After compression or a new session, read `CLAUDE.md`, read the most recent
   plan in `quality_reports/plans/`, read the most recent relevant handoff in
   `quality_reports/handoffs/` if one exists, then inspect
@@ -179,12 +192,12 @@ and reports exact evidence.
 
 Claude is the planner and reviewer. Claude reviews Codex's code changes,
 verification design, and reported results against the acceptance criteria,
-confirms that relevant tests pass, and flags gaps for Codex to fix. Repeat the
-Codex implement/self-review/verify step and Claude review step until Claude is
-satisfied or the standard five-round contractor review-fix limit is reached. At
-the limit, report remaining gaps instead of looping indefinitely. Claude does not
-implement verification code or rerun full verification unless the user
-explicitly asks.
+confirms that relevant tests pass, and flags gaps for Codex to fix. Allow one
+Codex fix and one Claude re-review by default. Use a fuller multi-agent loop
+only when the user explicitly requests it or when failures remain genuinely
+ambiguous after normal diagnosis. State the unresolved hypotheses and stop
+condition before expanding the loop. Claude does not implement verification
+code or rerun full verification unless the user explicitly asks.
 
 ---
 
@@ -204,8 +217,10 @@ For manuscript or slide tasks, ask during planning whether to include these opti
 - `domain-reviewer` for substantive domain review (identification, derivations, citations, code-theory alignment)
 - `proofreader` for grammar, typos, overflow, and consistency
 
-For multi-file tasks, write short handoff notes under
-`quality_reports/handoffs/` at major stage boundaries.
+Write a handoff under `quality_reports/handoffs/` only when context must
+transfer across a person, agent, branch, session, or major stage. Create a
+session log only when context must survive or major decisions need a durable
+record.
 
 When a durable, project-specific lesson emerges, save it to `MEMORY.md` with a
 structured `[LEARN:category]` block or use `/learn`.

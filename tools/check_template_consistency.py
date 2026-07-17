@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate shared-skill and permission consistency for the repo template."""
+"""Validate shared skills, permissions, and routed project conventions."""
 
 from __future__ import annotations
 
@@ -30,10 +30,39 @@ REVIEW_AGENT_PROTOCOLS = {
     "tex-reviewer": "review-tex",
 }
 
+CODE_CONVENTION_ROUTES = {
+    "r-reviewer": "code/conventions/r.md",
+    "julia-reviewer": "code/conventions/julia.md",
+    "stata-reviewer": "code/conventions/stata.md",
+    "matlab-reviewer": "code/conventions/matlab.md",
+    "makefile-reviewer": "code/conventions/makefile.md",
+}
+
+WORKFLOW_REQUIRED_SNIPPETS = {
+    "AGENTS.md": (
+        "## Risk-Based Workflow",
+        "### Selecting a Reviewer",
+        "do not spawn one\nreviewer per file type",
+        "Use a full multi-agent loop only when the user explicitly requests it",
+        "Documentation or instruction-only changes do not require a Make dry run.",
+        "Do not perform a scoring exercise after every routine edit.",
+        "pause until the user says\n  whether to continue in the current session",
+    ),
+    "CLAUDE.md": (
+        "routine work needs no plan",
+        "Start a fresh session, or use `/clear`, when changing task or branch",
+        "pause until the user says whether\n  to continue in the current session",
+        "Allow one\nCodex fix and one Claude re-review by default.",
+        "Do not pin Claude's `effortLevel` or model in tracked Claude project",
+    ),
+}
+
 COMMIT_PROTOCOL_REQUIRED_SNIPPETS = (
     "If the current branch is a non-`main` branch, keep using it.",
     "If the current branch is `main`, detached, or the user explicitly asks for a",
     "Keep branch naming tool-neutral.",
+    "Choose Make verification in proportion to the files being committed:",
+    "Documentation and instruction-only changes require no Make dry run.",
 )
 
 COMMIT_PROTOCOL_FORBIDDEN_SNIPPETS = (
@@ -86,16 +115,37 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
         "`make -C path` changes Make's working directory",
     ),
     "code/AGENTS.md": (
-        "script working directory",
+        "conventions/shared.md",
+        "conventions/r.md",
+        "conventions/julia.md",
+        "conventions/stata.md",
+        "conventions/matlab.md",
+        "conventions/makefile.md",
+    ),
+    "code/conventions/shared.md": (
         "paths in task-group Makefiles",
         "the scripts they run are relative to the task-group directory",
         "Do not add a `PROJECT_ROOT` variable merely",
-        'output_root = file.path("..", "..", "output")',
-        'output_root = joinpath("..", "..", "output")',
-        'local output_root "../../output"',
-        'output_root = fullfile("..", "..", "output");',
-        "OUTPUT_ROOT = ../../output",
         "Use forward slashes in any literal filepath",
+    ),
+    "code/conventions/r.md": (
+        "script working directory",
+        'output_root = file.path("..", "..", "output")',
+    ),
+    "code/conventions/julia.md": (
+        "script working directory",
+        'output_root = joinpath("..", "..", "output")',
+    ),
+    "code/conventions/stata.md": (
+        "script working directory",
+        'local output_root "../../output"',
+    ),
+    "code/conventions/matlab.md": (
+        "script working directory",
+        'output_root = fullfile("..", "..", "output");',
+    ),
+    "code/conventions/makefile.md": (
+        "OUTPUT_ROOT = ../../output",
     ),
     "README.md": (
         "Run these Make commands from the project root.",
@@ -115,19 +165,31 @@ PATH_MODEL_FORBIDDEN_SNIPPETS = {
         "fall back to `stata -b do path/to/script.do`",
         "fall back to `matlab -batch",
     ),
-    "code/AGENTS.md": (
+    "code/conventions/shared.md": (
         "relative to repository root",
         "Use repo-relative paths only",
+    ),
+    "code/conventions/r.md": (
         "code/analysis.R | output/tables",
         'file.path("output", "figures", "my_plot.pdf")',
+    ),
+    "code/conventions/julia.md": (
         'joinpath("output", "figures", "my_plot.pdf")',
+    ),
+    "code/conventions/stata.md": (
         'save "output/tables/my_results.dta", replace',
+    ),
+    "code/conventions/matlab.md": (
         'fullfile("output", "tables", "results.csv")',
     ),
 }
 
 CLAUDE_WRAPPER_REQUIRED_SNIPPETS = {
-    "code/CLAUDE.md": ("[AGENTS.md](./AGENTS.md)", "source of truth"),
+    "code/CLAUDE.md": (
+        "[AGENTS.md](./AGENTS.md)",
+        "source of truth",
+        "conventions/shared.md",
+    ),
     "latex/CLAUDE.md": ("[AGENTS.md](./AGENTS.md)", "source of truth"),
 }
 
@@ -210,6 +272,57 @@ def check_agent_protocol_refs(errors: list[str]) -> None:
             if marker in agent_text:
                 errors.append(
                     f"{agent_path.relative_to(REPO_ROOT)} still contains protocol marker '{marker}'"
+                )
+
+
+def check_code_convention_routes(errors: list[str]) -> None:
+    shared_path = REPO_ROOT / "code/conventions/shared.md"
+    if not shared_path.is_file():
+        errors.append("code/conventions/shared.md is missing")
+
+    for agent_name, convention_name in CODE_CONVENTION_ROUTES.items():
+        convention_path = REPO_ROOT / convention_name
+        if not convention_path.is_file():
+            errors.append(f"{convention_name} is missing")
+
+        agent_path = REPO_ROOT / ".claude/agents" / f"{agent_name}.md"
+        agent_text = agent_path.read_text()
+        if "code/conventions/shared.md" not in agent_text:
+            errors.append(
+                f"{agent_path.relative_to(REPO_ROOT)} does not load the shared code convention"
+            )
+        if convention_name not in agent_text:
+            errors.append(
+                f"{agent_path.relative_to(REPO_ROOT)} does not load {convention_name}"
+            )
+
+
+def check_claude_project_defaults(errors: list[str]) -> None:
+    settings_paths = (
+        REPO_ROOT / ".claude/settings.json.example",
+        REPO_ROOT / ".claude/settings.json",
+    )
+
+    for settings_path in settings_paths:
+        if not settings_path.is_file():
+            continue
+
+        settings = json.loads(settings_path.read_text())
+        for forbidden_key in ("effortLevel", "model"):
+            if forbidden_key in settings:
+                errors.append(
+                    f"{settings_path.relative_to(REPO_ROOT)} pins Claude {forbidden_key}"
+                )
+
+
+def check_workflow_policy(errors: list[str]) -> None:
+    for relative_path, snippets in WORKFLOW_REQUIRED_SNIPPETS.items():
+        file_path = REPO_ROOT / relative_path
+        file_text = file_path.read_text()
+        for snippet in snippets:
+            if snippet not in file_text:
+                errors.append(
+                    f"{relative_path} is missing workflow policy text: {snippet!r}"
                 )
 
 
@@ -335,6 +448,9 @@ def main() -> int:
     check_wrapper_protocol_refs(REPO_ROOT / ".claude/skills", errors)
     check_wrapper_protocol_refs(REPO_ROOT / ".agents/skills", errors)
     check_agent_protocol_refs(errors)
+    check_code_convention_routes(errors)
+    check_claude_project_defaults(errors)
+    check_workflow_policy(errors)
     check_commit_protocol_branch_policy(errors)
     check_protocol_required_snippets(errors)
     check_path_model_snippets(errors)

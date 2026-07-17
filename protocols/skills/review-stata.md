@@ -10,7 +10,7 @@ Run the comprehensive Stata code review protocol.
    - If the argument is `all`, review all Stata scripts in `code/`.
 
 2. **For each script, follow the review protocol below:**
-   - Read the Stata section of `code/AGENTS.md`.
+   - Read `code/conventions/shared.md` and `code/conventions/stata.md`.
    - Save the report to `quality_reports/[script_name]_stata_review.md`.
 
 3. **After all reviews complete, present a summary:**

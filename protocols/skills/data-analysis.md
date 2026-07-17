@@ -10,7 +10,7 @@ goal.
 
 ## Constraints
 
-- Follow the R code conventions in `code/AGENTS.md`.
+- Follow `code/conventions/shared.md` and `code/conventions/r.md`.
 - Save all scripts to the appropriate `code/[task_group]/` directory.
 - Save all outputs to `output/` under the appropriate subdirectory.
 - Use `saveRDS()` for every computed object.
