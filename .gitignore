@@ -21,6 +21,7 @@ Thumbs.db
 .codex/rules/*
 !.codex/rules/default.rules
 .gemini/
+.tokensave/
 
 # LaTeX build artifacts
 *.aux

@@ -2,7 +2,7 @@
 
 > **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant plans the approach, implements it, builds via Make, traces ambiguous failures, runs specialized review skills, records handoffs and durable learnings, fixes issues, and presents results — like a contractor who handles the entire job.
+A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
 
 **Both tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
 `.claude/`; Codex CLI uses an `AGENTS.md` hierarchy plus `.codex/` and
@@ -38,7 +38,10 @@ Then paste the following, filling in your project details:
 >
 > I've set up the Claude Code academic workflow (forked from `irudik/repo-template`). The configuration files are already in this repo. Please read them, understand the workflow, and then **update all configuration files to fit my project** — fill in placeholders in `CLAUDE.md`, set up the `code/` directory structure with sub-Makefiles for my pipeline stages, and propose any customizations specific to my use case.
 >
-> After that, use the plan-first workflow for all non-trivial tasks. Once I approve a plan, switch to contractor mode — coordinate everything autonomously and only come back to me when there's ambiguity or a decision to make.
+> After that, use the risk-based workflow: implement and test routine changes
+> directly; use a brief in-conversation plan for substantive single-module
+> work; and save a plan for approval before high-risk, cross-cutting,
+> numerical, or pre-merge work.
 >
 > Enter plan mode and start by adapting the workflow configuration for this project.
 
@@ -51,14 +54,15 @@ you want Claude to plan but Codex to execute and verify:
 > (`codex:codex-rescue`) in write-capable mode. Codex should implement the
 > changes, add or update the tests/checks needed to verify them, run that
 > proof-of-correctness itself, self-review the diff and verification design,
-> report exact evidence, and fix Claude-identified gaps for up to five review
-> rounds. Leave changes uncommitted unless I explicitly ask for a commit.
+> report exact evidence, and address at most one Claude-identified fix pass by
+> default. Claude then performs one re-review. Leave changes uncommitted unless
+> I explicitly ask for a commit.
 
 **What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
 tool-specific `.claude/` configuration, sets up your `code/` directory with
 sub-Makefiles for each pipeline stage, fills in your project details, then
-enters contractor mode — planning, implementing, reviewing, and verifying
-autonomously.
+applies the risk-based workflow: direct execution for routine work and stronger
+planning, verification, or review for consequential changes.
 
 ### 3. Configure Hooks (Optional)
 
@@ -68,17 +72,6 @@ Hooks are configured per-user in `.claude/settings.json` (gitignored by default)
 cat > .claude/settings.json << 'EOF'
 {
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-reminder.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "hooks": [
@@ -134,14 +127,16 @@ codex
 
 Then paste the same project-description prompt as the Claude Code section above.
 
-**What this does:** Codex reads `AGENTS.md` (root + `code/AGENTS.md` + `latex/AGENTS.md`), understands the full workflow, and configures the project.
+**What this does:** Codex reads the root `AGENTS.md`, then uses
+`code/AGENTS.md` or `latex/AGENTS.md` to load only the conventions needed for
+the files in scope.
 
 ### 3. Configuration
 
 Codex project configuration lives in:
 
 - **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
-- **`code/AGENTS.md`** — R, Julia, Stata, MATLAB, and Makefile conventions (loaded when working in `code/`)
+- **`code/AGENTS.md`** — router for shared and file-type-specific conventions under `code/conventions/`
 - **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
 - **`protocols/skills/*.md`** — canonical shared skill bodies for both tools
 - **`.codex/config.toml`** — model, sandbox, and approval settings
@@ -165,7 +160,6 @@ Codex project configuration lives in:
 
 Codex CLI does not support hooks, so these Claude Code features have no direct equivalent:
 - **File protection** (`.claude/hooks/protect-files.sh`) — be careful editing `references.bib` and `settings.json`
-- **Session log reminders** (`.claude/hooks/log-reminder.py`) — manually update session logs
 - **Context snapshot before compaction** (`.claude/hooks/pre-compact.sh`) — save context to plans/ manually
 - **Desktop notifications** (`.claude/hooks/notify.sh`) — not available
 
@@ -224,19 +218,36 @@ relative to that directory. For example, code under `code/estimation/` reaches
 the project output directory through `../../output`; it does not treat
 `output/` as relative to the project root.
 
-### Contractor Mode
+### Risk-Based Workflow
 
-You describe a task. Claude:
-1. **Plans** the approach (enter plan mode, save to disk)
-2. **Implements** the code
-3. **Writes handoff notes** at major stage boundaries for cross-cutting tasks
-4. **Verifies** via `make -n` then `make` — builds stale targets (including `make -C latex` for the manuscript), checks exit codes
-5. **Reviews** with specialized agents (r-reviewer, julia-reviewer, stata-reviewer, matlab-reviewer, makefile-reviewer, tracer when diagnosis is needed)
-6. **Fixes** issues found by reviewers or traces
-7. **Captures durable learnings** in `MEMORY.md` when non-obvious lessons emerge
-8. **Scores** against quality gates
+The workflow matches process to the consequences of a wrong result:
 
-If the score meets threshold, Claude presents a summary. Say "just do it" and it auto-commits too.
+1. **Routine or bounded change:** implement, test, and report concisely. No
+   saved plan, handoff, score, or reviewer agent by default.
+2. **Substantive single-module change:** give a brief in-conversation plan,
+   implement, test, and use one targeted review only when independence adds
+   material value.
+3. **High-risk, cross-cutting, numerical, or pre-merge work:** save a plan for
+   approval, implement, verify, run one independent review, and allow at most
+   one fix/re-review by default.
+4. **Full multi-agent loop:** use only when explicitly requested or when
+   failures remain genuinely ambiguous after normal diagnosis.
+
+Tests remain required at every level. Session logs and handoffs preserve
+context and major decisions; they are not mandatory stage paperwork. Saying
+"just do it" skips an approval pause but does not authorize a commit, push,
+merge, destructive operation, or broader scope.
+
+When a review is useful, choose one reviewer for the main risk: the matching
+R, Julia, Stata, MATLAB, Makefile, or LaTeX reviewer; domain review for
+identification or code-theory alignment; proofreading for presentation; or
+trace for an ambiguous cause. Touching several file types does not by itself
+justify several agents.
+
+Make verification is also scoped by risk. Dry-run a changed dependency graph,
+run the relevant target directly for an ordinary source change under a stable
+Makefile, skip Make for documentation-only changes, and use a full root dry run
+for cross-cutting or pre-merge checks when the complete build plan adds value.
 
 ### Claude + Codex Handoff
 
@@ -249,15 +260,23 @@ original task or planning prompt with language such as "hand this to Codex",
 For those marked steps, Claude records the Codex-owned scope and acceptance
 criteria in the saved plan. After approval, Claude hands the plan to
 `codex:codex-rescue`; Codex implements the feature/fix and implements the
-verification needed to prove it, such as unit tests, fixtures, Makefile targets,
-checksum scripts, or data-property checks. Codex then self-reviews its diff and
-verification design, runs the tests/builds/checks, fixes obvious gaps, and
-reports the evidence. Claude reviews the changed code, the verification design,
-and the reported results against the acceptance criteria. If Claude flags gaps,
-the task goes back to Codex. That Codex implementation/self-review/verification
-plus Claude review loop repeats until Claude is satisfied or the standard
-five-round contractor review-fix limit is reached. Claude does not write the
-verification code or rerun the full verification loop unless explicitly asked.
+verification needed to prove it, such as unit tests, example inputs, Makefile
+targets, checksum scripts, or data-property checks.
+
+Codex runs in the same checkout and follows the root and nested `AGENTS.md`
+instructions, including the routed code conventions and risk-based verification
+policy. The approved handoff supplies the narrower task scope and acceptance
+criteria. Codex then self-reviews its diff and verification design, runs the
+tests/builds/checks, fixes obvious gaps, and reports the evidence.
+
+Claude reviews the changed code, the verification design, and the reported
+results against the acceptance criteria. In this two-agent workflow, Claude's
+review is the independent review required for high-risk work, so Codex does not
+launch another reviewer by default. If Claude flags gaps, the task goes back to
+Codex for one fix followed by one Claude re-review. A fuller loop requires an
+explicit request or genuinely ambiguous failures with stated hypotheses and a
+stop condition. Claude does not write the verification code or rerun the full
+verification loop unless explicitly asked.
 
 This is intentionally Claude-only and does not live in `AGENTS.md`, so Codex
 does not read Claude orchestration instructions as its own operating procedure.
@@ -272,7 +291,7 @@ When reviewers leave comments on a pull request, `/review-pr <PR#>` automates th
    - **MEDIUM** — ambiguous but likely intent. Implements and stages changes but does *not* commit. Presents the interpretation for your approval.
    - **LOW** — design question or unclear fix. Reports the thread with a suggested approach. No code changes.
 3. **Groups** fixes by file so each commit is atomic
-4. **Runs the orchestrator mini-loop** on each group (implement, verify via Make, review, score)
+4. **Runs the applicable risk-based workflow** on each group, including Make verification and targeted review
 5. **Pushes** and prints a summary table of what was addressed, what needs approval, and what needs your input
 
 Outdated threads (code has moved since the comment) are reported but never touched.
@@ -293,11 +312,10 @@ solver failures, and code-manuscript mismatches.
 
 ### Structured Handoffs and Learning
 
-For multi-file tasks, the workflow can write short handoff notes under
-`quality_reports/handoffs/` so planning, implementation, verification, and
-review do not depend only on live context. Durable project-specific lessons are
-stored in `MEMORY.md` using structured `[LEARN:category]` entries rather than
-loose bullets.
+When context must transfer across a person, agent, branch, session, or major
+stage, the workflow can write a short handoff under `quality_reports/handoffs/`.
+Durable project-specific lessons are stored in `MEMORY.md` using structured
+`[LEARN:category]` entries rather than loose bullets.
 
 ### Specialized Agents
 
@@ -314,15 +332,19 @@ Focused agents each check one dimension:
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
 | `tracer` | Evidence-driven diagnosis for ambiguous failures and output shifts |
 
-For manuscript or slide tasks, the orchestrator can also run **opt-in review passes** after the review-fix loop completes:
+For manuscript or slide tasks, choose at most one **opt-in review pass** based
+on the main risk unless the user explicitly requests both:
 - `domain-reviewer` for substantive identification and citation checks
 - `proofreader` for grammar, overflow, and consistency checks
 
-These run once on the final state and produce reports only — fixes require user review.
+The selected reviewer runs once on the final state and produces a report only;
+fixes require user review.
 
 ### Quality Gates
 
-Every file gets a score (0–100). Scores below threshold block the action:
+Use a score (0–100) for requested or high-risk review and for commit or merge
+decisions when the rubric adds value. Do not score every routine edit. When
+scoring applies, scores below threshold block the action:
 - **80** — commit threshold
 - **90** — PR threshold
 - **95** — excellence (aspirational)
@@ -382,8 +404,10 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 | File | What It Covers |
 |------|----------------|
-| `AGENTS.md` | Core workflow, orchestrators, quality gates, verification, and session logging |
-| `code/AGENTS.md` | Shared research-code style plus R, Julia, Stata, MATLAB, path, and Makefile conventions |
+| `AGENTS.md` | Risk-based workflow, quality gates, verification, and session logging |
+| `code/AGENTS.md` | Router that selects the applicable code convention files |
+| `code/conventions/shared.md` | Path and research-code conventions used for all code work |
+| `code/conventions/{r,julia,stata,matlab,makefile}.md` | File-type-specific conventions loaded only when applicable |
 | `latex/AGENTS.md` | Shared LaTeX build, manuscript, and dynamic-number conventions |
 | `CLAUDE.md` | Claude-specific loading model, plan-mode notes, and tool-specific mechanics |
 | `code/CLAUDE.md` | Claude entry point that loads the shared code conventions |
@@ -405,7 +429,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | `AGENTS.md` (root) | Project root | Core instructions + workflow rules |
-| `code/AGENTS.md` | `code/` | R, Julia, Stata, MATLAB, and Makefile conventions |
+| `code/AGENTS.md` | `code/` | Router for shared and file-type-specific conventions |
 | `latex/AGENTS.md` | `latex/` | LaTeX conventions |
 | `protocols/skills/*.md` | `protocols/skills/` | Canonical shared skill bodies |
 | `.codex/config.toml` | `.codex/` | Optional Codex project overrides for sandbox, approval, and model behavior |
@@ -432,7 +456,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 Not all tools are needed — install only what your project uses. Either Claude Code or Codex CLI is the only hard requirement.
 
-By default, this template does not pin an AI model for either tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), and Claude Code uses the default model configured in your local Claude Code CLI/app session. If you want a repo-specific model, add that pin yourself.
+By default, this template does not pin an AI model for either tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), and Claude Code uses the default model configured in your local Claude Code CLI/app session. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
 
 ---
 
@@ -571,6 +595,8 @@ my-project/
 ├── .agents/                     # Codex CLI: thin skill wrappers
 ├── code/
 │   ├── CLAUDE.md                # Claude instructions for code/
+│   ├── AGENTS.md                # Routes work to applicable conventions
+│   ├── conventions/             # Shared, language, and Makefile conventions
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   ├── [task_group_a]/          # e.g., data cleaning (R or Stata)
 │   │   ├── Makefile
@@ -596,7 +622,10 @@ my-project/
 └── templates/                   # Session, handoff, learning, and quality templates
 ```
 
-Each `code/[task_group]/Makefile` follows the conventions in `code/AGENTS.md`: `all` and `clean` targets, order-only prerequisites for directories, pattern rules for parametric outputs, and `.PRECIOUS` for expensive intermediates.
+Each `code/[task_group]/Makefile` follows
+`code/conventions/makefile.md`: `all` and `clean` targets, order-only
+prerequisites for directories, pattern rules for parametric outputs, and
+`.PRECIOUS` for expensive intermediates.
 
 ---
 

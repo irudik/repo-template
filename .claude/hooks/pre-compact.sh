@@ -7,7 +7,7 @@ command -v jq >/dev/null 2>&1 || exit 0
 INPUT=$(cat)
 TRIGGER=$(echo "$INPUT" | jq -r '.trigger // "unknown"')
 
-# Get project directory from the JSON payload (same pattern as log-reminder.py)
+# Get the project directory from the hook's JSON payload
 PROJECT_DIR=$(echo "$INPUT" | jq -r '.cwd // empty')
 [ -z "$PROJECT_DIR" ] && exit 0
 

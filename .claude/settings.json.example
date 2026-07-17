@@ -45,17 +45,6 @@
     ]
   },
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-reminder.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "hooks": [

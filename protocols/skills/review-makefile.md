@@ -9,7 +9,7 @@ Run the comprehensive Makefile review protocol.
    - If the argument is `all`, review all Makefiles in the project.
 
 2. **For each Makefile, follow the review protocol below:**
-   - Read the Makefile section of `code/AGENTS.md`.
+   - Read `code/conventions/shared.md` and `code/conventions/makefile.md`.
    - Scan scripts in the same directory for coverage checking.
    - Derive `dir_name` from the Makefile's containing directory path relative to
      the repo root, replacing `/` with `_`; use `root` for the repository root.

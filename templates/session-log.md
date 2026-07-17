@@ -7,9 +7,9 @@
 
 ## Changes Made
 
-| File | Change | Reason | Quality Score |
-|------|--------|--------|---|
-| `path/to/file` | [What changed] | [Why] | [N]/100 |
+| File | Change | Reason |
+|------|--------|--------|
+| `path/to/file` | [What changed] | [Why] |
 
 ## Design Decisions
 
@@ -17,9 +17,12 @@
 |----------|------------------------|-----------|
 | [Choice made] | [Other options] | [Why this one] |
 
-## Incremental Work Log
+## Material Decisions and Context Changes
 
-**HH:MM UTC:** [event description]
+[Use this section only when the information would help transfer or recover the
+task. Omit it when there is nothing material to record.]
+
+**HH:MM UTC:** [major decision, correction, blocker, or context needed for transfer]
 
 ## Linked Handoffs
 

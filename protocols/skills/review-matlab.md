@@ -10,7 +10,7 @@ Run the comprehensive MATLAB code review protocol.
      `code/unit_tests/` and `code/hpc/`.
 
 2. **For each script, follow the review protocol below:**
-   - Read the MATLAB section of `code/AGENTS.md`.
+   - Read `code/conventions/shared.md` and `code/conventions/matlab.md`.
    - Save the report to `quality_reports/[script_name]_matlab_review.md`.
 
 3. **After all reviews complete, present a summary:**

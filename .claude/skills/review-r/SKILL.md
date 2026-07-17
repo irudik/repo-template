@@ -14,5 +14,5 @@ Use the canonical shared protocol in `protocols/skills/review-r.md`.
 
 1. Resolve the target scope from `$ARGUMENTS`.
 2. Read `protocols/skills/review-r.md`.
-3. Launch the `r-reviewer` agent for each target and instruct it to follow `protocols/skills/review-r.md`.
+3. Launch one `r-reviewer` agent for the full approved target scope and instruct it to follow `protocols/skills/review-r.md`.
 4. Present a concise summary of the findings.

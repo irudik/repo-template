@@ -13,8 +13,20 @@ git diff --stat
 git log --oneline -5
 ```
 
-If a root `Makefile` exists, run `make -n` to check for stale targets. If stale
-targets exist, warn the user before proceeding. This is a soft gate.
+Choose Make verification in proportion to the files being committed:
+
+- If a Makefile, dependency declaration, or build configuration changed, run a
+  scoped dry run for the affected target before building it.
+- For ordinary source changes under an unchanged Makefile, run the relevant
+  target directly if it has not already been verified; a separate dry run is
+  optional.
+- Use a root `make -n` only for cross-cutting or pre-merge work when the full
+  dependency plan adds useful coverage.
+- Documentation and instruction-only changes require no Make dry run.
+
+If a required check shows stale targets or fails, warn the user before
+proceeding. This remains a soft commit gate unless another project rule makes
+the build mandatory.
 
 2. **Choose the working branch:**
 
