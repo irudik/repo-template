@@ -691,7 +691,7 @@ replace one approved command with several interactive permission checks.
 
 ## Workflow Quick Reference
 
-**Model:** Contractor (you direct, Codex orchestrates)
+**Workflow:** Risk-based (you set the goal; the agent applies proportionate planning, verification, and review)
 
 ```
 Your instruction -> [CLASSIFY RISK] -> [PLAN if needed] -> [EXECUTE] -> [VERIFY] -> [REPORT]

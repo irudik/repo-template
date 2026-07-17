@@ -42,6 +42,7 @@ WORKFLOW_REQUIRED_SNIPPETS = {
     "AGENTS.md": (
         "## Risk-Based Workflow",
         "### Selecting a Reviewer",
+        "**Workflow:** Risk-based",
         "do not spawn one\nreviewer per file type",
         "Use a full multi-agent loop only when the user explicitly requests it",
         "Documentation or instruction-only changes do not require a Make dry run.",
@@ -54,6 +55,30 @@ WORKFLOW_REQUIRED_SNIPPETS = {
         "pause until the user says whether\n  to continue in the current session",
         "Allow one\nCodex fix and one Claude re-review by default.",
         "Do not pin Claude's `effortLevel` or model in tracked Claude project",
+    ),
+    "README.md": (
+        "applies the risk-based workflow",
+        "choose at most one **opt-in review pass**",
+        "Do not score every routine edit.",
+        "Prefer user-level configuration or explicit session/CLI overrides",
+    ),
+    "code/conventions/makefile.md": (
+        "When a Makefile or dependency declaration changes, run a scoped `make -n`",
+    ),
+}
+
+WORKFLOW_FORBIDDEN_PATTERNS = {
+    "README.md": (
+        re.compile(r"contractor\s+mode", re.IGNORECASE),
+        re.compile(r"every\s+file\s+gets\s+a\s+score", re.IGNORECASE),
+        re.compile(r"review[- ]fix\s+loop", re.IGNORECASE),
+        re.compile(r"core\s+workflow,\s+orchestrators", re.IGNORECASE),
+        re.compile(r"repo-specific\s+model,\s+add\s+that\s+pin", re.IGNORECASE),
+        re.compile(r"log-reminder\.py"),
+    ),
+    ".claude/settings.json.example": (re.compile(r"log-reminder\.py"),),
+    "code/conventions/makefile.md": (
+        re.compile(r"make -n.*must produce a valid plan", re.IGNORECASE),
     ),
 }
 
@@ -275,6 +300,24 @@ def check_agent_protocol_refs(errors: list[str]) -> None:
                 )
 
 
+def check_review_skill_agent_scope(errors: list[str]) -> None:
+    for agent_name, protocol_name in REVIEW_AGENT_PROTOCOLS.items():
+        skill_path = REPO_ROOT / ".claude/skills" / protocol_name / "SKILL.md"
+        skill_text = skill_path.read_text()
+        expected_text = (
+            f"Launch one `{agent_name}` agent for the full approved target scope"
+        )
+
+        if expected_text not in skill_text:
+            errors.append(
+                f"{skill_path.relative_to(REPO_ROOT)} does not require one scoped reviewer agent"
+            )
+        if "for each target" in skill_text:
+            errors.append(
+                f"{skill_path.relative_to(REPO_ROOT)} still requests reviewer fan-out"
+            )
+
+
 def check_code_convention_routes(errors: list[str]) -> None:
     shared_path = REPO_ROOT / "code/conventions/shared.md"
     if not shared_path.is_file():
@@ -324,6 +367,21 @@ def check_workflow_policy(errors: list[str]) -> None:
                 errors.append(
                     f"{relative_path} is missing workflow policy text: {snippet!r}"
                 )
+
+    for relative_path, patterns in WORKFLOW_FORBIDDEN_PATTERNS.items():
+        file_path = REPO_ROOT / relative_path
+        file_text = file_path.read_text()
+        for pattern in patterns:
+            if pattern.search(file_text):
+                errors.append(
+                    f"{relative_path} contains obsolete workflow text matching {pattern.pattern!r}"
+                )
+
+    obsolete_hook = REPO_ROOT / ".claude/hooks/log-reminder.py"
+    if obsolete_hook.exists():
+        errors.append(
+            ".claude/hooks/log-reminder.py still enforces mandatory session logging"
+        )
 
 
 def check_commit_protocol_branch_policy(errors: list[str]) -> None:
@@ -448,6 +506,7 @@ def main() -> int:
     check_wrapper_protocol_refs(REPO_ROOT / ".claude/skills", errors)
     check_wrapper_protocol_refs(REPO_ROOT / ".agents/skills", errors)
     check_agent_protocol_refs(errors)
+    check_review_skill_agent_scope(errors)
     check_code_convention_routes(errors)
     check_claude_project_defaults(errors)
     check_workflow_policy(errors)

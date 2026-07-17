@@ -104,5 +104,8 @@ The `code/Makefile` in turn delegates to sub-Makefiles in each task-group direct
 
 ## Validation
 
-- `make -n` (dry-run) must produce a valid plan
+- When a Makefile or dependency declaration changes, run a scoped `make -n`
+  and confirm that it produces the intended plan before building the affected
+  target. A separate dry run is optional for source-only changes under a stable
+  Makefile.
 - Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file under `code/` should appear as a prerequisite in some Makefile target -- orphaned scripts are a warning sign

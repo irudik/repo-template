@@ -185,7 +185,7 @@ write-capable mode.
 
 Codex is the implementer for both the feature/fix and its verification. Codex
 adds or updates the verification code needed to make the acceptance criteria
-checkable, such as unit tests, fixtures, Makefile targets, data-property checks,
+checkable, such as unit tests, example inputs, Makefile targets, data-property checks,
 checksum scripts, or build checks. Before handing back, Codex self-reviews its
 diff, verification design, and test/build/check results, fixes obvious gaps,
 and reports exact evidence.

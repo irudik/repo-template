@@ -14,5 +14,5 @@ Use the canonical shared protocol in `protocols/skills/review-julia.md`.
 
 1. Resolve the target scope from `$ARGUMENTS`.
 2. Read `protocols/skills/review-julia.md`.
-3. Launch the `julia-reviewer` agent for each target and instruct it to follow `protocols/skills/review-julia.md`.
+3. Launch one `julia-reviewer` agent for the full approved target scope and instruct it to follow `protocols/skills/review-julia.md`.
 4. Present a concise summary of the findings.

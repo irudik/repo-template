@@ -2,7 +2,7 @@
 
 > **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant plans the approach, implements it, builds via Make, traces ambiguous failures, runs specialized review skills, records handoffs and durable learnings, fixes issues, and presents results — like a contractor who handles the entire job.
+A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
 
 **Both tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
 `.claude/`; Codex CLI uses an `AGENTS.md` hierarchy plus `.codex/` and
@@ -61,8 +61,8 @@ you want Claude to plan but Codex to execute and verify:
 **What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
 tool-specific `.claude/` configuration, sets up your `code/` directory with
 sub-Makefiles for each pipeline stage, fills in your project details, then
-enters contractor mode — planning, implementing, reviewing, and verifying
-autonomously.
+applies the risk-based workflow: direct execution for routine work and stronger
+planning, verification, or review for consequential changes.
 
 ### 3. Configure Hooks (Optional)
 
@@ -72,17 +72,6 @@ Hooks are configured per-user in `.claude/settings.json` (gitignored by default)
 cat > .claude/settings.json << 'EOF'
 {
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-reminder.py",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "hooks": [
@@ -171,7 +160,6 @@ Codex project configuration lives in:
 
 Codex CLI does not support hooks, so these Claude Code features have no direct equivalent:
 - **File protection** (`.claude/hooks/protect-files.sh`) — be careful editing `references.bib` and `settings.json`
-- **Session log reminders** (`.claude/hooks/log-reminder.py`) — manually update session logs
 - **Context snapshot before compaction** (`.claude/hooks/pre-compact.sh`) — save context to plans/ manually
 - **Desktop notifications** (`.claude/hooks/notify.sh`) — not available
 
@@ -344,15 +332,19 @@ Focused agents each check one dimension:
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
 | `tracer` | Evidence-driven diagnosis for ambiguous failures and output shifts |
 
-For manuscript or slide tasks, the orchestrator can also run **opt-in review passes** after the review-fix loop completes:
+For manuscript or slide tasks, choose at most one **opt-in review pass** based
+on the main risk unless the user explicitly requests both:
 - `domain-reviewer` for substantive identification and citation checks
 - `proofreader` for grammar, overflow, and consistency checks
 
-These run once on the final state and produce reports only — fixes require user review.
+The selected reviewer runs once on the final state and produces a report only;
+fixes require user review.
 
 ### Quality Gates
 
-Every file gets a score (0–100). Scores below threshold block the action:
+Use a score (0–100) for requested or high-risk review and for commit or merge
+decisions when the rubric adds value. Do not score every routine edit. When
+scoring applies, scores below threshold block the action:
 - **80** — commit threshold
 - **90** — PR threshold
 - **95** — excellence (aspirational)
@@ -412,7 +404,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 | File | What It Covers |
 |------|----------------|
-| `AGENTS.md` | Core workflow, orchestrators, quality gates, verification, and session logging |
+| `AGENTS.md` | Risk-based workflow, quality gates, verification, and session logging |
 | `code/AGENTS.md` | Router that selects the applicable code convention files |
 | `code/conventions/shared.md` | Path and research-code conventions used for all code work |
 | `code/conventions/{r,julia,stata,matlab,makefile}.md` | File-type-specific conventions loaded only when applicable |
@@ -464,7 +456,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 Not all tools are needed — install only what your project uses. Either Claude Code or Codex CLI is the only hard requirement.
 
-By default, this template does not pin an AI model for either tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), and Claude Code uses the default model configured in your local Claude Code CLI/app session. If you want a repo-specific model, add that pin yourself.
+By default, this template does not pin an AI model for either tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), and Claude Code uses the default model configured in your local Claude Code CLI/app session. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
 
 ---
 
