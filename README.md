@@ -54,8 +54,9 @@ you want Claude to plan but Codex to execute and verify:
 > (`codex:codex-rescue`) in write-capable mode. Codex should implement the
 > changes, add or update the tests/checks needed to verify them, run that
 > proof-of-correctness itself, self-review the diff and verification design,
-> report exact evidence, and fix Claude-identified gaps for up to five review
-> rounds. Leave changes uncommitted unless I explicitly ask for a commit.
+> report exact evidence, and address at most one Claude-identified fix pass by
+> default. Claude then performs one re-review. Leave changes uncommitted unless
+> I explicitly ask for a commit.
 
 **What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
 tool-specific `.claude/` configuration, sets up your `code/` directory with
@@ -271,15 +272,23 @@ original task or planning prompt with language such as "hand this to Codex",
 For those marked steps, Claude records the Codex-owned scope and acceptance
 criteria in the saved plan. After approval, Claude hands the plan to
 `codex:codex-rescue`; Codex implements the feature/fix and implements the
-verification needed to prove it, such as unit tests, fixtures, Makefile targets,
-checksum scripts, or data-property checks. Codex then self-reviews its diff and
-verification design, runs the tests/builds/checks, fixes obvious gaps, and
-reports the evidence. Claude reviews the changed code, the verification design,
-and the reported results against the acceptance criteria. If Claude flags gaps,
-the task goes back to Codex for one fix and one re-review by default. A fuller
-loop requires an explicit request or genuinely ambiguous failures with stated
-hypotheses and a stop condition. Claude does not write the verification code or
-rerun the full verification loop unless explicitly asked.
+verification needed to prove it, such as unit tests, example inputs, Makefile
+targets, checksum scripts, or data-property checks.
+
+Codex runs in the same checkout and follows the root and nested `AGENTS.md`
+instructions, including the routed code conventions and risk-based verification
+policy. The approved handoff supplies the narrower task scope and acceptance
+criteria. Codex then self-reviews its diff and verification design, runs the
+tests/builds/checks, fixes obvious gaps, and reports the evidence.
+
+Claude reviews the changed code, the verification design, and the reported
+results against the acceptance criteria. In this two-agent workflow, Claude's
+review is the independent review required for high-risk work, so Codex does not
+launch another reviewer by default. If Claude flags gaps, the task goes back to
+Codex for one fix followed by one Claude re-review. A fuller loop requires an
+explicit request or genuinely ambiguous failures with stated hypotheses and a
+stop condition. Claude does not write the verification code or rerun the full
+verification loop unless explicitly asked.
 
 This is intentionally Claude-only and does not live in `AGENTS.md`, so Codex
 does not read Claude orchestration instructions as its own operating procedure.
