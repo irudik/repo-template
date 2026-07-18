@@ -182,8 +182,10 @@ survive a session boundary.
 
 ### 3. High-Risk, Cross-Cutting, Numerical, or Pre-Merge Work
 
-Save a plan and obtain approval, implement, verify, and run one independent
-review. Allow at most one fix/re-review by default. This category includes:
+Save a plan, then continue automatically with implementation, verification,
+and one independent review. Do not treat the plan as an approval gate unless
+the user explicitly asks to review or approve it. Allow at most one
+fix/re-review by default. This category includes:
 
 - solver, derivative, tolerance, or convergence changes
 - identification, estimand, or manuscript-critical quantitative claims
@@ -222,12 +224,14 @@ Tests are required in every category. Fix test failures independently and
 rerun the relevant checks before reporting. An explicit request for a fuller
 or lighter process overrides the default, subject to safety constraints.
 
-### "Just Do It" Mode
+### Automatic Execution
 
-When the user says "just do it" or "handle it," skip a final approval pause and
-execute the applicable workflow. This does not authorize commits, pushes,
-merges, destructive operations, or a broader scope unless the user requested
-them.
+Proceed through the applicable workflow without a plan-approval pause. Phrases
+such as "just do it" or "handle it" reinforce this default but are not required.
+Pause only when the user explicitly requests plan approval or when a material
+choice, missing authority, destructive operation, or scope expansion requires
+input. Automatic execution does not authorize commits, pushes, merges,
+destructive operations, or a broader scope unless the user requested them.
 
 ### Structured Handoffs
 
@@ -300,7 +304,10 @@ When debugging numerical solver failures (MATLAB, Julia, Python):
 
 ### Report Format
 
-Present diagnosis with evidence, then proposed fix. Wait for approval before implementing.
+Present diagnosis with evidence, then implement the proposed fix when the task
+authorizes changes. For a diagnosis-only request, report the proposed fix
+without implementing it. Continue to require explicit approval for solver
+algorithm, tolerance, or option changes as specified above.
 
 ```markdown
 ## Diagnosis
@@ -397,20 +404,25 @@ For routine and substantive single-module R, Julia, Stata, or MATLAB changes:
 
 Plan in proportion to risk.
 
+Plans are working records, not approval gates. Do not enter an interactive plan
+mode solely because work is high risk; use it only when the user explicitly
+requests it.
+
 ### The Protocol
 
 1. **Classify the work** using the risk-based workflow above.
 2. **Routine work** -- implement directly; no plan artifact or approval pause.
 3. **Substantive single-module work** -- give a brief in-conversation plan.
 4. **High-risk or cross-cutting work** -- check `MEMORY.md`, draft the approach,
-   save it to `quality_reports/plans/YYYY-MM-DD_short-description.md`, and wait
-   for approval.
+   save it to `quality_reports/plans/YYYY-MM-DD_short-description.md`, and
+   continue automatically. Pause only when the user explicitly asks to approve
+   the plan or a material unresolved choice requires user input.
 5. **Context transfer** -- save a plan for lower-risk work only when another
    session, branch, person, or agent must resume it.
-6. **Manuscript review opt-in** -- when high-risk work touches manuscript or slides (`latex/`), ask:
-   - "Include domain substance review?" (runs `domain-reviewer` agent)
-   - "Include proofreading?" (runs `proofreader` agent)
-   - Record the answers in the saved plan under an `## Optional Reviews` section
+6. **Manuscript review opt-in** -- when high-risk work touches manuscript or
+   slides (`latex/`), include domain review or proofreading only when the user
+   requested it. Do not pause to ask. Record requested and omitted optional
+   reviews in the saved plan under an `## Optional Reviews` section.
 7. **Implement and verify** using the applicable risk-based workflow.
 
 ### Plans on Disk
@@ -421,7 +433,9 @@ Plans survive context loss. When a saved plan is required, use:
 quality_reports/plans/YYYY-MM-DD_short-description.md
 ```
 
-Format: Status (DRAFT/APPROVED/COMPLETED), approach, files to modify, verification steps.
+Format: Status (IN PROGRESS/COMPLETED; use DRAFT or APPROVED only when the user
+explicitly requests a plan-approval step), approach, files to modify,
+verification steps.
 
 ### Context Management
 
