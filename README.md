@@ -2,11 +2,14 @@
 
 > **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview) or [OpenAI Codex CLI](https://github.com/openai/codex) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
+A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview), [OpenAI Codex CLI](https://github.com/openai/codex), or [Kimi Code CLI](https://www.kimi.com/code/docs/en/) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
 
-**Both tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
+**All three tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
 `.claude/`; Codex CLI uses an `AGENTS.md` hierarchy plus `.codex/` and
-`.agents/`. The same workflow, quality gates, and skills work with either.
+`.agents/`; Kimi Code CLI uses the same `AGENTS.md` hierarchy, scans
+`.agents/skills/` natively, and mirrors permissions through
+`.kimi-code/config.toml.example`. The same workflow, quality gates, and skills
+work with each.
 
 ---
 
@@ -138,23 +141,23 @@ Codex project configuration lives in:
 - **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
 - **`code/AGENTS.md`** — router for shared and file-type-specific conventions under `code/conventions/`
 - **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
-- **`protocols/skills/*.md`** — canonical shared skill bodies for both tools
+- **`protocols/skills/*.md`** — canonical shared skill bodies for all three tools
 - **`.codex/config.toml`** — model, sandbox, and approval settings
 - **`.codex/rules/default.rules`** — command execution permissions (Starlark format)
 - **`.agents/skills/*/SKILL.md`** — thin Codex wrappers around the shared protocols
 
-### Codex vs Claude Code: Key Differences
+### Claude Code vs Codex CLI vs Kimi Code CLI: Key Differences
 
-| Aspect | Claude Code | Codex CLI |
-|--------|-------------|-----------|
-| Instructions file | `CLAUDE.md` hierarchy | `AGENTS.md` hierarchy |
-| Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) |
-| Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) |
-| Project conventions | `CLAUDE.md` hierarchy plus shared `AGENTS.md` local conventions | `AGENTS.md` hierarchy |
-| Shared skill bodies | `protocols/skills/*.md` | `protocols/skills/*.md` |
-| Agent definitions | `.claude/agents/*.md` | Not supported |
-| Skills | Thin wrappers in `.claude/skills/*/SKILL.md` | Thin wrappers in `.agents/skills/*/SKILL.md` |
-| Hooks | `.claude/hooks/*` | Not supported (use git hooks) |
+| Aspect | Claude Code | Codex CLI | Kimi Code CLI |
+|--------|-------------|-----------|---------------|
+| Instructions file | `CLAUDE.md` hierarchy | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy |
+| Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) | `~/.kimi-code/config.toml` (user-level TOML) |
+| Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) | `.kimi-code/config.toml.example` (merge into user config) |
+| Project conventions | `CLAUDE.md` hierarchy plus shared `AGENTS.md` local conventions | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy |
+| Shared skill bodies | `protocols/skills/*.md` | `protocols/skills/*.md` | `protocols/skills/*.md` |
+| Agent definitions | `.claude/agents/*.md` | Not supported | Built-in subagents; no per-repo agent files |
+| Skills | Thin wrappers in `.claude/skills/*/SKILL.md` | Thin wrappers in `.agents/skills/*/SKILL.md` | Reuses `.agents/skills/` natively |
+| Hooks | `.claude/hooks/*` | Not supported (use git hooks) | User-level `[[hooks]]` in `~/.kimi-code/config.toml` |
 
 ### Known Limitations (Codex)
 
@@ -162,6 +165,50 @@ Codex CLI does not support hooks, so these Claude Code features have no direct e
 - **File protection** (`.claude/hooks/protect-files.sh`) — be careful editing `references.bib` and `settings.json`
 - **Context snapshot before compaction** (`.claude/hooks/pre-compact.sh`) — save context to plans/ manually
 - **Desktop notifications** (`.claude/hooks/notify.sh`) — not available
+
+---
+
+## Quick Start: Kimi Code CLI (5 minutes)
+
+### 1. Fork & Clone
+
+Same as above — fork this repo, clone it, and `cd` into it.
+
+### 2. Start Kimi Code CLI and Paste This Prompt
+
+```bash
+kimi
+```
+
+Then paste the same project-description prompt as the Claude Code section above.
+
+**What this does:** Kimi Code reads the root `AGENTS.md`, then uses
+`code/AGENTS.md` or `latex/AGENTS.md` to load only the conventions needed for
+the files in scope. It also scans `.agents/skills/` natively, so all shared
+skills work without extra setup.
+
+### 3. Configuration
+
+Kimi Code project integration lives in:
+
+- **`AGENTS.md` hierarchy** — same instructions and workflow rules as Codex CLI
+- **`.agents/skills/*/SKILL.md`** — scanned natively; no Kimi-specific wrappers needed
+- **`.kimi-code/config.toml.example`** — permission rules mirroring the Claude and Codex configs
+
+Kimi Code reads permissions, models, and hooks from a single user-level config
+(`~/.kimi-code/config.toml`); there is no project-level config file for these
+settings. Its project-local `.kimi-code/local.toml` only stores workspace
+directories and is gitignored. To mirror the template's command permissions,
+merge the `[[permission.rules]]` blocks from `.kimi-code/config.toml.example`
+into `~/.kimi-code/config.toml`.
+
+### Known Limitations (Kimi)
+
+- **No project-level config for permissions, models, or hooks** — these
+  settings are user-level only; keep them in `~/.kimi-code/config.toml`
+  (`.kimi-code/local.toml` only stores workspace directories)
+- **No tracked skill wrappers of its own** — by design; it reuses
+  `.agents/skills/`
 
 ---
 
@@ -436,6 +483,14 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | `.codex/rules/default.rules` | `.codex/rules/` | Command execution permissions (Starlark) |
 | `.agents/skills/*/SKILL.md` | `.agents/skills/` | 20 thin wrappers around the shared protocols |
 
+### Kimi Code CLI Configuration
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `AGENTS.md` (root) | Project root | Core instructions + workflow rules (shared with Codex CLI) |
+| `.agents/skills/*/SKILL.md` | `.agents/skills/` | Scanned natively; same wrappers Codex uses |
+| `.kimi-code/config.toml.example` | `.kimi-code/` | Example permission rules to merge into `~/.kimi-code/config.toml` |
+
 </details>
 
 ---
@@ -444,7 +499,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 | Tool | Required For | Install |
 |------|-------------|---------|
-| [Claude Code](https://code.claude.com/docs/en/overview) or [Codex CLI](https://github.com/openai/codex) | AI assistant | `npm install -g @anthropic-ai/claude-code` or `npm install -g @openai/codex` |
+| [Claude Code](https://code.claude.com/docs/en/overview), [Codex CLI](https://github.com/openai/codex), or [Kimi Code CLI](https://www.kimi.com/code/docs/en/) | AI assistant | `npm install -g @anthropic-ai/claude-code`, `npm install -g @openai/codex`, or see Kimi Code docs |
 | [GNU Make](https://www.gnu.org/software/make/) | Build system | Pre-installed on macOS/Linux |
 | R | Data analysis, figures | [r-project.org](https://www.r-project.org/) |
 | Julia | Computation, simulation | [julialang.org](https://julialang.org/downloads/) |
@@ -454,9 +509,9 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | [gh CLI](https://cli.github.com/) | PR workflow | `brew install gh` (macOS) |
 | [jq](https://jqlang.github.io/jq/) | Claude Code hooks and `/review-pr` thread parsing | `brew install jq` (macOS) |
 
-Not all tools are needed — install only what your project uses. Either Claude Code or Codex CLI is the only hard requirement.
+Not all tools are needed — install only what your project uses. One of Claude Code, Codex CLI, or Kimi Code CLI is the only hard requirement.
 
-By default, this template does not pin an AI model for either tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), and Claude Code uses the default model configured in your local Claude Code CLI/app session. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
+By default, this template does not pin an AI model for any tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), Claude Code uses the default model configured in your local Claude Code CLI/app session, and Kimi Code CLI uses the default model from `~/.kimi-code/config.toml` or a `kimi -m` override. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
 
 ---
 
@@ -526,21 +581,26 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 ---
 
-## Maintenance: Keeping Claude and Codex in Sync
+## Maintenance: Keeping Claude, Codex, and Kimi in Sync
 
 This repo now uses a three-layer skill architecture:
 
 - **`protocols/skills/`** — canonical shared skill bodies
 - **`.claude/skills/`** — Claude wrappers
-- **`.agents/skills/`** — Codex wrappers
+- **`.agents/skills/`** — Codex wrappers, also scanned natively by Kimi Code CLI
 
 Claude also has a tool-specific execution layer in **`.claude/agents/`** for review-oriented skills. Those agents execute the same shared protocol files rather than owning separate checklists.
+
+Kimi Code CLI needs no wrapper layer of its own: it loads the `AGENTS.md`
+hierarchy and scans `.agents/skills/` out of the box. Its only tracked config
+is `.kimi-code/config.toml.example`, which mirrors the command permissions for
+merging into the user-level `~/.kimi-code/config.toml`.
 
 ### What must stay in sync
 
 | Component | Location | Keep in sync? |
 |-----------|----------|---------------|
-| Command permissions | `.claude/settings.json.example` and `.codex/rules/default.rules` | Yes |
+| Command permissions | `.claude/settings.json.example`, `.codex/rules/default.rules`, and `.kimi-code/config.toml.example` | Yes |
 | Shared skill bodies | `protocols/skills/*.md` | Yes |
 | Skill wrapper names and descriptions | `.claude/skills/*/SKILL.md` and `.agents/skills/*/SKILL.md` | Yes |
 | Project conventions | `CLAUDE.md`, `code/CLAUDE.md`, `latex/CLAUDE.md`, and the `AGENTS.md` hierarchy | Yes |
@@ -548,23 +608,24 @@ Claude also has a tool-specific execution layer in **`.claude/agents/`** for rev
 ### What intentionally differs
 
 - **Frontmatter format.** Claude wrappers use Claude frontmatter; Codex wrappers use Codex frontmatter.
-- **Agent layer.** Claude has `.claude/agents/` for review-oriented execution surfaces. Codex does not.
-- **Hooks.** Claude supports `.claude/hooks/`; Codex does not.
+- **Agent layer.** Claude has `.claude/agents/` for review-oriented execution surfaces. Codex and Kimi do not.
+- **Hooks.** Claude supports `.claude/hooks/`; Codex does not, and Kimi hooks are user-level only.
+- **Config scope.** Codex reads tracked project config in `.codex/`; Kimi reads permissions, models, and hooks only from user-level config (its project-local `.kimi-code/local.toml` stores workspace directories only), so `.kimi-code/config.toml.example` is a template to merge, not a live config.
 
 ### When adding a new skill or convention
 
 1. Add or update the canonical body in `protocols/skills/<name>.md`
 2. Update `.claude/skills/<name>/SKILL.md`
-3. Update `.agents/skills/<name>/SKILL.md`
+3. Update `.agents/skills/<name>/SKILL.md` (Kimi picks this up automatically)
 4. If it is a review-oriented Claude agent surface, update the matching file in `.claude/agents/`
-5. If the skill needs new commands, update both permission config files
+5. If the skill needs new commands, update all three permission config files
 6. Run `make check-template`
 
 ## Template Consistency Checker
 
 Run `make check-template` to validate:
 
-- permission parity between Claude and Codex configs
+- permission parity between Claude, Codex, and Kimi configs
 - shared protocol and wrapper inventory parity
 - wrapper references to `protocols/skills/*.md`
 - Claude review-agent references to the same canonical protocol files
@@ -592,7 +653,8 @@ my-project/
 │   └── skills/                  # Canonical shared skill bodies
 ├── .claude/                     # Claude Code: rules, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex CLI: thin skill wrappers
+├── .agents/                     # Codex/Kimi: thin skill wrappers
+├── .kimi-code/                  # Kimi Code CLI: example permission config
 ├── code/
 │   ├── CLAUDE.md                # Claude instructions for code/
 │   ├── AGENTS.md                # Routes work to applicable conventions

@@ -1,4 +1,4 @@
-# AGENTS.md -- Academic Project Development with Codex CLI
+# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI
 
 <!-- HOW TO USE: Replace [BRACKETED PLACEHOLDERS] with your project info.
      Keep this file under 32KB -- Codex loads it every session.
@@ -41,8 +41,10 @@
 │   ├── config.toml              # Model, sandbox, approval settings
 │   └── rules/
 │       └── default.rules        # Command execution permissions (Starlark)
-├── .agents/                     # Codex skill wrappers
+├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)
 │   └── skills/                  # Skill definitions
+├── .kimi-code/                  # Kimi Code CLI example config
+│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml
 ├── .claude/                     # Claude Code settings, wrappers, agents, hooks
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── AGENTS.md                # Routes to applicable code conventions
@@ -145,6 +147,9 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Canonical shared skill bodies live in `protocols/skills/`
 - `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
 - Review-oriented agents in `.claude/agents/` execute the same canonical protocols
+- Kimi Code CLI loads this `AGENTS.md` hierarchy and scans `.agents/skills/`
+  natively, so it needs no separate skill wrappers; for permission parity, merge
+  `.kimi-code/config.toml.example` into `~/.kimi-code/config.toml`
 
 ---
 

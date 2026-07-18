@@ -39,7 +39,8 @@
 │       └── *.md
 ├── .claude/                     # Claude Code: settings, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex CLI: thin skill wrappers
+├── .agents/                     # Codex/Kimi: thin skill wrappers (both tools scan this)
+├── .kimi-code/                  # Kimi Code CLI: example permission config
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── CLAUDE.md                # Claude entry point for code conventions
 │   ├── AGENTS.md                # Routes by file type
@@ -139,6 +140,8 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Canonical shared skill bodies live in `protocols/skills/`
 - `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
 - Review-oriented agents in `.claude/agents/` execute the same canonical protocols
+- Kimi Code CLI reuses the `.agents/skills/` wrappers natively; its example
+  permission config lives in `.kimi-code/config.toml.example`
 
 ## Claude Loading Model
 
@@ -169,6 +172,16 @@ pdflatex -interaction=nonstopmode manuscript.tex
   plan in `quality_reports/plans/`, read the most recent relevant handoff in
   `quality_reports/handoffs/` if one exists, then inspect
   `git log --oneline -10` and `git diff`
+
+## Kimi Code CLI
+
+Kimi Code CLI is a third supported agent alongside Codex CLI. It reads the same
+`AGENTS.md` hierarchy and scans `.agents/skills/` natively, so the shared
+skills and workflow rules apply without Kimi-specific wrappers. Kimi has no
+project-level config file for permissions, models, or hooks (its project-local
+`.kimi-code/local.toml` only stores workspace directories and is gitignored);
+permission parity comes from merging `.kimi-code/config.toml.example` into the
+user-level `~/.kimi-code/config.toml`.
 
 ## Explicit Codex Handoff
 
