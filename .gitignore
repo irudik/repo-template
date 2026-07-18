@@ -20,6 +20,8 @@ Thumbs.db
 !.codex/rules
 .codex/rules/*
 !.codex/rules/default.rules
+# Kimi Code CLI -- track example config, ignore machine-local state
+.kimi-code/local.toml
 .gemini/
 .tokensave/
 

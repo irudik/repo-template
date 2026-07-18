@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 
@@ -241,6 +242,14 @@ def load_claude_bash_permissions() -> set[str]:
     return command_prefixes
 
 
+def load_claude_permission_patterns() -> set[str]:
+    """Return the complete allow-list patterns from the Claude settings example."""
+    settings_path = REPO_ROOT / ".claude/settings.json.example"
+    settings = json.loads(settings_path.read_text())
+
+    return set(settings["permissions"]["allow"])
+
+
 def load_codex_prefix_rules() -> set[str]:
     rules_path = REPO_ROOT / ".codex/rules/default.rules"
     pattern = re.compile(r'prefix_rule\(pattern=\["([^"]+)"\]')
@@ -252,6 +261,30 @@ def load_codex_prefix_rules() -> set[str]:
             command_prefixes.add(match.group(1))
 
     return command_prefixes
+
+
+def load_kimi_permission_patterns(errors: list[str]) -> tuple[set[str], set[str]]:
+    """Return (allowed, denied) permission patterns from the Kimi example config."""
+    config_path = REPO_ROOT / ".kimi-code/config.toml.example"
+    allowed: set[str] = set()
+    denied: set[str] = set()
+
+    try:
+        config = tomllib.loads(config_path.read_text())
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        errors.append(f".kimi-code/config.toml.example is not valid TOML: {exc}")
+        return allowed, denied
+
+    for rule in config.get("permission", {}).get("rules", []):
+        rule_pattern = str(rule.get("pattern", ""))
+        if not rule_pattern:
+            continue
+        if rule.get("decision") != "allow":
+            denied.add(rule_pattern)
+            continue
+        allowed.add(rule_pattern)
+
+    return allowed, denied
 
 
 def collect_skill_names(base_dir: Path) -> set[str]:
@@ -476,6 +509,14 @@ def main() -> int:
 
     claude_permissions = load_claude_bash_permissions()
     codex_permissions = load_codex_prefix_rules()
+    claude_all_patterns = load_claude_permission_patterns()
+    kimi_allowed_patterns, kimi_denied_patterns = load_kimi_permission_patterns(errors)
+    bash_rule = re.compile(r"Bash\((.+) \*\)")
+    kimi_permissions = {
+        match.group(1)
+        for match in (bash_rule.fullmatch(p) for p in kimi_allowed_patterns)
+        if match
+    }
 
     only_in_claude = sorted(claude_permissions - codex_permissions)
     only_in_codex = sorted(codex_permissions - claude_permissions)
@@ -484,6 +525,31 @@ def main() -> int:
         errors.append(f"Commands allowed only in Claude config: {only_in_claude}")
     if only_in_codex:
         errors.append(f"Commands allowed only in Codex config: {only_in_codex}")
+
+    only_in_kimi = sorted(kimi_permissions - claude_permissions - codex_permissions)
+    missing_in_kimi = sorted((claude_permissions | codex_permissions) - kimi_permissions)
+
+    if only_in_kimi:
+        errors.append(f"Commands allowed only in Kimi config: {only_in_kimi}")
+    if missing_in_kimi:
+        errors.append(f"Commands missing from Kimi config: {missing_in_kimi}")
+
+    only_in_claude_patterns = sorted(claude_all_patterns - kimi_allowed_patterns)
+    only_in_kimi_patterns = sorted(kimi_allowed_patterns - claude_all_patterns)
+    denied_in_kimi = sorted(kimi_denied_patterns & claude_all_patterns)
+
+    if only_in_claude_patterns:
+        errors.append(
+            f"Permissions allowed only in Claude config: {only_in_claude_patterns}"
+        )
+    if only_in_kimi_patterns:
+        errors.append(
+            f"Permissions allowed only in Kimi config: {only_in_kimi_patterns}"
+        )
+    if denied_in_kimi:
+        errors.append(
+            f"Permissions allowed in Claude but denied in Kimi config: {denied_in_kimi}"
+        )
 
     protocol_names = collect_protocol_names()
     claude_skill_names = collect_skill_names(REPO_ROOT / ".claude/skills")
@@ -528,7 +594,7 @@ def main() -> int:
     print(f"- Claude skill wrappers: {len(claude_skill_names)}")
     print(f"- Codex skill wrappers: {len(codex_skill_names)}")
     print(f"- Reviewed agent mappings: {len(REVIEW_AGENT_PROTOCOLS)}")
-    print(f"- Allowed command families: {len(claude_permissions)}")
+    print(f"- Allowed command families: {len(claude_permissions)} (Claude/Codex/Kimi in parity)")
     return 0
 
 
