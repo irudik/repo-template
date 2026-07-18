@@ -159,7 +159,8 @@ pdflatex -interaction=nonstopmode manuscript.tex
 
 - Follow the risk-based workflow in `AGENTS.md`: routine work needs no plan
   artifact; substantive single-module work needs a brief in-conversation plan;
-  high-risk, cross-cutting, numerical, or pre-merge work needs a saved plan and
+  high-risk, cross-cutting, numerical, or pre-merge work needs a saved plan
+  followed by automatic execution unless the user explicitly requests plan
   approval
 - Prefer automatic compression while continuing the same task on the same
   branch. Start a fresh session, or use `/clear`, when changing task or branch
@@ -186,15 +187,16 @@ user-level `~/.kimi-code/config.toml`.
 ## Explicit Codex Handoff
 
 Delegate execution to Codex ONLY if the user explicitly asks during the original
-task, planning prompt, or approval step, using phrasing such as "hand this to
+task or planning exchange, using phrasing such as "hand this to
 Codex", "delegate execution to Codex", "Codex executes", or a `[codex]` marker
 on plan steps. Otherwise follow the normal Claude flow.
 
 During planning, record a `Codex Handoff` section with Codex-owned steps, the
 saved plan path, acceptance criteria, expected verification commands, no-commit
-default, and cautious handling for `data/` and `output/` symlinks. After plan
-approval, send the approved plan to the `codex:codex-rescue` subagent in
-write-capable mode.
+default, and cautious handling for `data/` and `output/` symlinks. After the
+plan is saved, send it to the `codex:codex-rescue` subagent in write-capable
+mode. Wait for plan approval first only when the user explicitly requested
+that step.
 
 Codex is the implementer for both the feature/fix and its verification. Codex
 adds or updates the verification code needed to make the acceptance criteria
@@ -226,7 +228,8 @@ code or rerun full verification unless the user explicitly asks.
 
 ## Plan-First Notes
 
-For manuscript or slide tasks, ask during planning whether to include these optional review passes:
+For manuscript or slide tasks, include these optional review passes only when
+the user requests them; do not pause to ask during planning:
 - `domain-reviewer` for substantive domain review (identification, derivations, citations, code-theory alignment)
 - `proofreader` for grammar, typos, overflow, and consistency
 

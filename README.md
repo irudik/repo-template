@@ -43,16 +43,17 @@ Then paste the following, filling in your project details:
 >
 > After that, use the risk-based workflow: implement and test routine changes
 > directly; use a brief in-conversation plan for substantive single-module
-> work; and save a plan for approval before high-risk, cross-cutting,
-> numerical, or pre-merge work.
+> work; and save a plan before high-risk, cross-cutting, numerical, or
+> pre-merge work, then continue automatically unless I explicitly request plan
+> approval.
 >
-> Enter plan mode and start by adapting the workflow configuration for this project.
+> Start adapting the workflow configuration for this project.
 
 **Optional for Claude Code + Codex plugin users:** Add this to the prompt when
 you want Claude to plan but Codex to execute and verify:
 
 > During planning, mark the implementation and verification steps that Codex
-> should own with `[codex]`. After I approve the saved plan, hand those steps to
+> should own with `[codex]`. After saving the plan, hand those steps to
 > Codex through the Codex plugin
 > (`codex:codex-rescue`) in write-capable mode. Codex should implement the
 > changes, add or update the tests/checks needed to verify them, run that
@@ -274,15 +275,16 @@ The workflow matches process to the consequences of a wrong result:
 2. **Substantive single-module change:** give a brief in-conversation plan,
    implement, test, and use one targeted review only when independence adds
    material value.
-3. **High-risk, cross-cutting, numerical, or pre-merge work:** save a plan for
-   approval, implement, verify, run one independent review, and allow at most
-   one fix/re-review by default.
+3. **High-risk, cross-cutting, numerical, or pre-merge work:** save a plan,
+   continue automatically, implement, verify, run one independent review, and
+   allow at most one fix/re-review by default. Pause for plan approval only
+   when the user explicitly requests it.
 4. **Full multi-agent loop:** use only when explicitly requested or when
    failures remain genuinely ambiguous after normal diagnosis.
 
 Tests remain required at every level. Session logs and handoffs preserve
-context and major decisions; they are not mandatory stage paperwork. Saying
-"just do it" skips an approval pause but does not authorize a commit, push,
+context and major decisions; they are not mandatory stage paperwork. Plan
+approval is opt-in; automatic execution does not authorize a commit, push,
 merge, destructive operation, or broader scope.
 
 When a review is useful, choose one reviewer for the main risk: the matching
@@ -305,14 +307,14 @@ original task or planning prompt with language such as "hand this to Codex",
 `[codex]`.
 
 For those marked steps, Claude records the Codex-owned scope and acceptance
-criteria in the saved plan. After approval, Claude hands the plan to
+criteria in the saved plan. After saving it, Claude hands the plan to
 `codex:codex-rescue`; Codex implements the feature/fix and implements the
 verification needed to prove it, such as unit tests, example inputs, Makefile
 targets, checksum scripts, or data-property checks.
 
 Codex runs in the same checkout and follows the root and nested `AGENTS.md`
 instructions, including the routed code conventions and risk-based verification
-policy. The approved handoff supplies the narrower task scope and acceptance
+policy. The recorded handoff supplies the narrower task scope and acceptance
 criteria. Codex then self-reviews its diff and verification design, runs the
 tests/builds/checks, fixes obvious gaps, and reports the evidence.
 
