@@ -198,6 +198,20 @@ plan is saved, send it to the `codex:codex-rescue` subagent in write-capable
 mode. Wait for plan approval first only when the user explicitly requested
 that step.
 
+When a Codex handoff runs as a background job, the `codex:codex-rescue`
+subagent returns only a job ID within seconds while Codex keeps running
+detached, and Claude does not execute again until something wakes it -- so a
+silently finished job can sit unreported for a long time. To close this gap,
+immediately after dispatch start a background watcher that blocks on the
+plugin's own status contract (`codex-companion status <jobId> --wait`, bounded
+by a wall-clock timeout) rather than scraping the session log. When the watcher
+exits, its completion re-invokes Claude, which then reports the result
+unprompted; if the timeout is hit first, report that the job is still running
+and how to poll it (`/codex:status <jobId>`). This watcher compensates for the
+plugin's fire-and-forget dispatch; retire it if the Codex plugin adds a native
+completion signal. A foreground/`--wait` handoff already blocks then wakes
+Claude on its own and needs no watcher.
+
 Codex is the implementer for both the feature/fix and its verification. Codex
 adds or updates the verification code needed to make the acceptance criteria
 checkable, such as unit tests, example inputs, Makefile targets, data-property checks,
