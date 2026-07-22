@@ -1,6 +1,7 @@
 # Review LaTeX Files Protocol
 
-Run the LaTeX review protocol focused on hardcoded numeric results.
+Run the LaTeX review protocol for changed dynamic values and hardcoded numeric
+results.
 
 ## Steps
 
@@ -21,8 +22,9 @@ Run the LaTeX review protocol focused on hardcoded numeric results.
 
 ## Review Protocol
 
-Detect hardcoded numeric results in LaTeX prose and, when possible, replace
-them with dynamically generated macros from the code pipeline.
+Review the prose surrounding changed dynamic values, detect hardcoded numeric
+results, and replace hardcoded values with generated macros when the source is
+unambiguous.
 
 ### Background
 
@@ -36,15 +38,72 @@ files containing `\newcommand` definitions in `output/numbers/`. The
 % a U.S. carbon tariff raises \$\revenueEstimate\ billion
 ```
 
-### Phase 1: Detection
+Keep generated macros value-only. Review the actual prose when a value changes;
+do not replace this review with generated sentence fragments or a general
+article-selection function.
+
+### Phase 1: Build the Dynamic Value Registry
 
 #### Step 1: Build the Dynamic Value Registry
 
 1. Glob for `output/numbers/*.txt`.
 2. Read all `\input{...}` lines in the relevant `.tex` files.
-3. Extract `\newcommand` definitions and build a macro registry.
+3. Extract `\newcommand` definitions and build a registry containing each
+   macro's source file and rendered value.
 
-#### Step 2: Scan Prose Sections
+#### Step 2: Identify Changed Macro Values
+
+1. When a task can rebuild `output/numbers/`, record the registry before
+   running the producing scripts and build it again afterward.
+2. Compare macro contents, not file modification times. Treat added, removed,
+   or textually changed definitions as changes; ignore identical regenerations.
+3. If the protocol starts after a refresh, use a reliable version-control
+   baseline when one exists.
+4. If no reliable earlier registry exists, state that limitation and treat all
+   macros in regenerated files as requiring contextual review.
+
+### Phase 2: Review Changed Dynamic Values in Context
+
+#### Step 1: Find Every Prose Use
+
+Review every prose occurrence of each changed macro in all affected TeX
+documents, including manuscripts, slides, captions, and notes. Search for
+direct uses and follow aliases or prose wrapper definitions that contain the
+changed macro. Unless the user explicitly limits scope, do not stop after the
+first document or occurrence.
+
+#### Step 2: Review the Surrounding Claim
+
+Inspect the complete sentence containing each use. Expand to the surrounding
+paragraph, slide, caption, or note when the interpretation depends on nearby
+claims. Check:
+
+- Articles and other determiners, based on the complete spoken phrase rather
+  than the number alone
+- Singular and plural agreement
+- Sign, increase/decrease language, and direction of change
+- Units, scales, currency, percent, and percentage points
+- Comparisons, orderings, ranges, and threshold statements
+- Qualitative descriptions such as `small`, `large`, `roughly`, `nearly`,
+  `more than doubles`, and claims about the largest or smallest result
+
+Account for intervening prose. For example, `a roughly 8\% change` and
+`an approximately 8\% change` cannot be checked from the numeric macro alone.
+
+#### Step 3: Decide and Verify
+
+- Fix grammatical or substantive wording only when the correction is
+  unambiguous from the generated value and surrounding claim.
+- Escalate when the intended interpretation is unclear or the new value may
+  require a substantive rewrite.
+- Recompile every affected top-level document after a fix and repeat the
+  contextual check for the edited occurrence.
+- Record the old and new macro values, every location reviewed, each fix, and
+  each unresolved issue.
+
+### Phase 3: Detect Hardcoded Numeric Results
+
+#### Step 1: Scan Prose Sections
 
 Determine the document type before flagging issues:
 
@@ -66,7 +125,7 @@ Skip lines inside:
 - Layout commands such as `\vspace`, `\hspace`, `\setcounter`, and
   `\setlength`
 
-#### Step 3: Classify Numbers
+#### Step 2: Classify Numbers
 
 Always acceptable:
 
@@ -87,12 +146,12 @@ Suspicious:
 For slides, only flag these when the surrounding text indicates that the number
 is a substantive result rather than presentational scaffolding.
 
-#### Step 4: Cross-Reference Against the Registry
+#### Step 3: Cross-Reference Against the Registry
 
 - If an existing macro matches approximately, flag a Critical issue.
 - Otherwise, proceed to source tracing.
 
-### Phase 2: Source Tracing and Auto-Fix
+### Phase 4: Source Tracing and Auto-Fix
 
 #### Step 1: Trace the Source
 
@@ -122,6 +181,9 @@ hardcoded-number detection is informational only.
 
 Include:
 
+- Dynamic-value baseline used, or the absence of a reliable baseline
+- Changed macros with old and new values
+- Every changed-macro occurrence reviewed and its disposition
 - Auto-fixed items
 - Escalated issues
 - Severity classification

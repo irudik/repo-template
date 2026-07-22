@@ -132,7 +132,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/review-julia [file]` | Julia code quality review |
 | `/review-stata [file]` | Stata code quality review |
 | `/review-matlab [file]` | MATLAB code quality review |
-| `/review-tex [file]` | LaTeX hardcoded-number review for manuscripts and slides |
+| `/review-tex [file]` | LaTeX hardcoded-number and updated-result prose review |
 | `/review-makefile [file]` | Makefile conventions review |
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
 | `/review-domain [file]` | Substantive domain review (identification, citations, code-theory) -- opt-in |
@@ -579,12 +579,33 @@ decisions. Do not perform a scoring exercise after every routine edit.
 - Any required build must exit successfully before proceeding to the
   file-specific checks below.
 
+### Dynamic Number Context Review
+
+When a task can rebuild files in `output/numbers/`, record the current
+`\newcommand` definitions before running the producing scripts. After the
+rebuild, compare macro contents rather than file modification times.
+
+Whenever a generated numeric macro changes value, review every prose
+occurrence of that macro in all affected TeX documents. Inspect the containing
+sentence and enough nearby context to assess the claim. Check articles,
+singular and plural agreement, direction and sign language, units, comparisons,
+thresholds, and qualitative descriptions of magnitude. Fix unambiguous prose
+problems, flag substantive ambiguity, and recompile every affected document.
+Report the old and new values and every location reviewed. A regeneration with
+identical macro contents requires no contextual review.
+
+If no reliable pre-rebuild definitions are available, state that limitation
+and review every prose use of the macros in the regenerated files. Keep
+generated macros value-only; do not move surrounding prose into generated
+files or rely on a general article-selection function to replace contextual
+review.
+
 ### For LaTeX Manuscript:
 1. Compile with `make -C latex` (preferred). Check for errors
 2. Verify PDF was generated with non-zero size
 3. Check for overfull hbox warnings
 4. Check for undefined citations
-5. Run `/review-tex` to check for hardcoded numbers in prose
+5. Run `/review-tex` to check hardcoded numbers and changed-value prose contexts
 6. Verify all dynamic number `\input{...}` files exist in `output/numbers/`
 
 ### For R Scripts:
@@ -631,6 +652,7 @@ decisions. Do not perform a scoring exercise after every routine edit.
 [ ] Output file created successfully
 [ ] No compilation/render errors
 [ ] Images/figures display correctly
+[ ] Changed dynamic-number contexts reviewed (when applicable)
 [ ] Reported results to user
 ```
 

@@ -18,7 +18,7 @@ After any LaTeX change:
 3. Verify PDF was generated with non-zero size
 4. Check for overfull hbox warnings
 5. Check for undefined citations
-6. Run the `/review-tex` skill to check for hardcoded numbers in prose
+6. Run `/review-tex` to check hardcoded numbers and changed-value prose contexts
 7. Verify all dynamic number `\input{...}` files exist in `output/numbers/` and are listed in `latex/Makefile` SOURCES
 
 ---
@@ -91,6 +91,20 @@ The pipeline keeps computed results out of `.tex` source by writing `\newcommand
 3. Add `\input{filename.txt}` in the manuscript preamble
 4. Use the macro in prose
 5. Run `make` -- the code pipeline writes the file, then pdflatex picks it up
+
+### Reviewing Updated Values
+
+Before a task rebuilds `output/numbers/`, record the current macro definitions.
+Compare their contents after the rebuild. Whenever a generated numeric macro
+changes value, review every prose occurrence in all affected TeX documents,
+including captions, notes, and slides. Inspect the containing sentence and
+enough nearby context to check articles, singular and plural agreement,
+direction, units, comparisons, thresholds, and descriptions of magnitude.
+Fix unambiguous wording, flag substantive ambiguity, and recompile affected
+documents. Identical regenerated definitions do not require this review.
+
+Keep generated macros value-only. Do not replace contextual prose review with
+a general article-selection function.
 
 The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (`output/tables/`).
 

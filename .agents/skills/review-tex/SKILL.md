@@ -1,15 +1,16 @@
 ---
 name: review-tex
-description: Run the LaTeX review protocol on manuscript and slides. Detects hardcoded numeric results, distinguishes manuscript from slide contexts, and auto-fixes unambiguous values when the source is clear.
+description: Run the LaTeX review protocol on manuscripts and slides. Reviews prose around changed dynamic values, detects hardcoded numeric results, and auto-fixes unambiguous issues.
 workflow_stage: review
 compatibility:
   - codex
   - claude-code
-version: 1.0.0
+version: 1.1.0
 tags:
   - latex
   - slides
   - hardcoded-numbers
+  - dynamic-numbers
   - manuscript
 ---
 
