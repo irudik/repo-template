@@ -48,6 +48,7 @@ WORKFLOW_REQUIRED_SNIPPETS = {
         "Use a full multi-agent loop only when the user explicitly requests it",
         "Documentation or instruction-only changes do not require a Make dry run.",
         "Do not perform a scoring exercise after every routine edit.",
+        "Whenever a generated numeric macro changes value, review every prose",
         "pause until the user says\n  whether to continue in the current session",
     ),
     "CLAUDE.md": (
@@ -56,12 +57,18 @@ WORKFLOW_REQUIRED_SNIPPETS = {
         "pause until the user says whether\n  to continue in the current session",
         "Allow one\nCodex fix and one Claude re-review by default.",
         "Do not pin Claude's `effortLevel` or model in tracked Claude project",
+        "when a generated numeric macro changes value,",
     ),
     "README.md": (
         "applies the risk-based workflow",
         "choose at most one **opt-in review pass**",
         "Do not score every routine edit.",
         "Prefer user-level configuration or explicit session/CLI overrides",
+        "When an agent-driven build can rewrite `output/numbers/`",
+    ),
+    "latex/AGENTS.md": (
+        "Whenever a generated numeric macro",
+        "Keep generated macros value-only.",
     ),
     "code/conventions/makefile.md": (
         "When a Makefile or dependency declaration changes, run a scoped `make -n`",
@@ -123,6 +130,11 @@ PROTOCOL_REQUIRED_SNIPPETS = {
     "protocols/skills/review-makefile.md": (
         "`.R`, `.jl`, `.do`, `.ado`, and `.m`",
         "`$(STATA) -b do $<`",
+    ),
+    "protocols/skills/review-tex.md": (
+        "Compare macro contents, not file modification times.",
+        "Review every prose occurrence of each changed macro",
+        "Keep generated macros value-only.",
     ),
 }
 

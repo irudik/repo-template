@@ -417,7 +417,7 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
 | `domain-reviewer` | Substantive review for manuscripts, slides, and teaching materials |
 | `proofreader` | Academic proofreading for manuscripts, slides, and notes |
-| `tex-reviewer` | LaTeX hardcoded-number review for manuscripts and slides |
+| `tex-reviewer` | LaTeX hardcoded-number and updated-result prose review |
 | `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
 
 ### Key Skills (`.claude/skills/`)
@@ -438,7 +438,7 @@ Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles
 | `/review-julia [file]` | Julia code quality review via julia-reviewer agent |
 | `/review-stata [file]` | Stata code quality review via stata-reviewer agent |
 | `/review-matlab [file]` | MATLAB code quality review via matlab-reviewer agent |
-| `/review-tex [file]` | LaTeX hardcoded-number review for manuscripts and slides via tex-reviewer agent |
+| `/review-tex [file]` | LaTeX hardcoded-number and updated-result prose review via tex-reviewer agent |
 | `/review-makefile [file]` | Makefile conventions review via makefile-reviewer agent |
 | `/review-domain [file]` | Opt-in substantive domain review via domain-reviewer agent |
 | `/proofread [file]` | Opt-in proofreading review via proofreader agent |
@@ -578,6 +578,21 @@ The pipeline keeps computed results out of your `.tex` source by writing `\newco
 3. Add `\input{filename.txt}` in the manuscript preamble (or wherever the macro is first used)
 4. Use the macro (`\revenueEstimate`) in prose
 5. Run `make` — the code pipeline writes the file, then `pdflatex` picks it up
+
+### Reviewing updated values
+
+When an agent-driven build can rewrite `output/numbers/`, the agent records the
+current macro definitions before rebuilding and compares their contents
+afterward. If a macro value changes, the agent reviews every prose occurrence
+in all affected TeX documents for grammar and substantive consistency, fixes
+unambiguous wording, and recompiles the affected documents. Regenerating an
+identical definition does not trigger this review.
+
+This review considers the full sentence and nearby context, including articles,
+singular and plural agreement, sign and direction language, units, comparisons,
+thresholds, and descriptions of magnitude. Generated macros remain values
+rather than complete prose phrases; contextual review is not replaced by a
+general article-selection function.
 
 The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (`output/tables/`), so `\includegraphics{plot.pdf}` and `\input{reg_table.tex}` also work without path prefixes.
 

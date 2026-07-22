@@ -23,6 +23,8 @@
   do not score every routine edit
 - **Template hygiene** -- in this template repo, remove branch-specific files under `quality_reports/` before merging to `main`; keep `main` fresh
 - **Structured [LEARN] tags** -- when corrected or when you discover a durable lesson, save a structured `[LEARN:category]` entry to `MEMORY.md`
+- **Dynamic result context** -- when a generated numeric macro changes value,
+  review every prose use under the changed-value workflow in `AGENTS.md`
 
 ---
 
@@ -125,7 +127,7 @@ pdflatex -interaction=nonstopmode manuscript.tex
 | `/review-julia [file]` | Julia code quality review |
 | `/review-stata [file]` | Stata code quality review |
 | `/review-matlab [file]` | MATLAB code quality review |
-| `/review-tex [file]` | LaTeX hardcoded-number review for manuscripts and slides |
+| `/review-tex [file]` | LaTeX hardcoded-number and updated-result prose review |
 | `/review-makefile [file]` | Makefile conventions review |
 | `/review-comments [path]` | Clean up comments, docstrings, dead code |
 | `/review-domain [file]` | Substantive domain review (identification, citations, code-theory) — opt-in |

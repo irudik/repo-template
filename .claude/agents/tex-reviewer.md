@@ -1,6 +1,6 @@
 ---
 name: tex-reviewer
-description: LaTeX reviewer that executes the canonical shared review-tex protocol, including auto-fix when the source is unambiguous.
+description: LaTeX reviewer for changed dynamic-value prose, hardcoded results, and unambiguous auto-fixes under the canonical protocol.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---

@@ -1,6 +1,6 @@
 ---
 name: review-tex
-description: Run the LaTeX review protocol on manuscript and slides. Detects hardcoded numeric results, distinguishes manuscript from slide contexts, and auto-fixes unambiguous values when the source is clear.
+description: Run the LaTeX review protocol on manuscripts and slides. Reviews prose around changed dynamic values, detects hardcoded numeric results, and auto-fixes unambiguous issues.
 disable-model-invocation: true
 argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
