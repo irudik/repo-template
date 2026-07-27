@@ -19,6 +19,9 @@
 - **Readable research code** -- prefer clear, reproducible, prose-like code
   over clever compactness; code should be easy for coauthors, referees, and
   future selves to audit
+- **Plain-language writing** -- all prose (replies, issues, reports,
+  comments) follows `protocols/writing.md`; write for an economist coauthor,
+  never in programmer jargon
 - **Single source of truth** -- `latex/manuscript.tex` is authoritative for the paper
 - **Quality gates** -- apply the scoring rubric before commit or merge when it
   adds value; do not score every routine edit
@@ -34,7 +37,8 @@
 ├── CLAUDE.md                    # Claude Code instructions
 ├── MEMORY.md                    # Persistent [LEARN] entries across sessions
 ├── Makefile                     # Root -- delegates to code/ and latex/
-├── protocols/                   # Canonical shared skill bodies
+├── protocols/                   # Shared writing guide and skill bodies
+│   ├── writing.md
 │   └── skills/
 │       └── *.md
 ├── .codex/                      # Codex CLI config and rules
@@ -144,9 +148,9 @@ pdflatex -interaction=nonstopmode manuscript.tex
 
 ## Shared Skill Protocols
 
-- Canonical shared skill bodies live in `protocols/skills/`
+- Shared skill bodies live in `protocols/skills/`
 - `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
-- Review-oriented agents in `.claude/agents/` execute the same canonical protocols
+- Review-oriented agents in `.claude/agents/` execute the same shared protocols
 - Kimi Code CLI loads this `AGENTS.md` hierarchy and scans `.agents/skills/`
   natively, so it needs no separate skill wrappers; for permission parity, merge
   `.kimi-code/config.toml.example` into `~/.kimi-code/config.toml`

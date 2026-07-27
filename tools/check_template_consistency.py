@@ -231,6 +231,19 @@ CLAUDE_WRAPPER_REQUIRED_SNIPPETS = {
     "latex/CLAUDE.md": ("[AGENTS.md](./AGENTS.md)", "source of truth"),
 }
 
+WRITING_GUIDE_REQUIRED_SNIPPETS = {
+    "protocols/writing.md": (
+        "## The Audience Test",
+        "## Banned Programmer Vocabulary",
+        "| sanity check |",
+    ),
+    "CLAUDE.md": ("protocols/writing.md",),
+    "AGENTS.md": ("protocols/writing.md",),
+    "latex/AGENTS.md": ("protocols/writing.md",),
+    "code/conventions/shared.md": ("protocols/writing.md",),
+    "protocols/skills/review-comments.md": ("protocols/writing.md",),
+}
+
 LEGACY_RULE_REFERENCE_GLOBS = (
     "README.md",
     "CLAUDE.md",
@@ -498,6 +511,21 @@ def check_claude_wrappers(errors: list[str]) -> None:
                 )
 
 
+def check_writing_guide(errors: list[str]) -> None:
+    for relative_path, snippets in WRITING_GUIDE_REQUIRED_SNIPPETS.items():
+        file_path = REPO_ROOT / relative_path
+        if not file_path.is_file():
+            errors.append(f"{relative_path} is missing")
+            continue
+
+        file_text = file_path.read_text()
+        for snippet in snippets:
+            if snippet not in file_text:
+                errors.append(
+                    f"{relative_path} is missing required writing-guide text: {snippet!r}"
+                )
+
+
 def check_no_legacy_rule_refs(errors: list[str]) -> None:
     for pattern in LEGACY_RULE_REFERENCE_GLOBS:
         for file_path in REPO_ROOT.glob(pattern):
@@ -592,6 +620,7 @@ def main() -> int:
     check_protocol_required_snippets(errors)
     check_path_model_snippets(errors)
     check_claude_wrappers(errors)
+    check_writing_guide(errors)
     check_no_legacy_rule_refs(errors)
     check_claude_rules_dir(errors)
 

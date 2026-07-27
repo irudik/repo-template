@@ -114,3 +114,12 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 - Reference labels as "equation \eqref{...}" or "equations \eqref{...}--\eqref{...}" when grammatically appropriate
 - Avoid bare "\eqref{...}" in running text
+- Follow the plain-language rules in `protocols/writing.md`: no programmer
+  jargon, no AI-inflated vocabulary, and no references to code, file paths,
+  or pipeline stages in manuscript or slide prose -- describe the economics
+  and the mathematics
+- Write in first person active voice ("we estimate", "we find") with no
+  contractions; state the claim first and qualify second
+- Report magnitudes with units and, where possible, a benchmark a reader can
+  anchor on (dollar values with a base year, effect sizes against familiar
+  interventions)

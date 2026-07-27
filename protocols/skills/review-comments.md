@@ -42,7 +42,8 @@ and align documentation with code reality.
 - Plain language: name the object or task directly. Prefer `test setup`,
   `example input`, `initial structure`, `main specification`, or `earlier
   method` to programmer jargon or software-style shorthand. Explain any precise
-  software term in plain language in the same comment or docstring.
+  software term in plain language in the same comment or docstring. The full
+  banned-term and replacement table is in `protocols/writing.md`.
 - Comments self-contained: strip references to issues, commit hashes, pull
   requests, or Claude/Codex conversations
 - Do not prefix with "Economic intuition:"
