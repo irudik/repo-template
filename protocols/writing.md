@@ -12,14 +12,18 @@ Use plain language or terminology standard in modern economics. A term fails
 this test if an economics PhD would not understand it immediately from
 ordinary research practice. Name the object or task directly. If a precise
 software term is unavoidable, explain it in plain language in the same
-sentence or comment.
+sentence or comment. When unsure whether a term passes, rewrite it.
+
+This test is the rule. The banned-vocabulary table below only records terms
+that have already been ruled on; a term that fails the test must be
+rewritten whether or not it appears in the table.
 
 ## Banned Programmer Vocabulary
 
-Rewrite these wherever they appear in prose. Never rename identifiers (file
-names, function names, make targets, variables, column names) to satisfy
-this rule; when prose must name an identifier, put the exact name in
-backticks.
+Common offenders and their replacements -- not an exhaustive list; the
+audience test governs. Never rename identifiers (file names, function
+names, make targets, variables, column names) to satisfy this rule; when
+prose must name an identifier, put the exact name in backticks.
 
 | Avoid | Write instead (adapt to context) |
 |---|---|
@@ -50,10 +54,11 @@ backticks.
 | deprecated | superseded / retired |
 | wire up / plumbing | connect / underlying setup |
 
-Acceptable without rewriting: cache, wrapper, stale, parse, dry run,
-upstream/downstream (including the input-output sense), helper, manifest,
-source of truth, API, side effect, regex, hardcoded, checksum, driver,
-runner, edge case, alias, fail fast.
+Acceptable without rewriting (explicitly ruled on): cache, wrapper, stale,
+parse, dry run, upstream/downstream (including the input-output sense),
+helper, manifest, source of truth, API, side effect, regex, hardcoded,
+checksum, driver, runner, edge case, alias, fail fast. Terms on neither
+list get the audience test, not the benefit of the doubt.
 
 After replacing a term, re-read the sentence and smooth it. The goal is
 prose an economist reads naturally, not word swaps.
