@@ -48,7 +48,8 @@ language-specific convention gives a narrower rule.
   `canonical`, and `legacy`. Write `test setup`, `example input`, `initial
   structure`, `main specification`, or `earlier method` instead. Name the
   object or task directly. If a precise software term must appear, explain it
-  in plain language in the same comment or docstring.
+  in plain language in the same comment or docstring. The full banned-term
+  and replacement table is in `protocols/writing.md`.
 - Comments and docstrings must be self-contained. Never reference issue or
   ticket numbers, commit hashes, pull requests, or conversations with Claude or
   Codex. The reader is a coauthor, referee, or future self without access to the
