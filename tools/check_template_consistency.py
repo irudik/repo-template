@@ -32,11 +32,11 @@ REVIEW_AGENT_PROTOCOLS = {
 }
 
 CODE_CONVENTION_ROUTES = {
-    "r-reviewer": "code/conventions/r.md",
-    "julia-reviewer": "code/conventions/julia.md",
-    "stata-reviewer": "code/conventions/stata.md",
-    "matlab-reviewer": "code/conventions/matlab.md",
-    "makefile-reviewer": "code/conventions/makefile.md",
+    "r-reviewer": "protocols/conventions/r.md",
+    "julia-reviewer": "protocols/conventions/julia.md",
+    "stata-reviewer": "protocols/conventions/stata.md",
+    "matlab-reviewer": "protocols/conventions/matlab.md",
+    "makefile-reviewer": "protocols/conventions/makefile.md",
 }
 
 WORKFLOW_REQUIRED_SNIPPETS = {
@@ -70,7 +70,7 @@ WORKFLOW_REQUIRED_SNIPPETS = {
         "Whenever a generated numeric macro",
         "Keep generated macros value-only.",
     ),
-    "code/conventions/makefile.md": (
+    "protocols/conventions/makefile.md": (
         "When a Makefile or dependency declaration changes, run a scoped `make -n`",
     ),
 }
@@ -85,7 +85,7 @@ WORKFLOW_FORBIDDEN_PATTERNS = {
         re.compile(r"log-reminder\.py"),
     ),
     ".claude/settings.json.example": (re.compile(r"log-reminder\.py"),),
-    "code/conventions/makefile.md": (
+    "protocols/conventions/makefile.md": (
         re.compile(r"make -n.*must produce a valid plan", re.IGNORECASE),
     ),
 }
@@ -153,36 +153,36 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
         "`make -C path` changes Make's working directory",
     ),
     "code/AGENTS.md": (
-        "conventions/shared.md",
-        "conventions/r.md",
-        "conventions/julia.md",
-        "conventions/stata.md",
-        "conventions/matlab.md",
-        "conventions/makefile.md",
+        "../protocols/conventions/shared.md",
+        "../protocols/conventions/r.md",
+        "../protocols/conventions/julia.md",
+        "../protocols/conventions/stata.md",
+        "../protocols/conventions/matlab.md",
+        "../protocols/conventions/makefile.md",
     ),
-    "code/conventions/shared.md": (
+    "protocols/conventions/shared.md": (
         "paths in task-group Makefiles",
         "the scripts they run are relative to the task-group directory",
         "Do not add a `PROJECT_ROOT` variable merely",
         "Use forward slashes in any literal filepath",
     ),
-    "code/conventions/r.md": (
+    "protocols/conventions/r.md": (
         "script working directory",
         'output_root = file.path("..", "..", "output")',
     ),
-    "code/conventions/julia.md": (
+    "protocols/conventions/julia.md": (
         "script working directory",
         'output_root = joinpath("..", "..", "output")',
     ),
-    "code/conventions/stata.md": (
+    "protocols/conventions/stata.md": (
         "script working directory",
         'local output_root "../../output"',
     ),
-    "code/conventions/matlab.md": (
+    "protocols/conventions/matlab.md": (
         "script working directory",
         'output_root = fullfile("..", "..", "output");',
     ),
-    "code/conventions/makefile.md": (
+    "protocols/conventions/makefile.md": (
         "OUTPUT_ROOT = ../../output",
     ),
     "README.md": (
@@ -203,21 +203,21 @@ PATH_MODEL_FORBIDDEN_SNIPPETS = {
         "fall back to `stata -b do path/to/script.do`",
         "fall back to `matlab -batch",
     ),
-    "code/conventions/shared.md": (
+    "protocols/conventions/shared.md": (
         "relative to repository root",
         "Use repo-relative paths only",
     ),
-    "code/conventions/r.md": (
+    "protocols/conventions/r.md": (
         "code/analysis.R | output/tables",
         'file.path("output", "figures", "my_plot.pdf")',
     ),
-    "code/conventions/julia.md": (
+    "protocols/conventions/julia.md": (
         'joinpath("output", "figures", "my_plot.pdf")',
     ),
-    "code/conventions/stata.md": (
+    "protocols/conventions/stata.md": (
         'save "output/tables/my_results.dta", replace',
     ),
-    "code/conventions/matlab.md": (
+    "protocols/conventions/matlab.md": (
         'fullfile("output", "tables", "results.csv")',
     ),
 }
@@ -226,7 +226,7 @@ CLAUDE_WRAPPER_REQUIRED_SNIPPETS = {
     "code/CLAUDE.md": (
         "[AGENTS.md](./AGENTS.md)",
         "source of truth",
-        "conventions/shared.md",
+        "../protocols/conventions/shared.md",
     ),
     "latex/CLAUDE.md": ("[AGENTS.md](./AGENTS.md)", "source of truth"),
 }
@@ -240,7 +240,7 @@ WRITING_GUIDE_REQUIRED_SNIPPETS = {
     "CLAUDE.md": ("protocols/writing.md",),
     "AGENTS.md": ("protocols/writing.md",),
     "latex/AGENTS.md": ("protocols/writing.md",),
-    "code/conventions/shared.md": ("protocols/writing.md",),
+    "protocols/conventions/shared.md": ("protocols/writing.md",),
     "protocols/skills/review-comments.md": ("protocols/writing.md",),
 }
 
@@ -377,25 +377,25 @@ def check_review_skill_agent_scope(errors: list[str]) -> None:
 
 
 def check_code_convention_routes(errors: list[str]) -> None:
-    shared_path = REPO_ROOT / "code/conventions/shared.md"
+    shared_path = REPO_ROOT / "protocols/conventions/shared.md"
     if not shared_path.is_file():
-        errors.append("code/conventions/shared.md is missing")
+        errors.append("protocols/conventions/shared.md is missing")
 
     for agent_name, convention_name in CODE_CONVENTION_ROUTES.items():
         convention_path = REPO_ROOT / convention_name
         if not convention_path.is_file():
             errors.append(f"{convention_name} is missing")
 
-        agent_path = REPO_ROOT / ".claude/agents" / f"{agent_name}.md"
-        agent_text = agent_path.read_text()
-        if "code/conventions/shared.md" not in agent_text:
+        agent_relative_path = f".claude/agents/{agent_name}.md"
+        agent_text = read_required_file(agent_relative_path, errors)
+        if agent_text is None:
+            continue
+        if "protocols/conventions/shared.md" not in agent_text:
             errors.append(
-                f"{agent_path.relative_to(REPO_ROOT)} does not load the shared code convention"
+                f"{agent_relative_path} does not load the shared code convention"
             )
         if convention_name not in agent_text:
-            errors.append(
-                f"{agent_path.relative_to(REPO_ROOT)} does not load {convention_name}"
-            )
+            errors.append(f"{agent_relative_path} does not load {convention_name}")
 
 
 def check_claude_project_defaults(errors: list[str]) -> None:
@@ -416,10 +416,25 @@ def check_claude_project_defaults(errors: list[str]) -> None:
                 )
 
 
+def read_required_file(relative_path: str, errors: list[str]) -> str | None:
+    """Return the text of a required template file, or None if it is absent.
+
+    Recording a missing file as an ordinary error keeps the report readable
+    when a file is moved or renamed, rather than ending the run with a
+    traceback.
+    """
+    file_path = REPO_ROOT / relative_path
+    if not file_path.is_file():
+        errors.append(f"{relative_path} is missing")
+        return None
+    return file_path.read_text()
+
+
 def check_workflow_policy(errors: list[str]) -> None:
     for relative_path, snippets in WORKFLOW_REQUIRED_SNIPPETS.items():
-        file_path = REPO_ROOT / relative_path
-        file_text = file_path.read_text()
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
+            continue
         for snippet in snippets:
             if snippet not in file_text:
                 errors.append(
@@ -427,8 +442,9 @@ def check_workflow_policy(errors: list[str]) -> None:
                 )
 
     for relative_path, patterns in WORKFLOW_FORBIDDEN_PATTERNS.items():
-        file_path = REPO_ROOT / relative_path
-        file_text = file_path.read_text()
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
+            continue
         for pattern in patterns:
             if pattern.search(file_text):
                 errors.append(
@@ -467,58 +483,60 @@ def check_commit_protocol_branch_policy(errors: list[str]) -> None:
 
 def check_protocol_required_snippets(errors: list[str]) -> None:
     for relative_path, snippets in PROTOCOL_REQUIRED_SNIPPETS.items():
-        protocol_path = REPO_ROOT / relative_path
-        protocol_text = protocol_path.read_text()
+        protocol_text = read_required_file(relative_path, errors)
+        if protocol_text is None:
+            continue
 
         for snippet in snippets:
             if snippet not in protocol_text:
                 errors.append(
-                    f"{protocol_path.relative_to(REPO_ROOT)} is missing required protocol text: {snippet!r}"
+                    f"{relative_path} is missing required protocol text: {snippet!r}"
                 )
 
 
 def check_path_model_snippets(errors: list[str]) -> None:
     for relative_path, snippets in PATH_MODEL_REQUIRED_SNIPPETS.items():
-        file_path = REPO_ROOT / relative_path
-        file_text = file_path.read_text()
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
+            continue
 
         for snippet in snippets:
             if snippet not in file_text:
                 errors.append(
-                    f"{file_path.relative_to(REPO_ROOT)} is missing required path-model text: {snippet!r}"
+                    f"{relative_path} is missing required path-model text: {snippet!r}"
                 )
 
     for relative_path, snippets in PATH_MODEL_FORBIDDEN_SNIPPETS.items():
-        file_path = REPO_ROOT / relative_path
-        file_text = file_path.read_text()
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
+            continue
 
         for snippet in snippets:
             if snippet in file_text:
                 errors.append(
-                    f"{file_path.relative_to(REPO_ROOT)} still contains forbidden path-model text: {snippet!r}"
+                    f"{relative_path} still contains forbidden path-model text: {snippet!r}"
                 )
 
 
 def check_claude_wrappers(errors: list[str]) -> None:
     for relative_path, snippets in CLAUDE_WRAPPER_REQUIRED_SNIPPETS.items():
-        file_path = REPO_ROOT / relative_path
-        file_text = file_path.read_text()
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
+            continue
 
         for snippet in snippets:
             if snippet not in file_text:
                 errors.append(
-                    f"{file_path.relative_to(REPO_ROOT)} is missing required Claude-wrapper text: {snippet!r}"
+                    f"{relative_path} is missing required Claude-wrapper text: {snippet!r}"
                 )
 
 
 def check_writing_guide(errors: list[str]) -> None:
     for relative_path, snippets in WRITING_GUIDE_REQUIRED_SNIPPETS.items():
-        file_path = REPO_ROOT / relative_path
-        if not file_path.is_file():
-            errors.append(f"{relative_path} is missing")
+        file_text = read_required_file(relative_path, errors)
+        if file_text is None:
             continue
 
-        file_text = file_path.read_text()
         for snippet in snippets:
             if snippet not in file_text:
                 errors.append(

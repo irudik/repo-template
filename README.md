@@ -140,7 +140,7 @@ the files in scope.
 Codex project configuration lives in:
 
 - **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
-- **`code/AGENTS.md`** — router for shared and file-type-specific conventions under `code/conventions/`
+- **`code/AGENTS.md`** — router for shared and file-type-specific conventions under `protocols/conventions/`
 - **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
 - **`protocols/skills/*.md`** — canonical shared skill bodies for all three tools
 - **`.codex/config.toml`** — model, sandbox, and approval settings
@@ -455,8 +455,8 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 |------|----------------|
 | `AGENTS.md` | Risk-based workflow, quality gates, verification, and session logging |
 | `code/AGENTS.md` | Router that selects the applicable code convention files |
-| `code/conventions/shared.md` | Path and research-code conventions used for all code work |
-| `code/conventions/{r,julia,stata,matlab,makefile}.md` | File-type-specific conventions loaded only when applicable |
+| `protocols/conventions/shared.md` | Path and research-code conventions used for all code work |
+| `protocols/conventions/{r,julia,stata,matlab,makefile}.md` | File-type-specific conventions loaded only when applicable |
 | `latex/AGENTS.md` | Shared LaTeX build, manuscript, and dynamic-number conventions |
 | `CLAUDE.md` | Claude-specific loading model, plan-mode notes, and tool-specific mechanics |
 | `code/CLAUDE.md` | Claude entry point that loads the shared code conventions |
@@ -667,15 +667,16 @@ my-project/
 ├── MEMORY.md                    # Persistent structured [LEARN] entries
 ├── Makefile                     # Root — delegates to code/ and latex/
 ├── protocols/
-│   └── skills/                  # Canonical shared skill bodies
+│   ├── writing.md               # Plain-language writing guide
+│   ├── conventions/             # Shared, language, and Makefile code conventions
+│   └── skills/                  # Shared skill bodies
 ├── .claude/                     # Claude Code: rules, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
 ├── .agents/                     # Codex/Kimi: thin skill wrappers
 ├── .kimi-code/                  # Kimi Code CLI: example permission config
 ├── code/
 │   ├── CLAUDE.md                # Claude instructions for code/
-│   ├── AGENTS.md                # Routes work to applicable conventions
-│   ├── conventions/             # Shared, language, and Makefile conventions
+│   ├── AGENTS.md                # Routes work to protocols/conventions/
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   ├── [task_group_a]/          # e.g., data cleaning (R or Stata)
 │   │   ├── Makefile
@@ -702,7 +703,7 @@ my-project/
 ```
 
 Each `code/[task_group]/Makefile` follows
-`code/conventions/makefile.md`: `all` and `clean` targets, order-only
+`protocols/conventions/makefile.md`: `all` and `clean` targets, order-only
 prerequisites for directories, pattern rules for parametric outputs, and
 `.PRECIOUS` for expensive intermediates.
 

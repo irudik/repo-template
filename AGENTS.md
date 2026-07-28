@@ -37,8 +37,15 @@
 ├── CLAUDE.md                    # Claude Code instructions
 ├── MEMORY.md                    # Persistent [LEARN] entries across sessions
 ├── Makefile                     # Root -- delegates to code/ and latex/
-├── protocols/                   # Shared writing guide and skill bodies
+├── protocols/                   # Shared writing guide, code conventions, skill bodies
 │   ├── writing.md
+│   ├── conventions/             # Shared plus language-specific code conventions
+│   │   ├── shared.md
+│   │   ├── r.md
+│   │   ├── julia.md
+│   │   ├── stata.md
+│   │   ├── matlab.md
+│   │   └── makefile.md
 │   └── skills/
 │       └── *.md
 ├── .codex/                      # Codex CLI config and rules
@@ -51,14 +58,7 @@
 │   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml
 ├── .claude/                     # Claude Code settings, wrappers, agents, hooks
 ├── code/                        # Analysis code with sub-Makefiles
-│   ├── AGENTS.md                # Routes to applicable code conventions
-│   ├── conventions/             # Shared plus language-specific conventions
-│   │   ├── shared.md
-│   │   ├── r.md
-│   │   ├── julia.md
-│   │   ├── stata.md
-│   │   ├── matlab.md
-│   │   └── makefile.md
+│   ├── AGENTS.md                # Routes to applicable protocols/conventions/ files
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   └── [task_group]/            # e.g., data cleaning, estimation, figures
 │       ├── Makefile
