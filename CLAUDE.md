@@ -39,8 +39,10 @@
 ├── AGENTS.md                    # Codex CLI instructions
 ├── MEMORY.md                    # Persistent [LEARN] entries across sessions
 ├── Makefile                     # Root — delegates to code/ and latex/
-├── protocols/                   # Shared writing guide and skill bodies
+├── protocols/                   # Shared writing guide, code conventions, skill bodies
 │   ├── writing.md
+│   ├── conventions/             # Shared and language-specific code conventions
+│   │   └── *.md
 │   └── skills/
 │       └── *.md
 ├── .claude/                     # Claude Code: settings, wrappers, agents, hooks
@@ -49,8 +51,7 @@
 ├── .kimi-code/                  # Kimi Code CLI: example permission config
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── CLAUDE.md                # Claude entry point for code conventions
-│   ├── AGENTS.md                # Routes by file type
-│   ├── conventions/             # Shared and language-specific conventions
+│   ├── AGENTS.md                # Routes by file type to protocols/conventions/
 │   ├── Makefile                 # Delegates to sub-Makefiles
 │   ├── [task_group]/            # e.g., data cleaning (R/Stata), simulation (Julia), or structural model (MATLAB)
 │   │   ├── Makefile
@@ -154,9 +155,9 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Root `CLAUDE.md` sets project-wide workflow rules
 - `code/CLAUDE.md` loads when Claude works in `code/`
 - `latex/CLAUDE.md` loads when Claude works in `latex/`
-- `code/AGENTS.md` routes code work to `code/conventions/shared.md` and only
+- `code/AGENTS.md` routes code work to `protocols/conventions/shared.md` and only
   the applicable language or Makefile convention
-- Shared local conventions live in `AGENTS.md`, `code/conventions/`, and
+- Shared local conventions live in `AGENTS.md`, `protocols/conventions/`, and
   `latex/AGENTS.md`
 - `.claude/agents/` and `.claude/hooks/` remain Claude-only execution surfaces
   and mechanics

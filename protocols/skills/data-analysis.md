@@ -10,7 +10,7 @@ goal.
 
 ## Constraints
 
-- Follow `code/conventions/shared.md` and `code/conventions/r.md`.
+- Follow `protocols/conventions/shared.md` and `protocols/conventions/r.md`.
 - Save all scripts to the appropriate `code/[task_group]/` directory.
 - Save all outputs to `output/` under the appropriate subdirectory.
 - Use `saveRDS()` for every computed object.

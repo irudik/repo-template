@@ -11,12 +11,12 @@ changes.
 
 ### 2. Read the Applicable Conventions
 
-Read `code/conventions/shared.md` and the relevant language convention:
+Read `protocols/conventions/shared.md` and the relevant language convention:
 
-- R: `code/conventions/r.md`
-- Julia: `code/conventions/julia.md`
-- Stata: `code/conventions/stata.md`
-- MATLAB: `code/conventions/matlab.md`
+- R: `protocols/conventions/r.md`
+- Julia: `protocols/conventions/julia.md`
+- Stata: `protocols/conventions/stata.md`
+- MATLAB: `protocols/conventions/matlab.md`
 
 Also read the Refactoring Protocol section of `AGENTS.md`.
 

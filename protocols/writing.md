@@ -108,7 +108,7 @@ openings and motivational filler generally.
 
 ## Related Rules
 
-- Code comments and docstrings: `code/conventions/shared.md` (same banned
+- Code comments and docstrings: `protocols/conventions/shared.md` (same banned
   list plus code-specific commenting rules).
 - Paper and slide prose: `latex/AGENTS.md` TeX prose conventions; when
   drafting manuscript text, follow the ivan-voice register (first person,

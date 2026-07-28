@@ -9,7 +9,7 @@ Run the comprehensive R code review protocol.
    - If the argument is `all`, review all R scripts in `code/`.
 
 2. **For each script, follow the review protocol below:**
-   - Read `code/conventions/shared.md` and `code/conventions/r.md`.
+   - Read `protocols/conventions/shared.md` and `protocols/conventions/r.md`.
    - Save the report to `quality_reports/[script_name]_r_review.md`.
 
 3. **After all reviews complete, present a summary:**
