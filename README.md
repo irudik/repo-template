@@ -647,6 +647,40 @@ Run `make check-template` to validate:
 - wrapper references to `protocols/skills/*.md`
 - Claude review-agent references to the same canonical protocol files
 
+`tools/check_template_consistency.py` is identical in every repository built
+from this template. Repositories differ in structure, so each one declares in
+`tools/template_check.toml` which optional parts it carries:
+
+| Declaration | Set to `false` when |
+|---|---|
+| `has_latex` | the manuscript lives in an Overleaf checkout reached through `MANUSCRIPT_DIR` and the repository has no `latex/` directory |
+| `has_code` | the repository has no `code/` directory |
+| `readme_documents_framework` | `README.md` is a project README rather than a copy of this framework documentation |
+
+Checks for a declared-absent part are skipped; every other check still runs. A
+declaration cannot hide a file that should be there: with `has_latex = true`, a
+missing `latex/AGENTS.md` is still an error. Checks for retired rules apply to
+whatever a repository has, so obsolete text in a project README is still
+reported. When the declaration file is absent, the whole template is required.
+
+Tests for this behavior live in `tools/tests/` and run as part of
+`make check-template`.
+
+Some projects deliberately adapt a shared framework file. Record each such
+choice in the target repository's `tools/template_departures.toml`:
+
+```toml
+[[departure]]
+path = "protocols/conventions/*.md"
+reason = "Adapted to this project's R, Julia, and MATLAB practice."
+```
+
+`tools/sync_template.py` reads this file from the target repository. A `path`
+may name one file or use a path pattern such as `*.md`. The command leaves each
+matching path alone during copying, removal, and generation, and reports the
+path with its stated reason. A pattern that matches nothing produces a warning
+so renamed files can be reviewed. The template itself has no departures file.
+
 ## Fresh Main Branch
 
 When maintaining this template repo itself, treat ad hoc files under

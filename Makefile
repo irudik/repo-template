@@ -12,6 +12,7 @@ $(SUBDIRS):
 
 check-template:
 	python3 tools/check_template_consistency.py
+	python3 -m unittest discover -s tools/tests
 
 clean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
