@@ -37,6 +37,8 @@ prose must name an identifier, put the exact name in backticks.
 | canonical / canon | main / standard / official / authoritative |
 | legacy | earlier / older / superseded |
 | contract (data-format sense) | required columns / expected structure |
+| surface (as a verb) | find / turn up / reveal |
+| gate (check sense) | check / threshold / requirement |
 | schema | column layout / file structure |
 | artifact (build-output sense) | output file |
 | entrypoint / entry point | main command / top-level script |
@@ -53,11 +55,15 @@ prose must name an identifier, put the exact name in backticks.
 | refactor (in prose) | reorganize / clean up |
 | deprecated | superseded / retired |
 | wire up / plumbing | connect / underlying setup |
+| maintained (as a qualifier: maintained scenario, solver, algorithm) | the implemented algorithm / the scenario workflow / the default settings, or drop the word |
 
 Acceptable without rewriting (explicitly ruled on): cache, wrapper, stale,
 parse, dry run, upstream/downstream (including the input-output sense),
 helper, manifest, source of truth, API, side effect, regex, hardcoded,
-checksum, driver, runner, edge case, alias, fail fast. Terms on neither
+checksum, driver, runner, edge case, alias, fail fast, and surface as a
+mathematical or physical noun (a criterion surface, surface temperature).
+The verb ban on surface applies in code as well as prose: comments,
+docstrings, and identifiers. Terms on neither
 list get the audience test, not the benefit of the doubt.
 
 After replacing a term, re-read the sentence and smooth it. The goal is

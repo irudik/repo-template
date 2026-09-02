@@ -1,0 +1,17 @@
+# Which optional parts of the template this repository carries.
+#
+# tools/check_template_consistency.py is identical in every repository built
+# from this template. Repositories differ in structure, so each one declares
+# here what it has, and the checker applies every check that applies to it.
+#
+# has_latex                   the repository has a latex/ directory. Set false
+#                             when the manuscript lives in an Overleaf checkout
+#                             reached through MANUSCRIPT_DIR.
+# has_code                    the repository has a code/ directory.
+# readme_documents_framework  README.md documents this agent framework, as it
+#                             does in the template itself. Set false when
+#                             README.md is a project README instead.
+
+has_latex = true
+has_code = true
+readme_documents_framework = true

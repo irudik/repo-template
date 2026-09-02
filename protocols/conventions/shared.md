@@ -45,8 +45,13 @@ language-specific convention gives a narrower rule.
   programmer jargon and software-style shorthand. A term fails this rule if an
   economics PhD would not understand it immediately from ordinary research
   practice. Examples to avoid include `harness`, `fixture`, `scaffold`,
-  `canonical`, and `legacy`. Write `test setup`, `example input`, `initial
-  structure`, `main specification`, or `earlier method` instead. Name the
+  `canonical`, `canon`, `contract`, `surface` (as a verb: a check finds
+  or reveals a problem, it does not surface one; this applies in
+  comments, docstrings, and identifiers alike, while a mathematical or
+  physical surface such as a criterion surface or surface temperature
+  is standard usage), `gate`, and `legacy`. Write `test setup`,
+  `example input`, `initial structure`, `main specification`, `required
+  behavior`, or `earlier method` instead. Name the
   object or task directly. If a precise software term must appear, explain it
   in plain language in the same comment or docstring. The full banned-term
   and replacement table is in `protocols/writing.md`.

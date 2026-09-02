@@ -5,12 +5,129 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 import tomllib
-from pathlib import Path
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+@dataclass(frozen=True)
+class DepartureRule:
+    """A reason this repository keeps one shared path different."""
+
+    path: str
+    reason: str
+
+
+def normalize_departure_path(raw_path: str) -> str:
+    """Return a repository-relative departure path with forward slashes."""
+
+    normalized = raw_path.replace("\\", "/").rstrip("/")
+    parsed = PurePosixPath(normalized)
+    if not normalized or parsed.is_absolute() or ".." in parsed.parts:
+        raise ValueError(f"Departure path must stay within the repository: {raw_path!r}")
+    return parsed.as_posix()
+
+
+def load_departure_rules() -> tuple[DepartureRule, ...]:
+    """Read deliberate file differences separately from structural declarations."""
+
+    declaration_path = REPO_ROOT / "tools/template_departures.toml"
+    if not declaration_path.is_file():
+        return ()
+
+    declaration = tomllib.loads(declaration_path.read_text())
+    raw_departures = declaration.get("departure", [])
+    if not isinstance(raw_departures, list):
+        raise ValueError(f"{declaration_path} must contain [[departure]] entries")
+
+    departures: list[DepartureRule] = []
+    for position, raw_departure in enumerate(raw_departures, start=1):
+        if not isinstance(raw_departure, dict):
+            raise ValueError(
+                f"Departure {position} in {declaration_path} must be a table"
+            )
+        raw_path = raw_departure.get("path")
+        reason = raw_departure.get("reason")
+        if not isinstance(raw_path, str) or not isinstance(reason, str):
+            raise ValueError(
+                f"Departure {position} in {declaration_path} needs text path and reason values"
+            )
+        if not reason.strip():
+            raise ValueError(
+                f"Departure {position} in {declaration_path} has an empty reason"
+            )
+        departures.append(
+            DepartureRule(
+                path=normalize_departure_path(raw_path),
+                reason=reason.strip(),
+            )
+        )
+    return tuple(departures)
+
+
+DEPARTURE_RULES = load_departure_rules()
+SKIPPED_DEPARTURE_CHECKS: set[tuple[str, str, str]] = set()
+
+
+def departure_matches_path(departure_path: str, relative_path: str) -> bool:
+    """Match one literal path, directory, or forward-slash glob."""
+
+    if not any(character in departure_path for character in "*?["):
+        return relative_path == departure_path or relative_path.startswith(
+            f"{departure_path}/"
+        )
+    return PurePosixPath(relative_path).match(departure_path)
+
+
+def skip_departed_check(relative_path: str, check_name: str) -> bool:
+    """Record and skip a check whose subject path is a declared departure."""
+
+    matching_rules = [
+        departure
+        for departure in DEPARTURE_RULES
+        if departure_matches_path(departure.path, relative_path)
+    ]
+    for departure in matching_rules:
+        SKIPPED_DEPARTURE_CHECKS.add(
+            (relative_path, check_name, departure.reason)
+        )
+    return bool(matching_rules)
+
+
+def skip_if_any_path_departed(
+    relative_paths: tuple[str, ...],
+    check_name: str,
+) -> bool:
+    """Record all departed subjects and return whether an aggregate check skips."""
+
+    results = [
+        skip_departed_check(relative_path, check_name)
+        for relative_path in relative_paths
+    ]
+    return any(results)
+
+
+def git_tracks_path(relative_path: str) -> bool:
+    """Return whether Git records a path as part of project settings."""
+
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(REPO_ROOT),
+            "ls-files",
+            "--error-unmatch",
+            "--",
+            relative_path,
+        ],
+        capture_output=True,
+    )
+    return result.returncode == 0
 
 WRAPPER_PROTOCOL_MARKERS = (
     "## Review Protocol",
@@ -251,6 +368,55 @@ LEGACY_RULE_REFERENCE_GLOBS = (
     ".claude/agents/*.md",
 )
 
+# Optional parts of the template that a project may legitimately not have.
+# Each entry maps a checked path, or a path prefix, to the declaration that
+# says whether this repository carries that part.
+SURFACE_GATES = {
+    "README.md": "readme_documents_framework",
+    "latex/": "has_latex",
+    "code/": "has_code",
+}
+
+SURFACE_DEFAULTS = {
+    "has_latex": True,
+    "has_code": True,
+    "readme_documents_framework": True,
+}
+
+
+def load_surface_flags() -> dict[str, bool]:
+    """Return which optional parts of the template this repository carries.
+
+    Projects built from this template differ in structure. Some keep the
+    manuscript in an Overleaf checkout and have no `latex/` directory, some
+    have no `code/` directory, and most have a project README rather than the
+    template's own framework documentation. Each repository declares what it
+    has in `tools/template_check.toml`, so this checker can stay identical
+    everywhere while still applying every check that does apply.
+    """
+    config_path = REPO_ROOT / "tools/template_check.toml"
+    if not config_path.is_file():
+        return dict(SURFACE_DEFAULTS)
+
+    declared = tomllib.loads(config_path.read_text())
+
+    return {
+        name: bool(declared.get(name, default))
+        for name, default in SURFACE_DEFAULTS.items()
+    }
+
+
+SURFACE_FLAGS = load_surface_flags()
+
+
+def path_applies(relative_path: str) -> bool:
+    """Return whether a checked path is part of this repository's structure."""
+    for prefix, flag_name in SURFACE_GATES.items():
+        if relative_path.startswith(prefix):
+            return SURFACE_FLAGS[flag_name]
+
+    return True
+
 
 def load_claude_bash_permissions() -> set[str]:
     settings_path = REPO_ROOT / ".claude/settings.json.example"
@@ -323,6 +489,9 @@ def collect_protocol_names() -> set[str]:
 def check_wrapper_protocol_refs(wrapper_dir: Path, errors: list[str]) -> None:
     for wrapper_path in wrapper_dir.glob("*/SKILL.md"):
         skill_name = wrapper_path.parent.name
+        relative_path = wrapper_path.relative_to(REPO_ROOT).as_posix()
+        if skip_departed_check(relative_path, "skill wrapper protocol reference"):
+            continue
         expected_ref = f"protocols/skills/{skill_name}.md"
         wrapper_text = wrapper_path.read_text()
 
@@ -343,6 +512,9 @@ def check_agent_protocol_refs(errors: list[str]) -> None:
 
     for agent_name, protocol_name in REVIEW_AGENT_PROTOCOLS.items():
         agent_path = agents_dir / f"{agent_name}.md"
+        relative_path = agent_path.relative_to(REPO_ROOT).as_posix()
+        if skip_departed_check(relative_path, "review agent protocol reference"):
+            continue
         expected_ref = f"protocols/skills/{protocol_name}.md"
         agent_text = agent_path.read_text()
 
@@ -361,6 +533,9 @@ def check_agent_protocol_refs(errors: list[str]) -> None:
 def check_review_skill_agent_scope(errors: list[str]) -> None:
     for agent_name, protocol_name in REVIEW_AGENT_PROTOCOLS.items():
         skill_path = REPO_ROOT / ".claude/skills" / protocol_name / "SKILL.md"
+        relative_path = skill_path.relative_to(REPO_ROOT).as_posix()
+        if skip_departed_check(relative_path, "review skill agent scope"):
+            continue
         skill_text = skill_path.read_text()
         expected_text = (
             f"Launch one `{agent_name}` agent for the full approved target scope"
@@ -378,16 +553,26 @@ def check_review_skill_agent_scope(errors: list[str]) -> None:
 
 def check_code_convention_routes(errors: list[str]) -> None:
     shared_path = REPO_ROOT / "protocols/conventions/shared.md"
-    if not shared_path.is_file():
+    if not skip_departed_check(
+        "protocols/conventions/shared.md",
+        "shared code convention presence",
+    ) and not shared_path.is_file():
         errors.append("protocols/conventions/shared.md is missing")
 
     for agent_name, convention_name in CODE_CONVENTION_ROUTES.items():
         convention_path = REPO_ROOT / convention_name
-        if not convention_path.is_file():
+        if not skip_departed_check(
+            convention_name,
+            "language convention presence",
+        ) and not convention_path.is_file():
             errors.append(f"{convention_name} is missing")
 
         agent_relative_path = f".claude/agents/{agent_name}.md"
-        agent_text = read_required_file(agent_relative_path, errors)
+        agent_text = read_required_file(
+            agent_relative_path,
+            errors,
+            check_name="review agent convention routes",
+        )
         if agent_text is None:
             continue
         if "protocols/conventions/shared.md" not in agent_text:
@@ -400,12 +585,17 @@ def check_code_convention_routes(errors: list[str]) -> None:
 
 def check_claude_project_defaults(errors: list[str]) -> None:
     settings_paths = (
-        REPO_ROOT / ".claude/settings.json.example",
-        REPO_ROOT / ".claude/settings.json",
+        (".claude/settings.json.example", False),
+        (".claude/settings.json", True),
     )
 
-    for settings_path in settings_paths:
+    for relative_path, require_tracking in settings_paths:
+        settings_path = REPO_ROOT / relative_path
         if not settings_path.is_file():
+            continue
+        if require_tracking and not git_tracks_path(relative_path):
+            continue
+        if skip_departed_check(relative_path, "Claude project defaults"):
             continue
 
         settings = json.loads(settings_path.read_text())
@@ -416,13 +606,24 @@ def check_claude_project_defaults(errors: list[str]) -> None:
                 )
 
 
-def read_required_file(relative_path: str, errors: list[str]) -> str | None:
+def read_required_file(
+    relative_path: str,
+    errors: list[str],
+    *,
+    check_name: str = "required file content",
+) -> str | None:
     """Return the text of a required template file, or None if it is absent.
 
     Recording a missing file as an ordinary error keeps the report readable
     when a file is moved or renamed, rather than ending the run with a
-    traceback.
+    traceback. Files belonging to a part of the template this repository does
+    not carry are skipped without an error.
     """
+    if skip_departed_check(relative_path, check_name):
+        return None
+    if not path_applies(relative_path):
+        return None
+
     file_path = REPO_ROOT / relative_path
     if not file_path.is_file():
         errors.append(f"{relative_path} is missing")
@@ -430,9 +631,32 @@ def read_required_file(relative_path: str, errors: list[str]) -> str | None:
     return file_path.read_text()
 
 
+def read_present_file(
+    relative_path: str,
+    *,
+    check_name: str = "retired text",
+) -> str | None:
+    """Return the text of a file if it exists, without requiring it.
+
+    Checks for obsolete text apply to whatever a repository actually has, even
+    where the file is a project's own document rather than a copy of the
+    template's.
+    """
+    if skip_departed_check(relative_path, check_name):
+        return None
+    file_path = REPO_ROOT / relative_path
+    if not file_path.is_file():
+        return None
+    return file_path.read_text()
+
+
 def check_workflow_policy(errors: list[str]) -> None:
     for relative_path, snippets in WORKFLOW_REQUIRED_SNIPPETS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_required_file(
+            relative_path,
+            errors,
+            check_name="required workflow policy",
+        )
         if file_text is None:
             continue
         for snippet in snippets:
@@ -442,7 +666,10 @@ def check_workflow_policy(errors: list[str]) -> None:
                 )
 
     for relative_path, patterns in WORKFLOW_FORBIDDEN_PATTERNS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_present_file(
+            relative_path,
+            check_name="retired workflow policy",
+        )
         if file_text is None:
             continue
         for pattern in patterns:
@@ -452,7 +679,10 @@ def check_workflow_policy(errors: list[str]) -> None:
                 )
 
     obsolete_hook = REPO_ROOT / ".claude/hooks/log-reminder.py"
-    if obsolete_hook.exists():
+    if not skip_departed_check(
+        ".claude/hooks/log-reminder.py",
+        "retired session-logging hook",
+    ) and obsolete_hook.exists():
         errors.append(
             ".claude/hooks/log-reminder.py still enforces mandatory session logging"
         )
@@ -460,6 +690,11 @@ def check_workflow_policy(errors: list[str]) -> None:
 
 def check_commit_protocol_branch_policy(errors: list[str]) -> None:
     commit_protocol_path = REPO_ROOT / "protocols/skills/commit.md"
+    if skip_departed_check(
+        "protocols/skills/commit.md",
+        "commit branch policy",
+    ):
+        return
     commit_protocol_text = commit_protocol_path.read_text()
 
     for snippet in COMMIT_PROTOCOL_REQUIRED_SNIPPETS:
@@ -483,7 +718,11 @@ def check_commit_protocol_branch_policy(errors: list[str]) -> None:
 
 def check_protocol_required_snippets(errors: list[str]) -> None:
     for relative_path, snippets in PROTOCOL_REQUIRED_SNIPPETS.items():
-        protocol_text = read_required_file(relative_path, errors)
+        protocol_text = read_required_file(
+            relative_path,
+            errors,
+            check_name="required skill protocol text",
+        )
         if protocol_text is None:
             continue
 
@@ -496,7 +735,11 @@ def check_protocol_required_snippets(errors: list[str]) -> None:
 
 def check_path_model_snippets(errors: list[str]) -> None:
     for relative_path, snippets in PATH_MODEL_REQUIRED_SNIPPETS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_required_file(
+            relative_path,
+            errors,
+            check_name="required path model",
+        )
         if file_text is None:
             continue
 
@@ -507,7 +750,10 @@ def check_path_model_snippets(errors: list[str]) -> None:
                 )
 
     for relative_path, snippets in PATH_MODEL_FORBIDDEN_SNIPPETS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_present_file(
+            relative_path,
+            check_name="forbidden path model",
+        )
         if file_text is None:
             continue
 
@@ -520,7 +766,11 @@ def check_path_model_snippets(errors: list[str]) -> None:
 
 def check_claude_wrappers(errors: list[str]) -> None:
     for relative_path, snippets in CLAUDE_WRAPPER_REQUIRED_SNIPPETS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_required_file(
+            relative_path,
+            errors,
+            check_name="Claude wrapper source-of-truth reference",
+        )
         if file_text is None:
             continue
 
@@ -533,7 +783,11 @@ def check_claude_wrappers(errors: list[str]) -> None:
 
 def check_writing_guide(errors: list[str]) -> None:
     for relative_path, snippets in WRITING_GUIDE_REQUIRED_SNIPPETS.items():
-        file_text = read_required_file(relative_path, errors)
+        file_text = read_required_file(
+            relative_path,
+            errors,
+            check_name="writing guide reference",
+        )
         if file_text is None:
             continue
 
@@ -547,6 +801,9 @@ def check_writing_guide(errors: list[str]) -> None:
 def check_no_legacy_rule_refs(errors: list[str]) -> None:
     for pattern in LEGACY_RULE_REFERENCE_GLOBS:
         for file_path in REPO_ROOT.glob(pattern):
+            relative_path = file_path.relative_to(REPO_ROOT).as_posix()
+            if skip_departed_check(relative_path, "retired rule reference"):
+                continue
             file_text = file_path.read_text()
             if ".claude/rules/" in file_text:
                 errors.append(
@@ -555,6 +812,8 @@ def check_no_legacy_rule_refs(errors: list[str]) -> None:
 
 
 def check_claude_rules_dir(errors: list[str]) -> None:
+    if skip_departed_check(".claude/rules", "retired Claude rules directory"):
+        return
     rule_files = sorted(
         path.relative_to(REPO_ROOT) for path in (REPO_ROOT / ".claude/rules").glob("*.md")
     )
@@ -563,6 +822,7 @@ def check_claude_rules_dir(errors: list[str]) -> None:
 
 
 def main() -> int:
+    SKIPPED_DEPARTURE_CHECKS.clear()
     errors: list[str] = []
 
     claude_permissions = load_claude_bash_permissions()
@@ -578,33 +838,49 @@ def main() -> int:
 
     only_in_claude = sorted(claude_permissions - codex_permissions)
     only_in_codex = sorted(codex_permissions - claude_permissions)
+    skip_claude_codex_command_parity = skip_if_any_path_departed(
+        (".claude/settings.json.example", ".codex/rules/default.rules"),
+        "Claude and Codex command-family permission parity",
+    )
 
-    if only_in_claude:
+    if only_in_claude and not skip_claude_codex_command_parity:
         errors.append(f"Commands allowed only in Claude config: {only_in_claude}")
-    if only_in_codex:
+    if only_in_codex and not skip_claude_codex_command_parity:
         errors.append(f"Commands allowed only in Codex config: {only_in_codex}")
 
     only_in_kimi = sorted(kimi_permissions - claude_permissions - codex_permissions)
     missing_in_kimi = sorted((claude_permissions | codex_permissions) - kimi_permissions)
+    skip_kimi_command_parity = skip_if_any_path_departed(
+        (
+            ".claude/settings.json.example",
+            ".codex/rules/default.rules",
+            ".kimi-code/config.toml.example",
+        ),
+        "Kimi command-family permission parity",
+    )
 
-    if only_in_kimi:
+    if only_in_kimi and not skip_kimi_command_parity:
         errors.append(f"Commands allowed only in Kimi config: {only_in_kimi}")
-    if missing_in_kimi:
+    if missing_in_kimi and not skip_kimi_command_parity:
         errors.append(f"Commands missing from Kimi config: {missing_in_kimi}")
 
     only_in_claude_patterns = sorted(claude_all_patterns - kimi_allowed_patterns)
     only_in_kimi_patterns = sorted(kimi_allowed_patterns - claude_all_patterns)
     denied_in_kimi = sorted(kimi_denied_patterns & claude_all_patterns)
+    skip_full_permission_parity = skip_if_any_path_departed(
+        (".claude/settings.json.example", ".kimi-code/config.toml.example"),
+        "Claude and Kimi full permission parity",
+    )
 
-    if only_in_claude_patterns:
+    if only_in_claude_patterns and not skip_full_permission_parity:
         errors.append(
             f"Permissions allowed only in Claude config: {only_in_claude_patterns}"
         )
-    if only_in_kimi_patterns:
+    if only_in_kimi_patterns and not skip_full_permission_parity:
         errors.append(
             f"Permissions allowed only in Kimi config: {only_in_kimi_patterns}"
         )
-    if denied_in_kimi:
+    if denied_in_kimi and not skip_full_permission_parity:
         errors.append(
             f"Permissions allowed in Claude but denied in Kimi config: {denied_in_kimi}"
         )
@@ -613,10 +889,41 @@ def main() -> int:
     claude_skill_names = collect_skill_names(REPO_ROOT / ".claude/skills")
     codex_skill_names = collect_skill_names(REPO_ROOT / ".agents/skills")
 
-    protocol_only = sorted(protocol_names - claude_skill_names - codex_skill_names)
-    claude_only = sorted(claude_skill_names - protocol_names)
-    codex_only = sorted(codex_skill_names - protocol_names)
-    wrapper_mismatch = sorted(claude_skill_names ^ codex_skill_names)
+    protocol_only = []
+    for name in sorted(protocol_names - claude_skill_names - codex_skill_names):
+        if not skip_departed_check(
+            f"protocols/skills/{name}.md",
+            "shared skill inventory",
+        ):
+            protocol_only.append(name)
+
+    claude_only = []
+    for name in sorted(claude_skill_names - protocol_names):
+        if not skip_departed_check(
+            f".claude/skills/{name}/SKILL.md",
+            "Claude skill inventory",
+        ):
+            claude_only.append(name)
+
+    codex_only = []
+    for name in sorted(codex_skill_names - protocol_names):
+        if not skip_departed_check(
+            f".agents/skills/{name}/SKILL.md",
+            "Codex skill inventory",
+        ):
+            codex_only.append(name)
+
+    wrapper_mismatch = []
+    for name in sorted(claude_skill_names ^ codex_skill_names):
+        skip_wrapper_check = skip_if_any_path_departed(
+            (
+                f".claude/skills/{name}/SKILL.md",
+                f".agents/skills/{name}/SKILL.md",
+            ),
+            "Claude and Codex skill wrapper inventory",
+        )
+        if not skip_wrapper_check:
+            wrapper_mismatch.append(name)
 
     if protocol_only:
         errors.append(f"Protocol files without matching skill wrappers: {protocol_only}")
@@ -653,7 +960,28 @@ def main() -> int:
     print(f"- Claude skill wrappers: {len(claude_skill_names)}")
     print(f"- Codex skill wrappers: {len(codex_skill_names)}")
     print(f"- Reviewed agent mappings: {len(REVIEW_AGENT_PROTOCOLS)}")
-    print(f"- Allowed command families: {len(claude_permissions)} (Claude/Codex/Kimi in parity)")
+    permission_checks_skipped = (
+        skip_claude_codex_command_parity
+        or skip_kimi_command_parity
+        or skip_full_permission_parity
+    )
+    if permission_checks_skipped:
+        print(
+            f"- Allowed command families: {len(claude_permissions)} "
+            "(one or more parity checks skipped for a declared departure)"
+        )
+    else:
+        print(
+            f"- Allowed command families: {len(claude_permissions)} "
+            "(Claude/Codex/Kimi in parity)"
+        )
+    if SKIPPED_DEPARTURE_CHECKS:
+        print(
+            "- Checks skipped for declared departures: "
+            f"{len(SKIPPED_DEPARTURE_CHECKS)}"
+        )
+        for relative_path, check_name, reason in sorted(SKIPPED_DEPARTURE_CHECKS):
+            print(f"  - {relative_path} [{check_name}]: {reason}")
     return 0
 
 
