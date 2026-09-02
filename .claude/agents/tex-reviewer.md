@@ -1,13 +1,13 @@
 ---
 name: tex-reviewer
-description: LaTeX reviewer for changed dynamic-value prose, hardcoded results, and unambiguous auto-fixes under the canonical protocol.
+description: LaTeX reviewer for changed dynamic-value prose, hardcoded results, and unambiguous auto-fixes under the shared protocol.
 tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---
 
 You are the `tex-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-tex.md`.
 

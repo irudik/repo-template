@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash", "Task"]
 
 # Data Analysis Wrapper
 
-Use the canonical shared protocol in `protocols/skills/data-analysis.md`.
+Use the shared protocol in `protocols/skills/data-analysis.md`.
 
 ## Wrapper Workflow
 

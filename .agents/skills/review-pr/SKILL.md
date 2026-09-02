@@ -15,7 +15,7 @@ tags:
 
 # Review PR Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-pr.md`.
+Use the shared protocol in `protocols/skills/review-pr.md`.
 
 ## Wrapper Workflow
 

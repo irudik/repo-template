@@ -1,13 +1,13 @@
 ---
 name: proofreader
-description: Expert proofreading agent for academic writing. Executes the canonical shared proofread protocol.
+description: Expert proofreading agent for academic writing. Executes the shared proofread protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `proofreader` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/proofread.md`.
 

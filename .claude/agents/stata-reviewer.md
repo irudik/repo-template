@@ -1,13 +1,13 @@
 ---
 name: stata-reviewer
-description: Stata code reviewer for academic scripts. Executes the canonical shared review-stata protocol.
+description: Stata code reviewer for academic scripts. Executes the shared review-stata protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `stata-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-stata.md`.
 

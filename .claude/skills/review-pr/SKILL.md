@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Glob", "Grep", "Edit", "Write", "Task"]
 
 # Review PR Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-pr.md`.
+Use the shared protocol in `protocols/skills/review-pr.md`.
 
 ## Wrapper Workflow
 

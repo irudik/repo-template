@@ -16,7 +16,7 @@ tags:
 
 # Review LaTeX Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-tex.md`.
+Use the shared protocol in `protocols/skills/review-tex.md`.
 
 ## Wrapper Workflow
 

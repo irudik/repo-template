@@ -68,7 +68,7 @@ microeconomics, panel-data workflows, and research replication in Stata.
 
 - Outputs saved via `save`, `export delimited`, `putexcel`, `esttab`, or
   `file write`
-- Output paths point to canonical `output/` subdirectories
+- Output paths point to standard `output/` subdirectories
 - Filenames are descriptive
 - Dynamic-number exports use `file write`
 

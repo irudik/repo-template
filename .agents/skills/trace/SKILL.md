@@ -15,7 +15,7 @@ tags:
 
 # Trace Wrapper
 
-Use the canonical shared protocol in `protocols/skills/trace.md`.
+Use the shared protocol in `protocols/skills/trace.md`.
 
 ## Wrapper Workflow
 

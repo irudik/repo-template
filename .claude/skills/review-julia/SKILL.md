@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 
 # Review Julia Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-julia.md`.
+Use the shared protocol in `protocols/skills/review-julia.md`.
 
 ## Wrapper Workflow
 

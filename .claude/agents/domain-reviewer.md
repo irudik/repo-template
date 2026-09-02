@@ -1,13 +1,13 @@
 ---
 name: domain-reviewer
-description: Substantive domain review for empirical microeconomics and related academic writing. Executes the canonical shared review-domain protocol.
+description: Substantive domain review for empirical microeconomics and related academic writing. Executes the shared review-domain protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `domain-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-domain.md`.
 

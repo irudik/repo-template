@@ -15,7 +15,7 @@ tags:
 
 # Proofread Wrapper
 
-Use the canonical shared protocol in `protocols/skills/proofread.md`.
+Use the shared protocol in `protocols/skills/proofread.md`.
 
 ## Wrapper Workflow
 

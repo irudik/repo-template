@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Write"]
 
 # Compare Branches Wrapper
 
-Use the canonical shared protocol in `protocols/skills/compare-branches.md`.
+Use the shared protocol in `protocols/skills/compare-branches.md`.
 
 ## Wrapper Workflow
 

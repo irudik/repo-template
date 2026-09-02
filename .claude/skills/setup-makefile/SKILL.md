@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Write"]
 
 # Setup Makefile Wrapper
 
-Use the canonical shared protocol in `protocols/skills/setup-makefile.md`.
+Use the shared protocol in `protocols/skills/setup-makefile.md`.
 
 ## Wrapper Workflow
 

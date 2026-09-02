@@ -15,7 +15,7 @@ tags:
 
 # Review Stata Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-stata.md`.
+Use the shared protocol in `protocols/skills/review-stata.md`.
 
 ## Wrapper Workflow
 

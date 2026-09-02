@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Write", "Edit", "Task"]
 
 # Refactor Wrapper
 
-Use the canonical shared protocol in `protocols/skills/refactor.md`.
+Use the shared protocol in `protocols/skills/refactor.md`.
 
 ## Wrapper Workflow
 

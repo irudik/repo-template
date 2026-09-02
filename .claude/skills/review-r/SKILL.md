@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 
 # Review R Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-r.md`.
+Use the shared protocol in `protocols/skills/review-r.md`.
 
 ## Wrapper Workflow
 

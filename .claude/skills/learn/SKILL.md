@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Write", "Edit", "Glob"]
 
 # Learn Wrapper
 
-Use the canonical shared protocol in `protocols/skills/learn.md`.
+Use the shared protocol in `protocols/skills/learn.md`.
 
 ## Wrapper Workflow
 

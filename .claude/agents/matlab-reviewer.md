@@ -1,13 +1,13 @@
 ---
 name: matlab-reviewer
-description: MATLAB code reviewer for academic scripts. Executes the canonical shared review-matlab protocol.
+description: MATLAB code reviewer for academic scripts. Executes the shared review-matlab protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `matlab-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-matlab.md`.
 
