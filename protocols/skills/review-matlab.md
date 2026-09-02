@@ -6,8 +6,7 @@ Run the comprehensive MATLAB code review protocol.
 
 1. **Identify scripts to review:**
    - If an argument is a specific `.m` filename, review that file only.
-   - If the argument is `all`, review all MATLAB scripts in `code/`, excluding
-     `code/unit_tests/` and `code/hpc/`.
+   - If the argument is `all`, review all MATLAB scripts in `code/`.
 
 2. **For each script, follow the review protocol below:**
    - Read `protocols/conventions/shared.md` and `protocols/conventions/matlab.md`.

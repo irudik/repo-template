@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob", "Write"]
 
 # Verify Outputs Wrapper
 
-Use the canonical shared protocol in `protocols/skills/verify-outputs.md`.
+Use the shared protocol in `protocols/skills/verify-outputs.md`.
 
 ## Wrapper Workflow
 

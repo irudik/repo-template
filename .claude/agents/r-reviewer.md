@@ -1,13 +1,13 @@
 ---
 name: r-reviewer
-description: R code reviewer for academic scripts. Executes the canonical shared review-r protocol.
+description: R code reviewer for academic scripts. Executes the shared review-r protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `r-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-r.md`.
 

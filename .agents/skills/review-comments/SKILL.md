@@ -17,7 +17,7 @@ tags:
 
 # Review Comments Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-comments.md`.
+Use the shared protocol in `protocols/skills/review-comments.md`.
 
 ## Wrapper Workflow
 

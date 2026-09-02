@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Glob"]
 
 # Commit Wrapper
 
-Use the canonical shared protocol in `protocols/skills/commit.md`.
+Use the shared protocol in `protocols/skills/commit.md`.
 
 ## Wrapper Workflow
 

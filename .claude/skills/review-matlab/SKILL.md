@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 
 # Review MATLAB Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-matlab.md`.
+Use the shared protocol in `protocols/skills/review-matlab.md`.
 
 ## Wrapper Workflow
 

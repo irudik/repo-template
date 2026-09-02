@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 
 # Review Makefile Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-makefile.md`.
+Use the shared protocol in `protocols/skills/review-makefile.md`.
 
 ## Wrapper Workflow
 

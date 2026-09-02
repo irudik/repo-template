@@ -1,13 +1,13 @@
 ---
 name: julia-reviewer
-description: Julia code reviewer for academic scripts. Executes the canonical shared review-julia protocol.
+description: Julia code reviewer for academic scripts. Executes the shared review-julia protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `julia-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-julia.md`.
 

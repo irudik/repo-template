@@ -8,7 +8,7 @@ allowed-tools: ["Bash", "Read", "Grep", "Glob"]
 
 # Resume Wrapper
 
-Use the canonical shared protocol in `protocols/skills/resume-custom.md`.
+Use the shared protocol in `protocols/skills/resume-custom.md`.
 
 ## Wrapper Workflow
 

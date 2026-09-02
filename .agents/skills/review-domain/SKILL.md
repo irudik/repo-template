@@ -15,7 +15,7 @@ tags:
 
 # Review Domain Wrapper
 
-Use the canonical shared protocol in `protocols/skills/review-domain.md`.
+Use the shared protocol in `protocols/skills/review-domain.md`.
 
 ## Wrapper Workflow
 

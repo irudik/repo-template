@@ -8,7 +8,7 @@ allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 
 # Proofread Wrapper
 
-Use the canonical shared protocol in `protocols/skills/proofread.md`.
+Use the shared protocol in `protocols/skills/proofread.md`.
 
 ## Wrapper Workflow
 

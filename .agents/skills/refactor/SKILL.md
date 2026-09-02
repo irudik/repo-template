@@ -14,7 +14,7 @@ tags:
 
 # Refactor Wrapper
 
-Use the canonical shared protocol in `protocols/skills/refactor.md`.
+Use the shared protocol in `protocols/skills/refactor.md`.
 
 ## Wrapper Workflow
 

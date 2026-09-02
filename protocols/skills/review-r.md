@@ -100,7 +100,7 @@ methods and reproducible research workflows.
 - Consistent operator spacing
 - Native `|>` pipe style
 - `=` assignment style when that is the project rule
-- No legacy `T` and `F`
+- No `T` and `F` as logical values
 - Clear explicit steps preferred over clever one-liners
 - One operation per line; avoid combining load, mutate, summarize, estimate,
   and export logic in one expression

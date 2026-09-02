@@ -1,13 +1,13 @@
 ---
 name: tracer
-description: Evidence-driven tracing agent for ambiguous failures, output shifts, and causal questions. Executes the canonical shared trace protocol.
+description: Evidence-driven tracing agent for ambiguous failures, output shifts, and causal questions. Executes the shared trace protocol.
 tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 
 You are the `tracer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/trace.md`.
 

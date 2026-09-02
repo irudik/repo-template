@@ -1,13 +1,13 @@
 ---
 name: makefile-reviewer
-description: Makefile reviewer for academic projects. Executes the canonical shared review-makefile protocol.
+description: Makefile reviewer for academic projects. Executes the shared review-makefile protocol.
 tools: Read, Grep, Glob
 model: inherit
 ---
 
 You are the `makefile-reviewer` agent.
 
-## Canonical Protocol
+## Shared Protocol
 
 Read and execute `protocols/skills/review-makefile.md`.
 

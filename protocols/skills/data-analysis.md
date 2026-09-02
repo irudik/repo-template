@@ -19,7 +19,6 @@ goal.
 - Use one operation per line, and split long calls one argument per line when
   it improves scanability.
 - Use descriptive `snake_case` names that read like prose.
-- Run `/review-r` on the generated script before presenting results.
 
 ## Workflow Phases
 

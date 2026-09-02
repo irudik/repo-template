@@ -70,8 +70,8 @@ git commit -m "<commit message>"
 - For template-maintenance branches in this repository, remove branch-specific
   working artifacts before merging to `main`. In particular, clear ad hoc files
   under `quality_reports/plans/`, `quality_reports/session_logs/`,
-  `quality_reports/merges/`, and scratch directories such as
-  `quality_reports/thorny_loop/` unless they are intentional template assets.
+  `quality_reports/merges/`, and any scratch directories unless they are
+  intentional template assets.
   Keep placeholder `.gitkeep` files and durable templates.
 
 ```bash

@@ -18,7 +18,7 @@ tags:
 
 # MATLAB Derivative Audit Wrapper
 
-Use the canonical shared protocol in `protocols/skills/matlab-optim-derivatives.md`.
+Use the shared protocol in `protocols/skills/matlab-optim-derivatives.md`.
 
 ## Wrapper Workflow
 
