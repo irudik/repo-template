@@ -138,13 +138,21 @@ class TemplateSectionMergeTests(unittest.TestCase):
         )
         claude_core = section_by_title(template_claude, "Core Principles")
         claude_commands = section_by_title(template_claude, "Commands")
-        kimi_section = section_by_title(template_claude, "Kimi Code CLI")
+        gemini_section = section_by_title(template_claude, "Gemini CLI")
+        retired_kimi_section = (
+            b"## Kimi Code CLI\n\n"
+            b"Retired Kimi section that should be replaced by Gemini CLI.\n\n"
+        )
         target_claude = template_claude.replace(
             claude_core,
             project_core + project_claude_section,
             1,
         ).replace(claude_commands, project_claude_commands, 1)
-        target_claude = target_claude.replace(kimi_section, b"", 1)
+        target_claude = target_claude.replace(
+            gemini_section,
+            retired_kimi_section,
+            1,
+        )
 
         (self.target / "AGENTS.md").write_bytes(target_agents)
         (self.target / "CLAUDE.md").write_bytes(target_claude)
@@ -257,9 +265,11 @@ class TemplateSectionMergeTests(unittest.TestCase):
         )
         self.assertIn("AGENTS.md: Commands", first.replaced_sections)
         self.assertIn("CLAUDE.md: Commands", first.replaced_sections)
-        self.assertIn("CLAUDE.md: Kimi Code CLI", first.inserted_sections)
+        self.assertIn("CLAUDE.md: Gemini CLI", first.inserted_sections)
+        self.assertIn("CLAUDE.md: ## Kimi Code CLI", first.removed_sections)
+        self.assertNotIn(b"## Kimi Code CLI", merged_claude)
         self.assertLess(
-            merged_claude.index(b"## Kimi Code CLI"),
+            merged_claude.index(b"## Gemini CLI"),
             merged_claude.index(b"## Explicit Codex Handoff"),
         )
         self.assertNotIn(b"## Replication-First Protocol", merged_agents)
@@ -269,6 +279,46 @@ class TemplateSectionMergeTests(unittest.TestCase):
             any("Replication-First Protocol" in item for item in first.removed_sections)
         )
         self.assertTrue(any("### Summary" in item for item in first.removed_sections))
+
+    def test_crlf_retired_kimi_folder_lines_and_title_are_updated(self) -> None:
+        template_agents = (REPO_ROOT / "AGENTS.md").read_bytes()
+        template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()
+        old_agents = (
+            template_agents.replace(
+                b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI",
+                b"# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI",
+            )
+            .replace(
+                "├── .agents/                     # Codex/Gemini skill wrappers (both tools scan this)\n"
+                "│   └── skills/                  # Skill definitions\n"
+                "├── .gemini/                     # Gemini CLI project settings\n"
+                "│   └── settings.json            # Context file names and command permissions\n".encode(
+                    "utf-8"
+                ),
+                "├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)\n"
+                "│   └── skills/                  # Skill definitions\n"
+                "├── .kimi-code/                  # Kimi Code CLI example config\n"
+                "│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml\n".encode(
+                    "utf-8"
+                ),
+            )
+            .replace(b"\n", b"\r\n")
+        )
+        (self.target / "AGENTS.md").write_bytes(old_agents)
+        (self.target / "CLAUDE.md").write_bytes(template_claude)
+
+        report = merge_template_sections.merge_repository(
+            REPO_ROOT,
+            self.target,
+            apply=True,
+        )
+
+        merged_agents = (self.target / "AGENTS.md").read_bytes()
+        self.assertTrue(report.has_changes)
+        self.assertNotIn(b"Kimi", merged_agents)
+        self.assertNotIn(b".kimi-code", merged_agents)
+        self.assertIn(b"Gemini CLI", merged_agents)
+        self.assertIn("AGENTS.md: Folder Structure", report.replaced_sections)
 
     def test_departed_root_file_is_neither_changed_nor_added(self) -> None:
         template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()

@@ -1,4 +1,4 @@
-# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI
+# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI
 
 <!-- HOW TO USE: Replace [BRACKETED PLACEHOLDERS] with your project info.
      Keep this file under 32KB -- Codex loads it every session.
@@ -52,10 +52,10 @@
 │   ├── config.toml              # Model, sandbox, approval settings
 │   └── rules/
 │       └── default.rules        # Command execution permissions (Starlark)
-├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)
+├── .agents/                     # Codex/Gemini skill wrappers (both tools scan this)
 │   └── skills/                  # Skill definitions
-├── .kimi-code/                  # Kimi Code CLI example config
-│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml
+├── .gemini/                     # Gemini CLI project settings
+│   └── settings.json            # Context file names and command permissions
 ├── .claude/                     # Claude Code settings, wrappers, agents, hooks
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── AGENTS.md                # Routes to applicable protocols/conventions/ files
@@ -151,9 +151,9 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Shared skill bodies live in `protocols/skills/`
 - `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
 - Review-oriented agents in `.claude/agents/` execute the same shared protocols
-- Kimi Code CLI loads this `AGENTS.md` hierarchy and scans `.agents/skills/`
-  natively, so it needs no separate skill wrappers; for permission parity, merge
-  `.kimi-code/config.toml.example` into `~/.kimi-code/config.toml`
+- Gemini CLI loads this `AGENTS.md` hierarchy via `.gemini/settings.json` and
+  scans `.agents/skills/` natively, so it needs no separate instruction files
+  or skill wrappers
 
 ---
 

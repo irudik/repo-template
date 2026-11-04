@@ -48,7 +48,7 @@ CHECKED_PATHS = (
     ".agents/",
     ".claude/",
     ".codex/",
-    ".kimi-code/",
+    ".gemini/",
     "protocols/",
     "templates/",
     "tools/",
@@ -65,13 +65,25 @@ CHECKED_PATHS = (
 def tracked_files() -> list[str]:
     """Return the tracked files the checker reads in this repository."""
     listing = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "ls-files"],
+        [
+            "git",
+            "-C",
+            str(REPO_ROOT),
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+        ],
         capture_output=True,
         text=True,
         check=True,
     )
 
-    return [path for path in listing.stdout.split() if path.startswith(CHECKED_PATHS)]
+    return [
+        path
+        for path in dict.fromkeys(listing.stdout.split())
+        if path.startswith(CHECKED_PATHS) and (REPO_ROOT / path).is_file()
+    ]
 
 
 def build_repo(destination: Path, *, omit_prefixes: tuple[str, ...]) -> None:
@@ -298,6 +310,52 @@ class SurfaceDeclarationTests(unittest.TestCase):
         self.assertIn(
             "protocols/conventions/r.md is missing required path-model text",
             strict_result.stdout,
+        )
+
+    def test_gemini_settings_require_agents_context_and_no_model_pin(self) -> None:
+        repo = self.build_overleaf_style_repo(DECLARES_NOTHING_OPTIONAL)
+        settings_path = repo / ".gemini/settings.json"
+        settings = json.loads(settings_path.read_text())
+        settings["model"] = "gemini-2.5-pro"
+        settings["context"] = {"fileName": "GEMINI.md"}
+        settings["tools"]["allowed"].append("run_shell_command")
+        settings["tools"]["allowed"].append("Edit")
+        settings["tools"]["exclude"] = ["run_shell_command"]
+        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+
+        result = run_checker(repo)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(".gemini/settings.json pins Gemini model", result.stdout)
+        self.assertIn(
+            ".gemini/settings.json does not include AGENTS.md in context.fileName",
+            result.stdout,
+        )
+        self.assertIn(
+            "Permissions allowed only in Gemini config: ['invalid:Edit', 'invalid:run_shell_command']",
+            result.stdout,
+        )
+        self.assertIn(
+            "Permissions allowed in Claude but denied in Gemini config:",
+            result.stdout,
+        )
+
+    def test_retired_kimi_config_flagged_while_local_state_is_allowed(self) -> None:
+        repo = self.build_overleaf_style_repo(DECLARES_NOTHING_OPTIONAL)
+        kimi_dir = repo / ".kimi-code"
+        kimi_dir.mkdir()
+        (kimi_dir / "local.toml").write_text("workspace = true\n")
+
+        local_only_result = run_checker(repo)
+
+        (kimi_dir / "config.toml.example").write_text("# retired\n")
+        retired_config_result = run_checker(repo)
+
+        self.assertEqual(local_only_result.returncode, 0, local_only_result.stdout)
+        self.assertEqual(retired_config_result.returncode, 1)
+        self.assertIn(
+            ".kimi-code/config.toml.example still exists in repository",
+            retired_config_result.stdout,
         )
 
     def test_this_repository_passes(self) -> None:

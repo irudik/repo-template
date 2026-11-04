@@ -66,7 +66,7 @@ AGENTS_SECTION_TITLES = SHARED_SECTION_TITLES + (
 CLAUDE_SECTION_TITLES = SHARED_SECTION_TITLES + (
     "Claude Loading Model",
     "Claude-Specific Notes",
-    "Kimi Code CLI",
+    "Gemini CLI",
     "Explicit Codex Handoff",
     "Plan-First Notes",
 )
@@ -84,6 +84,9 @@ SHARED_PREAMBLE_SECTION_TITLES = {
     "CLAUDE.md": ("Commands",),
 }
 
+RETIRED_STANDALONE_TITLES = {
+    "Kimi Code CLI",
+}
 RETIRED_FIRST_TITLE = "Replication-First Protocol"
 RETIRED_FOLLOWING_TITLES = {
     "Replication Targets: [Paper Author (Year)]",
@@ -93,6 +96,40 @@ RETIRED_FOLLOWING_TITLES = {
     "Discrepancies (if any)",
     "Environment",
 }
+
+RETIRED_PREAMBLE_REPLACEMENTS = (
+    (
+        b"# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI",
+        b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI",
+    ),
+)
+
+RETIRED_FOLDER_STRUCTURE_REPLACEMENTS = (
+    (
+        (
+            "├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)\n"
+            "│   └── skills/                  # Skill definitions\n"
+            "├── .kimi-code/                  # Kimi Code CLI example config\n"
+            "│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml\n"
+        ).encode("utf-8"),
+        (
+            "├── .agents/                     # Codex/Gemini skill wrappers (both tools scan this)\n"
+            "│   └── skills/                  # Skill definitions\n"
+            "├── .gemini/                     # Gemini CLI project settings\n"
+            "│   └── settings.json            # Context file names and command permissions\n"
+        ).encode("utf-8"),
+    ),
+    (
+        (
+            "├── .agents/                     # Codex/Kimi: thin skill wrappers (both tools scan this)\n"
+            "├── .kimi-code/                  # Kimi Code CLI: example permission config\n"
+        ).encode("utf-8"),
+        (
+            "├── .agents/                     # Codex/Gemini: thin skill wrappers (both tools scan this)\n"
+            "├── .gemini/                     # Gemini CLI: project settings and command permissions\n"
+        ).encode("utf-8"),
+    ),
+)
 
 SECTION_HEADING = re.compile(br"(?m)^## ([^\r\n]+)(?:\r?\n|$)")
 ANY_HEADING = re.compile(br"(?m)^(#{2,}) ([^\r\n]+)(?:\r?\n|$)")
@@ -197,13 +234,17 @@ def headings_in_removed_section(section: DocumentSection) -> list[str]:
 def remove_retired_sections(
     sections: list[DocumentSection],
 ) -> tuple[list[DocumentSection], list[str]]:
-    """Remove the retired replication section and only its named continuations."""
+    """Remove retired standalone sections and the retired replication sequence."""
 
     retained: list[DocumentSection] = []
     removed: list[str] = []
     removing_replication = False
 
     for section in sections:
+        if section.title in RETIRED_STANDALONE_TITLES:
+            removing_replication = False
+            removed.extend(headings_in_removed_section(section))
+            continue
         if section.title == RETIRED_FIRST_TITLE:
             removing_replication = True
             removed.extend(headings_in_removed_section(section))
@@ -215,6 +256,39 @@ def remove_retired_sections(
         retained.append(section)
 
     return retained, removed
+
+
+def update_retired_client_text(
+    preamble: bytes,
+    sections: list[DocumentSection],
+) -> tuple[bytes, list[DocumentSection], bool]:
+    """Update known template Kimi lines in preamble and Folder Structure."""
+
+    updated_preamble = preamble
+    for old_bytes, new_bytes in RETIRED_PREAMBLE_REPLACEMENTS:
+        updated_preamble = updated_preamble.replace(old_bytes, new_bytes)
+
+    folder_changed = False
+    updated_sections: list[DocumentSection] = []
+    for section in sections:
+        if section.title != "Folder Structure":
+            updated_sections.append(section)
+            continue
+        contents = section.contents
+        for old_bytes, new_bytes in RETIRED_FOLDER_STRUCTURE_REPLACEMENTS:
+            contents = contents.replace(old_bytes, new_bytes)
+            old_crlf = old_bytes.replace(b"\n", b"\r\n")
+            new_crlf = new_bytes.replace(b"\n", b"\r\n")
+            contents = contents.replace(old_crlf, new_crlf)
+        if contents != section.contents:
+            folder_changed = True
+            updated_sections.append(
+                DocumentSection(title=section.title, contents=contents)
+            )
+        else:
+            updated_sections.append(section)
+
+    return updated_preamble, updated_sections, folder_changed
 
 
 def restore_single_source_bullet(
@@ -268,6 +342,10 @@ def merge_document_contents(
     preamble, target_sections = parse_sections(target_contents)
     require_unique_sections(target_path, target_sections)
     target_sections, removed = remove_retired_sections(target_sections)
+    preamble, target_sections, folder_changed = update_retired_client_text(
+        preamble,
+        target_sections,
+    )
     target_by_title = {section.title: section for section in target_sections}
     shared_preamble_titles = SHARED_PREAMBLE_SECTION_TITLES.get(
         target_path.name,
@@ -320,6 +398,8 @@ def merge_document_contents(
                 replaced.append(target_section.title)
         else:
             output_sections.append(target_section)
+            if target_section.title == "Folder Structure" and folder_changed:
+                replaced.append(target_section.title)
 
     for title in owned_titles:
         if title in missing_titles:
