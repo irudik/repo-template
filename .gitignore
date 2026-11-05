@@ -20,9 +20,9 @@ Thumbs.db
 !.codex/rules
 .codex/rules/*
 !.codex/rules/default.rules
-# Kimi Code CLI -- track example config, ignore machine-local state
-.kimi-code/local.toml
-.gemini/
+# Gemini CLI -- track project settings, ignore local state
+.gemini/*
+!.gemini/settings.json
 .tokensave/
 
 # LaTeX build artifacts

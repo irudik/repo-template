@@ -47,8 +47,8 @@
 │       └── *.md
 ├── .claude/                     # Claude Code: settings, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex/Kimi: thin skill wrappers (both tools scan this)
-├── .kimi-code/                  # Kimi Code CLI: example permission config
+├── .agents/                     # Codex/Gemini: thin skill wrappers (both tools scan this)
+├── .gemini/                     # Gemini CLI: project settings and command permissions
 ├── code/                        # Analysis code with sub-Makefiles
 │   ├── CLAUDE.md                # Claude entry point for code conventions
 │   ├── AGENTS.md                # Routes by file type to protocols/conventions/
@@ -147,8 +147,8 @@ pdflatex -interaction=nonstopmode manuscript.tex
 - Shared skill bodies live in `protocols/skills/`
 - `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
 - Review-oriented agents in `.claude/agents/` execute the same shared protocols
-- Kimi Code CLI reuses the `.agents/skills/` wrappers natively; its example
-  permission config lives in `.kimi-code/config.toml.example`
+- Gemini CLI reuses the `.agents/skills/` wrappers natively; its project
+  settings and command permissions live in `.gemini/settings.json`
 
 ## Claude Loading Model
 
@@ -181,15 +181,15 @@ pdflatex -interaction=nonstopmode manuscript.tex
   `quality_reports/handoffs/` if one exists, then inspect
   `git log --oneline -10` and `git diff`
 
-## Kimi Code CLI
+## Gemini CLI
 
-Kimi Code CLI is a third supported agent alongside Codex CLI. It reads the same
-`AGENTS.md` hierarchy and scans `.agents/skills/` natively, so the shared
-skills and workflow rules apply without Kimi-specific wrappers. Kimi has no
-project-level config file for permissions, models, or hooks (its project-local
-`.kimi-code/local.toml` only stores workspace directories and is gitignored);
-permission parity comes from merging `.kimi-code/config.toml.example` into the
-user-level `~/.kimi-code/config.toml`.
+Gemini CLI is a third supported agent alongside Codex CLI. Its tracked project
+settings in `.gemini/settings.json` set `context.fileName` to
+`["GEMINI.md", "AGENTS.md"]` and list the allowed file and shell tools under
+`tools.allowed`. Once the repository folder is trusted in Gemini CLI, it reads
+the `AGENTS.md` hierarchy and scans `.agents/skills/` natively without
+Gemini-specific wrappers. Keep personal model, authentication, and UI settings
+in `~/.gemini/settings.json`.
 
 ## Explicit Codex Handoff
 

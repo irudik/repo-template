@@ -31,7 +31,6 @@ COPY_PREFIXES = (
     ".claude/hooks/",
     ".claude/skills/",
     ".codex/",
-    ".kimi-code/",
     "protocols/",
     "templates/",
     "tools/",
@@ -40,6 +39,7 @@ COPY_PREFIXES = (
 
 COPY_EXACT_PATHS = {
     ".claude/settings.json.example",
+    ".gemini/settings.json",
     ".lintr",
     "AGENTS.md",
     "code/AGENTS.md",
@@ -59,6 +59,7 @@ COPY_EXCLUDED_PATHS = {
 # the finished tools before any commit is made. Once tracked, this list has no
 # effect on discovery.
 CURRENT_UPDATE_PATHS = (
+    ".gemini/settings.json",
     "tools/sync_template.py",
     "tools/merge_template_sections.py",
     "tools/tests/test_template_check.py",
@@ -77,9 +78,13 @@ RETIRED_FILE_PATHS = (
     ".claude/agents/verifier.md",
     ".claude/.headroom_wrap_marker.json",
     ".codex/hooks.json",
+    ".kimi-code/config.toml.example",
 )
 
-REMOVE_WHEN_EMPTY_PATHS = (".codex/agents",)
+REMOVE_WHEN_EMPTY_PATHS = (
+    ".codex/agents",
+    ".kimi-code",
+)
 
 UNTRACK_ONLY_PATHS = (".claude/settings.json",)
 
@@ -577,6 +582,7 @@ def copy_shared_files(
     departures: list[DepartureRule],
     report: SyncReport,
     matched_departure_positions: set[int],
+    indexed_paths: set[str],
 ) -> None:
     """Copy shared files while respecting structure and project choices."""
 
@@ -623,6 +629,21 @@ def copy_shared_files(
 
         target_exists = path_exists_without_following(target_path)
         if target_exists and files_match(source_path, target_path):
+            continue
+
+        if (
+            relative_path == ".gemini/settings.json"
+            and target_exists
+            and relative_path not in indexed_paths
+        ):
+            record_preserved(
+                report,
+                relative_path,
+                "Existing untracked Gemini settings",
+            )
+            report.warnings.append(
+                ".gemini/settings.json exists as an untracked file and was not overwritten"
+            )
             continue
 
         if target_exists:
@@ -794,6 +815,84 @@ def untrack_ignored_files(
         report.untracked.append(relative_path)
 
 
+def update_gitignore_for_gemini(
+    repository: Path,
+    apply: bool,
+    departures: list[DepartureRule],
+    report: SyncReport,
+    matched_departure_positions: set[int],
+) -> None:
+    """Replace retired Kimi and blanket .gemini/ ignore rules when present."""
+
+    relative_path = ".gitignore"
+    gitignore_path = repository / relative_path
+    if not gitignore_path.is_file() or gitignore_path.is_symlink():
+        return
+
+    matches = matching_departures(relative_path, departures)
+    if matches:
+        record_departures(
+            relative_path,
+            matches,
+            report,
+            matched_departure_positions,
+        )
+        return
+
+    untracked_gemini_preserved = any(
+        item.path == ".gemini/settings.json"
+        and item.reason == "Existing untracked Gemini settings"
+        for item in report.preserved
+    )
+    retained_kimi_local = path_exists_without_following(
+        repository / ".kimi-code/local.toml"
+    )
+
+    original = gitignore_path.read_text()
+    newline = "\r\n" if "\r\n" in original else "\n"
+    lines = original.splitlines()
+    new_lines: list[str] = []
+    has_negated_gemini_settings = any(
+        line.strip() in {"!.gemini/settings.json", "!/.gemini/settings.json"}
+        for line in lines
+    )
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("# Kimi Code CLI"):
+            if retained_kimi_local:
+                new_lines.append(line)
+            continue
+        if stripped in {".kimi-code/local.toml", "/.kimi-code/local.toml"}:
+            if retained_kimi_local:
+                new_lines.append(line)
+            continue
+        if stripped in {".gemini/", "/.gemini/"}:
+            if untracked_gemini_preserved:
+                new_lines.append(line)
+                continue
+            prefix = "/" if stripped.startswith("/") else ""
+            new_lines.append(
+                "# Gemini CLI -- track project settings, ignore local state"
+            )
+            new_lines.append(f"{prefix}.gemini/*")
+            if not has_negated_gemini_settings:
+                new_lines.append(f"!{prefix}.gemini/settings.json")
+            continue
+        new_lines.append(line)
+
+    updated = newline.join(new_lines)
+    if original.endswith(("\n", "\r\n")) and updated:
+        updated += newline
+
+    if updated == original:
+        return
+
+    report.updated.append(relative_path)
+    if apply:
+        gitignore_path.write_text(updated)
+
+
 def sync_repository(
     template_root: Path,
     repository: Path,
@@ -822,6 +921,14 @@ def sync_repository(
 
     copy_shared_files(
         template_root,
+        repository,
+        apply,
+        departures,
+        report,
+        matched_departure_positions,
+        indexed_paths,
+    )
+    update_gitignore_for_gemini(
         repository,
         apply,
         departures,

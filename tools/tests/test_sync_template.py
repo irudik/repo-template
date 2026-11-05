@@ -111,6 +111,11 @@ class TemplateSyncTests(unittest.TestCase):
         initialize_git_repository(self.template, "template-branch")
 
         write_file(self.template, ".codex/config.toml", "# template config\n")
+        write_file(
+            self.template,
+            ".gemini/settings.json",
+            '{"context": {"fileName": ["GEMINI.md", "AGENTS.md"]}}\n',
+        )
         notify = write_file(
             self.template,
             ".claude/hooks/notify.sh",
@@ -218,6 +223,7 @@ class TemplateSyncTests(unittest.TestCase):
         write_file(target, ".codex/agents/old.toml", "retired = true\n")
         write_file(target, ".codex/hooks/old.json", "{}\n")
         write_file(target, ".codex/hooks.json", "{}\n")
+        write_file(target, ".kimi-code/config.toml.example", "# retired kimi\n")
         write_file(target, ".claude/settings.json", "{}\n")
         write_file(target, "tools/__pycache__/old.pyc", "compiled\n")
         add_all(target)
@@ -239,6 +245,9 @@ class TemplateSyncTests(unittest.TestCase):
         self.assertFalse((target / ".codex/agents").exists())
         self.assertFalse((target / ".codex/hooks").exists())
         self.assertFalse((target / ".codex/hooks.json").exists())
+        self.assertFalse((target / ".kimi-code/config.toml.example").exists())
+        self.assertFalse((target / ".kimi-code").exists())
+        self.assertTrue((target / ".gemini/settings.json").is_file())
         self.assertTrue((target / ".claude/settings.json").exists())
         self.assertTrue((target / "tools/__pycache__/old.pyc").exists())
         remaining_index = indexed_paths(target)
@@ -359,6 +368,48 @@ class TemplateSyncTests(unittest.TestCase):
         self.assertEqual(len(report.warnings), 1)
         self.assertIn("nowhere/*.md", report.warnings[0])
         self.assertIn(".claude/hooks/log-reminder.py", indexed_paths(target))
+
+    def test_untracked_gemini_settings_preserved_and_gitignore_updated(self) -> None:
+        target = self.build_target("gemini-migration-project")
+        write_file(
+            target,
+            ".gitignore",
+            "# Kimi Code CLI -- track example config, ignore machine-local state\n"
+            ".kimi-code/local.toml\n"
+            ".gemini/\n"
+            ".tokensave/\n",
+        )
+        add_all(target)
+        write_file(
+            target,
+            ".gemini/settings.json",
+            '{"model": "personal-untracked"}\n',
+        )
+        write_file(target, ".kimi-code/local.toml", "workspace = true\n")
+
+        report = sync_template.sync_repository(self.template, target, apply=True)
+
+        self.assertEqual(
+            (target / ".gemini/settings.json").read_text(),
+            '{"model": "personal-untracked"}\n',
+        )
+        self.assertTrue((target / ".kimi-code/local.toml").is_file())
+        self.assertNotIn(".gitignore", report.updated)
+        gitignore_text = (target / ".gitignore").read_text()
+        self.assertIn(".gemini/\n", gitignore_text)
+        self.assertIn(".kimi-code/local.toml\n", gitignore_text)
+        self.assertTrue(
+            any(".gemini/settings.json" in warning for warning in report.warnings)
+        )
+
+        (target / ".gemini/settings.json").unlink()
+        (target / ".kimi-code/local.toml").unlink()
+        second = sync_template.sync_repository(self.template, target, apply=True)
+
+        self.assertIn(".gitignore", second.updated)
+        updated_gitignore = (target / ".gitignore").read_text()
+        self.assertIn(".gemini/*\n!.gemini/settings.json\n", updated_gitignore)
+        self.assertNotIn(".kimi-code/local.toml", updated_gitignore)
 
     def test_default_command_mode_is_dry_run(self) -> None:
         arguments = sync_template.parse_arguments(["--repo", str(self.workspace)])

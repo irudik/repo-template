@@ -2,14 +2,13 @@
 
 > **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview), [OpenAI Codex CLI](https://github.com/openai/codex), or [Kimi Code CLI](https://www.kimi.com/code/docs/en/) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
+A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview), [OpenAI Codex CLI](https://github.com/openai/codex), or [Gemini CLI](https://github.com/google-gemini/gemini-cli) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
 
 **All three tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
 `.claude/`; Codex CLI uses an `AGENTS.md` hierarchy plus `.codex/` and
-`.agents/`; Kimi Code CLI uses the same `AGENTS.md` hierarchy, scans
-`.agents/skills/` natively, and mirrors permissions through
-`.kimi-code/config.toml.example`. The same workflow, quality gates, and skills
-work with each.
+`.agents/`; Gemini CLI uses the same `AGENTS.md` hierarchy and `.agents/skills/`
+wrappers through `.gemini/settings.json`. The same workflow, quality checks,
+and skills work with each.
 
 ---
 
@@ -147,18 +146,18 @@ Codex project configuration lives in:
 - **`.codex/rules/default.rules`** — command execution permissions (Starlark format)
 - **`.agents/skills/*/SKILL.md`** — thin Codex wrappers around the shared protocols
 
-### Claude Code vs Codex CLI vs Kimi Code CLI: Key Differences
+### Claude Code vs Codex CLI vs Gemini CLI: Key Differences
 
-| Aspect | Claude Code | Codex CLI | Kimi Code CLI |
-|--------|-------------|-----------|---------------|
-| Instructions file | `CLAUDE.md` hierarchy | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy |
-| Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) | `~/.kimi-code/config.toml` (user-level TOML) |
-| Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) | `.kimi-code/config.toml.example` (merge into user config) |
+| Aspect | Claude Code | Codex CLI | Gemini CLI |
+|--------|-------------|-----------|------------|
+| Instructions file | `CLAUDE.md` hierarchy | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy (via `context.fileName` in `.gemini/settings.json`) |
+| Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) | `.gemini/settings.json` (JSON) |
+| Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) | `tools.allowed` in `.gemini/settings.json` |
 | Project conventions | `CLAUDE.md` hierarchy plus shared `AGENTS.md` local conventions | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy |
 | Shared skill bodies | `protocols/skills/*.md` | `protocols/skills/*.md` | `protocols/skills/*.md` |
-| Agent definitions | `.claude/agents/*.md` | Not supported | Built-in subagents; no per-repo agent files |
+| Agent definitions | `.claude/agents/*.md` | Not supported | Not tracked (reviews run through `.agents/skills/`) |
 | Skills | Thin wrappers in `.claude/skills/*/SKILL.md` | Thin wrappers in `.agents/skills/*/SKILL.md` | Reuses `.agents/skills/` natively |
-| Hooks | `.claude/hooks/*` | Not supported (use git hooks) | User-level `[[hooks]]` in `~/.kimi-code/config.toml` |
+| Hooks | `.claude/hooks/*` | Not supported (use git hooks) | Optional in `~/.gemini/settings.json` |
 
 ### Known Limitations (Codex)
 
@@ -169,45 +168,47 @@ Codex CLI does not support hooks, so these Claude Code features have no direct e
 
 ---
 
-## Quick Start: Kimi Code CLI (5 minutes)
+## Quick Start: Gemini CLI (5 minutes)
 
 ### 1. Fork & Clone
 
 Same as above — fork this repo, clone it, and `cd` into it.
 
-### 2. Start Kimi Code CLI and Paste This Prompt
+### 2. Start Gemini CLI and Paste This Prompt
 
 ```bash
-kimi
+gemini
 ```
 
-Then paste the same project-description prompt as the Claude Code section above.
+Approve folder trust when prompted on first launch, then paste the same
+project-description prompt as the Claude Code section above.
 
-**What this does:** Kimi Code reads the root `AGENTS.md`, then uses
-`code/AGENTS.md` or `latex/AGENTS.md` to load only the conventions needed for
-the files in scope. It also scans `.agents/skills/` natively, so all shared
-skills work without extra setup.
+**What this does:** Once the folder is trusted, Gemini CLI reads
+`.gemini/settings.json`, loads the root `AGENTS.md`, and uses `code/AGENTS.md`
+or `latex/AGENTS.md` to load only the conventions needed for the files in
+scope. It also scans `.agents/skills/` natively (tested on Gemini CLI 0.29.5+),
+so all shared skills work without extra setup.
 
 ### 3. Configuration
 
-Kimi Code project integration lives in:
+Gemini CLI project integration lives in:
 
 - **`AGENTS.md` hierarchy** — same instructions and workflow rules as Codex CLI
-- **`.agents/skills/*/SKILL.md`** — scanned natively; no Kimi-specific wrappers needed
-- **`.kimi-code/config.toml.example`** — permission rules mirroring the Claude and Codex configs
+- **`.agents/skills/*/SKILL.md`** — scanned natively; no Gemini-specific wrappers needed
+- **`.gemini/settings.json`** — configures `context.fileName` (`["GEMINI.md", "AGENTS.md"]`) and `tools.allowed` command permissions
 
-Kimi Code reads permissions, models, and hooks from a single user-level config
-(`~/.kimi-code/config.toml`); there is no project-level config file for these
-settings. Its project-local `.kimi-code/local.toml` only stores workspace
-directories and is gitignored. To mirror the template's command permissions,
-merge the `[[permission.rules]]` blocks from `.kimi-code/config.toml.example`
-into `~/.kimi-code/config.toml`.
+Keep personal model, authentication, and UI preferences in the user-level
+`~/.gemini/settings.json` rather than the tracked project file.
 
-### Known Limitations (Kimi)
+### Known Limitations (Gemini)
 
-- **No project-level config for permissions, models, or hooks** — these
-  settings are user-level only; keep them in `~/.kimi-code/config.toml`
-  (`.kimi-code/local.toml` only stores workspace directories)
+- **Folder trust required on first launch** — Gemini CLI ignores workspace
+  settings, `AGENTS.md`, and `.agents/skills/` until the repository folder is
+  trusted
+- **Workspace `tools.allowed` overrides user-level `tools.allowed`** — Gemini
+  CLI replaces rather than merges `tools.allowed` across scopes, and shell
+  commands with inline environment assignments (`VAR=value cmd`) or output
+  redirection (`>`) still prompt for confirmation
 - **No tracked skill wrappers of its own** — by design; it reuses
   `.agents/skills/`
 
@@ -485,13 +486,13 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | `.codex/rules/default.rules` | `.codex/rules/` | Command execution permissions (Starlark) |
 | `.agents/skills/*/SKILL.md` | `.agents/skills/` | 20 thin wrappers around the shared protocols |
 
-### Kimi Code CLI Configuration
+### Gemini CLI Configuration
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | `AGENTS.md` (root) | Project root | Core instructions + workflow rules (shared with Codex CLI) |
 | `.agents/skills/*/SKILL.md` | `.agents/skills/` | Scanned natively; same wrappers Codex uses |
-| `.kimi-code/config.toml.example` | `.kimi-code/` | Example permission rules to merge into `~/.kimi-code/config.toml` |
+| `.gemini/settings.json` | `.gemini/` | Configures `context.fileName` and `tools.allowed` permissions |
 
 </details>
 
@@ -501,7 +502,7 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 
 | Tool | Required For | Install |
 |------|-------------|---------|
-| [Claude Code](https://code.claude.com/docs/en/overview), [Codex CLI](https://github.com/openai/codex), or [Kimi Code CLI](https://www.kimi.com/code/docs/en/) | AI assistant | `npm install -g @anthropic-ai/claude-code`, `npm install -g @openai/codex`, or see Kimi Code docs |
+| [Claude Code](https://code.claude.com/docs/en/overview), [Codex CLI](https://github.com/openai/codex), or [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AI assistant | `npm install -g @anthropic-ai/claude-code`, `npm install -g @openai/codex`, or `npm install -g @google/gemini-cli` |
 | [GNU Make](https://www.gnu.org/software/make/) | Build system | Pre-installed on macOS/Linux |
 | R | Data analysis, figures | [r-project.org](https://www.r-project.org/) |
 | Julia | Computation, simulation | [julialang.org](https://julialang.org/downloads/) |
@@ -511,9 +512,9 @@ Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/s
 | [gh CLI](https://cli.github.com/) | PR workflow | `brew install gh` (macOS) |
 | [jq](https://jqlang.github.io/jq/) | Claude Code hooks and `/review-pr` thread parsing | `brew install jq` (macOS) |
 
-Not all tools are needed — install only what your project uses. One of Claude Code, Codex CLI, or Kimi Code CLI is the only hard requirement.
+Not all tools are needed — install only what your project uses. One of Claude Code, Codex CLI, or Gemini CLI is the only hard requirement.
 
-By default, this template does not pin an AI model for any tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), Claude Code uses the default model configured in your local Claude Code CLI/app session, and Kimi Code CLI uses the default model from `~/.kimi-code/config.toml` or a `kimi -m` override. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
+By default, this template does not pin an AI model for any tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), Claude Code uses the default model configured in your local Claude Code CLI/app session, and Gemini CLI uses the default model from `~/.gemini/settings.json` or a `gemini --model ...` override. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
 
 ---
 
@@ -598,26 +599,27 @@ The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (
 
 ---
 
-## Maintenance: Keeping Claude, Codex, and Kimi in Sync
+## Maintenance: Keeping Claude, Codex, and Gemini in Sync
 
 This repo now uses a three-layer skill architecture:
 
-- **`protocols/skills/`** — canonical shared skill bodies
+- **`protocols/skills/`** — shared skill bodies
 - **`.claude/skills/`** — Claude wrappers
-- **`.agents/skills/`** — Codex wrappers, also scanned natively by Kimi Code CLI
+- **`.agents/skills/`** — Codex wrappers, also scanned natively by Gemini CLI
 
 Claude also has a tool-specific execution layer in **`.claude/agents/`** for review-oriented skills. Those agents execute the same shared protocol files rather than owning separate checklists.
 
-Kimi Code CLI needs no wrapper layer of its own: it loads the `AGENTS.md`
-hierarchy and scans `.agents/skills/` out of the box. Its only tracked config
-is `.kimi-code/config.toml.example`, which mirrors the command permissions for
-merging into the user-level `~/.kimi-code/config.toml`.
+Gemini CLI needs no wrapper layer of its own: once `.gemini/settings.json` sets
+`context.fileName` to `["GEMINI.md", "AGENTS.md"]`, it loads the `AGENTS.md`
+hierarchy and scans `.agents/skills/` out of the box. Its tracked project
+settings in `.gemini/settings.json` also mirror the command permissions under
+`tools.allowed`.
 
 ### What must stay in sync
 
 | Component | Location | Keep in sync? |
 |-----------|----------|---------------|
-| Command permissions | `.claude/settings.json.example`, `.codex/rules/default.rules`, and `.kimi-code/config.toml.example` | Yes |
+| Command permissions | `.claude/settings.json.example`, `.codex/rules/default.rules`, and `.gemini/settings.json` | Yes |
 | Shared skill bodies | `protocols/skills/*.md` | Yes |
 | Skill wrapper names and descriptions | `.claude/skills/*/SKILL.md` and `.agents/skills/*/SKILL.md` | Yes |
 | Project conventions | `CLAUDE.md`, `code/CLAUDE.md`, `latex/CLAUDE.md`, and the `AGENTS.md` hierarchy | Yes |
@@ -625,16 +627,16 @@ merging into the user-level `~/.kimi-code/config.toml`.
 ### What intentionally differs
 
 - **Frontmatter format.** Claude wrappers use Claude frontmatter; Codex wrappers use Codex frontmatter.
-- **Agent layer.** Claude has `.claude/agents/` for review-oriented execution surfaces. Codex and Kimi do not.
-- **Hooks.** Claude supports `.claude/hooks/`; Codex does not, and Kimi hooks are user-level only.
-- **Config scope.** Codex reads tracked project config in `.codex/`; Kimi reads permissions, models, and hooks only from user-level config (its project-local `.kimi-code/local.toml` stores workspace directories only), so `.kimi-code/config.toml.example` is a template to merge, not a live config.
+- **Agent layer.** Claude has `.claude/agents/` for review-oriented agents. Codex and Gemini do not track repo-level agent files.
+- **Hooks.** Claude supports `.claude/hooks/`; Codex does not, and Gemini hooks remain optional in user-level settings.
+- **Config scope.** Codex and Gemini read tracked project config in `.codex/` and `.gemini/settings.json`; Claude reads `.claude/settings.json.example` as a template for local `.claude/settings.json`.
 
 ### When adding a new skill or convention
 
-1. Add or update the canonical body in `protocols/skills/<name>.md`
+1. Add or update the shared body in `protocols/skills/<name>.md`
 2. Update `.claude/skills/<name>/SKILL.md`
-3. Update `.agents/skills/<name>/SKILL.md` (Kimi picks this up automatically)
-4. If it is a review-oriented Claude agent surface, update the matching file in `.claude/agents/`
+3. Update `.agents/skills/<name>/SKILL.md` (Gemini picks this up automatically)
+4. If it is a review-oriented Claude agent, update the matching file in `.claude/agents/`
 5. If the skill needs new commands, update all three permission config files
 6. Run `make check-template`
 
@@ -642,10 +644,10 @@ merging into the user-level `~/.kimi-code/config.toml`.
 
 Run `make check-template` to validate:
 
-- permission parity between Claude, Codex, and Kimi configs
+- permission parity between Claude, Codex, and Gemini configs
 - shared protocol and wrapper inventory parity
 - wrapper references to `protocols/skills/*.md`
-- Claude review-agent references to the same canonical protocol files
+- Claude review-agent references to the same shared protocol files
 
 `tools/check_template_consistency.py` is identical in every repository built
 from this template. Repositories differ in structure, so each one declares in
@@ -706,8 +708,8 @@ my-project/
 │   └── skills/                  # Shared skill bodies
 ├── .claude/                     # Claude Code: rules, wrappers, agents, hooks
 ├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex/Kimi: thin skill wrappers
-├── .kimi-code/                  # Kimi Code CLI: example permission config
+├── .agents/                     # Codex/Gemini: thin skill wrappers
+├── .gemini/                     # Gemini CLI: project settings and permissions
 ├── code/
 │   ├── CLAUDE.md                # Claude instructions for code/
 │   ├── AGENTS.md                # Routes work to protocols/conventions/
