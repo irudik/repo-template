@@ -1,18 +1,14 @@
 ---
 name: proofread
-description: Run expert proofreading on academic documents. Checks grammar, typos, overflow risks, citation consistency, and academic quality for LaTeX, Quarto, and directly provided text-based files. Produces a report without editing files.
+description: Review academic text for grammar, typos, consistency, and layout risks without editing. Use only when the user asks for it.
 disable-model-invocation: true
 argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 ---
 
-# Proofread Wrapper
-
-Use the shared protocol in `protocols/skills/proofread.md`.
-
-## Wrapper Workflow
-
-1. Resolve the target scope from `$ARGUMENTS`.
-2. Read `protocols/skills/proofread.md`.
-3. Launch one `proofreader` agent for the full approved target scope and instruct it to follow `protocols/skills/proofread.md`.
-4. Present a concise summary of the findings.
+Resolve `$ARGUMENTS` to the requested files. Launch one `proofreader` agent for the full requested target scope
+with a short, self-contained brief: files to review, what changed, what was
+already checked, and no conclusion. Instruct the reviewer to read
+`protocols/skills/proofread.md`; the main agent need not read that protocol
+before delegation. Present the returned findings under `Reports and Updates`
+in `protocols/writing.md`, saving a report only if the user requested one.

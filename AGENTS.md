@@ -1,82 +1,56 @@
-# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI
-
-<!-- HOW TO USE: Replace [BRACKETED PLACEHOLDERS] with your project info.
-     Keep this file under 32KB -- Codex loads it every session.
-     Code-specific conventions are in code/AGENTS.md.
-     LaTeX-specific conventions are in latex/AGENTS.md. -->
+# AGENTS.md -- Shared Instructions for Claude Code, Codex, and Antigravity
 
 **Project:** [YOUR PROJECT NAME]
 **Institution:** [YOUR INSTITUTION]
-**Branch:** main
 
 ---
 
 ## Core Principles
 
-- **Match process to risk** -- plan and review in proportion to the chance and
-  cost of a wrong result; do not use file count as the sole risk measure
-- **Verify after** -- compile/render and confirm output at the end of every task
-- **Readable research code** -- prefer clear, reproducible, prose-like code
-  over clever compactness; code should be easy for coauthors, referees, and
-  future selves to audit
-- **Plain-language writing** -- all prose (replies, issues, reports,
-  comments) follows `protocols/writing.md`; write for an economist coauthor,
-  never in programmer jargon
+- **The code is ours to change** -- the user and their coauthors own every
+  file here, and nobody outside the project depends on it. When a task calls
+  for it, rewrite or restructure existing code directly. Do not keep old
+  versions beside new ones, add compatibility layers, or work around code you
+  could fix. The exception is `/refactor`, a style cleanup that must leave
+  outputs identical.
+- **Match process to risk** -- plan and review in proportion to the chance
+  and cost of a wrong result. A one-line change to an estimand or a solver
+  can be riskier than a broad documentation edit.
+- **Readable research code** -- prefer clear, reproducible code that
+  coauthors and referees can audit over compact or clever code.
+- **Plain-language writing** -- all prose follows `protocols/writing.md`:
+  replies, reports, issues, commit messages, and comments. Write for an
+  economist coauthor, never in programmer jargon.
 - **Single source of truth** -- `latex/manuscript.tex` is authoritative for the paper
-- **Quality gates** -- apply the scoring rubric before commit or merge when it
-  adds value; do not score every routine edit
-- **Structured [LEARN] tags** -- when corrected or when you discover a durable lesson, save a structured `[LEARN:category]` entry to `MEMORY.md`
+- **Generated numbers** -- computed results reach the manuscript only through
+  macros written to `output/numbers/`, never typed by hand.
 
 ---
 
-## Folder Structure
+## Where Things Are
 
-```
-[YOUR-PROJECT]/
-├── AGENTS.md                    # This file (Codex instructions)
-├── CLAUDE.md                    # Claude Code instructions
-├── MEMORY.md                    # Persistent [LEARN] entries across sessions
-├── Makefile                     # Root -- delegates to code/ and latex/
-├── protocols/                   # Shared writing guide, code conventions, skill bodies
-│   ├── writing.md
-│   ├── conventions/             # Shared plus language-specific code conventions
-│   │   ├── shared.md
-│   │   ├── r.md
-│   │   ├── julia.md
-│   │   ├── stata.md
-│   │   ├── matlab.md
-│   │   └── makefile.md
-│   └── skills/
-│       └── *.md
-├── .codex/                      # Codex CLI config and rules
-│   ├── config.toml              # Model, sandbox, approval settings
-│   └── rules/
-│       └── default.rules        # Command execution permissions (Starlark)
-├── .agents/                     # Codex/Gemini skill wrappers (both tools scan this)
-│   └── skills/                  # Skill definitions
-├── .gemini/                     # Gemini CLI project settings
-│   └── settings.json            # Context file names and command permissions
-├── .claude/                     # Claude Code settings, wrappers, agents, hooks
-├── code/                        # Analysis code with sub-Makefiles
-│   ├── AGENTS.md                # Routes to applicable protocols/conventions/ files
-│   ├── Makefile                 # Delegates to sub-Makefiles
-│   └── [task_group]/            # e.g., data cleaning, estimation, figures
-│       ├── Makefile
-│       └── *.R, *.jl, *.do, *.ado, or *.m
-├── latex/                       # Paper manuscript and slides
-│   ├── AGENTS.md                # LaTeX conventions (Codex)
-│   ├── Makefile                 # pdflatex 3-pass build
-│   ├── manuscript.tex           # Main paper
-│   ├── slides.tex               # Presentation slides
-│   ├── latex_extras/            # Preamble files (packages, commands, tables)
-│   └── references/              # .bib and .bst files
-├── output/                      # Code pipeline outputs
-│   ├── figures/                 # Generated figures
-│   ├── tables/                  # Generated tables
-│   └── numbers/                 # Inline numbers for manuscript (\newcommand .txt files)
-├── quality_reports/             # Plans, handoffs, session logs, merge reports
-└── templates/                   # Session, handoff, learning, and quality templates
-```
+This file is loaded in every session, so it stays short. Read the files below
+when the task needs them.
+
+| Need | File |
+|------|------|
+| Any prose, including replies and reports | `protocols/writing.md` |
+| Code under `code/` | `code/AGENTS.md`, which selects from `protocols/conventions/` |
+| Manuscript and slides | `latex/AGENTS.md` |
+| A numerical solver that fails | `protocols/solver-debugging.md` |
+| A skill invoked as `/name` | `protocols/skills/<name>.md` |
+| Handing work from Claude to Codex | `protocols/codex-handoff.md` |
+| Lessons from earlier sessions | `MEMORY.md` |
+| Plans, handoffs, session logs | `quality_reports/`, with layouts in `templates/` |
+
+Analysis code lives in `code/[task_group]/`, each with its own Makefile.
+Outputs go to `output/figures/`, `output/tables/`, and `output/numbers/`.
+`.claude/skills/` and `.agents/skills/` hold thin wrappers around the shared
+skill files.
+
+Size limits: Antigravity cuts an instruction file at 24,000 bytes, and Codex
+reads at most 32,768 bytes across all `AGENTS.md` files it loads. Keep this
+file under 20,000 bytes; `make check-template` enforces that.
 
 ---
 
@@ -87,660 +61,190 @@ Run all Make commands below from the repository root.
 Makefile and in the scripts its recipes run are relative to `path`, not to the
 repository root.
 
+Issue one command per shell call. Do not chain commands with `&&` or `;`, and
+do not rely on `cd`, `export`, or a shell variable carrying over to the next
+call: permission rules are evaluated per command, and shell state does not
+persist between calls. Issue independent commands in parallel. For a sequence
+you repeat, use a Make target.
+
 ```bash
-# Make (preferred -- builds everything)
-make                               # Build all (code + latex)
-make -n                            # Dry-run: show what would be built
-make check-template                # Validate shared-skill and permission sync
+make                               # Build all (code, then latex)
+make -n                            # Dry run: show what would be built
 make -C code                       # Build all code targets
 make -C code/[task_group] all      # Build one task group
-make -C latex                      # Compile manuscript
-
-# LaTeX (manual fallback -- 3-pass, pdflatex)
-cd latex
-export TEXINPUTS=.:./latex_extras/:../output/numbers/:../output/tables/:../output/figures/:
-export BIBINPUTS=./references/:
-export BSTINPUTS=./references/:
-pdflatex -interaction=nonstopmode manuscript.tex
-bibtex manuscript
-pdflatex -interaction=nonstopmode manuscript.tex
-pdflatex -interaction=nonstopmode manuscript.tex
+make -C latex                      # Compile manuscript and slides
+make check-template                # Check the instruction files
 ```
-
----
-
-## Quality Thresholds
-
-| Score | Gate | Meaning |
-|-------|------|---------|
-| 80 | Commit | Good enough to save |
-| 90 | PR | Ready for deployment |
-| 95 | Excellence | Aspirational |
-
----
-
-## Skills Quick Reference
-
-| Command | What It Does |
-|---------|-------------|
-| `/commit [msg]` | Stage, commit, PR, merge on the current non-`main` branch; create a branch only when needed |
-| `/data-analysis [dataset]` | End-to-end R analysis |
-| `/refactor [file-or-dir]` | Verify-refactor-verify loop |
-| `/verify-outputs [script]` | Checksum outputs, compare to reference |
-| `/compare-branches [b1] [b2]` | Cross-branch output comparison |
-| `/resume-custom` | Recover context after compression/new session |
-| `/trace [question]` | Trace an ambiguous result or failure back to its most likely cause |
-| `/learn [insight]` | Save a durable, project-specific lesson to `MEMORY.md` |
-| `/setup-makefile [dir]` | Generate Makefile from directory contents |
-| `/review-r [file]` | R code quality review |
-| `/review-julia [file]` | Julia code quality review |
-| `/review-stata [file]` | Stata code quality review |
-| `/review-matlab [file]` | MATLAB code quality review |
-| `/review-tex [file]` | LaTeX hardcoded-number and updated-result prose review |
-| `/review-makefile [file]` | Makefile conventions review |
-| `/review-comments [path]` | Clean up comments, docstrings, dead code |
-| `/review-domain [file]` | Substantive domain review (identification, citations, code-theory) -- opt-in |
-| `/proofread [file]` | Grammar, typos, overflow, consistency check -- opt-in |
-| `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
-| `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
-
----
-
-## Shared Skill Protocols
-
-- Shared skill bodies live in `protocols/skills/`
-- `.claude/skills/` and `.agents/skills/` are thin wrappers around those files
-- Review-oriented agents in `.claude/agents/` execute the same shared protocols
-- Gemini CLI loads this `AGENTS.md` hierarchy via `.gemini/settings.json` and
-  scans `.agents/skills/` natively, so it needs no separate instruction files
-  or skill wrappers
-
----
-
-## Current Project State
-
-| Component | File | Status | Description |
-|-----------|------|--------|-------------|
-| Manuscript | `latex/manuscript.tex` | Template | Paper skeleton with standard sections |
-| Slides | `latex/slides.tex` | Template | Presentation template |
-| Code pipeline | `code/` | Template | Sub-Makefiles to be added per project |
 
 ---
 
 ## Risk-Based Workflow
 
-Choose the lightest workflow that still provides credible evidence of
-correctness. File count is useful context, but a one-line estimand or solver
-change can be riskier than a broad documentation edit.
+Choose the lightest process that still gives credible evidence the result is
+right.
 
-### 1. Routine or Bounded Change
+| Work | Process |
+|------|---------|
+| Routine or bounded change | Make the change, check it, report. No saved plan, handoff, or reviewer. |
+| Substantive change within one module | State the approach in a few sentences, then implement and check. Use one reviewer only when an independent reading adds material value. |
+| High-risk work | Save a plan to `quality_reports/plans/YYYY-MM-DD_short-description.md`, then continue straight through implementation, checks, and one independent review. Fix every blocking defect the review finds. Ask for a second review only when those fixes were substantial. |
+| Several reviewers or repeated rounds | Only when the user asks, or when the cause of a failure is still unclear after normal diagnosis and one review. State the open hypotheses, what each reviewer tests, and when to stop. |
 
-Implement, test, and provide a concise report. Do not create a saved plan,
-handoff file, scoring exercise, or reviewer agent by default.
+High-risk work means: solver, derivative, tolerance, or convergence changes;
+identification, estimands, or quantitative claims the manuscript depends on;
+broad data-pipeline changes; destructive operations; and a final review
+before a merge when a missed error would be costly.
 
-### 2. Substantive Single-Module Change
+A plan is a working record, saved as a file in the repository. Do not wait
+for approval of it, and do not use a tool's plan mode or approval dialog,
+unless the user asked to approve plans. An explicit request for a fuller or
+lighter process overrides this table.
 
-Give a brief in-conversation plan, implement, test, and run one targeted review
-only when independence adds material value. Save a plan only if the work must
-survive a session boundary.
+### Reviewers
 
-### 3. High-Risk, Cross-Cutting, Numerical, or Pre-Merge Work
+Pick the one reviewer that covers the riskiest part of the change. Do not
+start one reviewer per file type.
 
-Save a plan, then continue automatically with implementation, verification,
-and one independent review. Do not treat the plan as an approval gate unless
-the user explicitly asks to review or approve it. Allow at most one
-fix/re-review by default. This category includes:
+| Main risk | Skill |
+|-----------|-------|
+| R, Julia, Stata, or MATLAB code | `/review-r`, `/review-julia`, `/review-stata`, `/review-matlab` |
+| Make dependencies | `/review-makefile` |
+| Results and generated numbers in LaTeX | `/review-tex` |
+| Identification, derivations, agreement between code and theory | `/review-domain`, only when the user asks |
+| Grammar and presentation | `/proofread`, only when the user asks |
+| Unclear cause of a result or failure | `/trace` |
 
-- solver, derivative, tolerance, or convergence changes
-- identification, estimand, or manuscript-critical quantitative claims
-- broad data-pipeline changes and destructive operations
-- final pre-merge review when the consequences of a missed error are high
+Where the tool can start a subagent, hand the review to a fresh one, and
+review in the main conversation only where it cannot. Give the reviewer a
+self-contained brief: the files to read, what changed, the acceptance
+criteria, and what has already been checked. Leave out your own conclusion,
+because the value of a review is an independent reading. When the findings
+come back, fix the blocking defects yourself.
 
-### 4. Full Multi-Agent Loop
+### Working Without Stopping
 
-Use a full multi-agent loop only when the user explicitly requests it or when
-failures remain genuinely ambiguous after normal diagnosis and independent
-review. State the unresolved hypotheses, what each additional reviewer will
-test, and the stop condition. Never loop indefinitely.
+Finish every part of the task before ending the turn. Carry on through the
+whole workflow without asking for approval of a plan or of the next step. Do
+not end a turn by offering to continue or by listing work you could do
+yourself. When a decision is open, first finish all the work that does not
+depend on the answer, then ask at the end of the turn; do not use a question
+or approval dialog that halts the work midway. A new task or a different
+branch within the same session is not a reason to stop; if the context has
+grown large, say in one line that a fresh session would help, and continue.
 
-### Selecting a Reviewer
+These steps need no further approval:
 
-When independent review adds value, select the narrowest reviewer that covers
-the main risk:
+- reading any file in the repository
+- running the `make` targets, dry runs, tests, and scripts the task concerns
+- rerunning a build or test after a fix, and retrying a command that timed
+  out or found a file busy when it is safe to repeat
+- creating and editing files in the directories the task concerns, including
+  `latex/references/references.bib`
+- creating a working branch when the current branch is `main`
+- writing plans and notes under `quality_reports/`
 
-| Main risk | Review skill or Claude reviewer |
-|-----------|---------------------------------|
-| R analysis | `/review-r` or `r-reviewer` |
-| Julia computation | `/review-julia` or `julia-reviewer` |
-| Stata analysis | `/review-stata` or `stata-reviewer` |
-| MATLAB computation or optimization | `/review-matlab` or `matlab-reviewer` |
-| Make dependency graph | `/review-makefile` or `makefile-reviewer` |
-| LaTeX results and dynamic numbers | `/review-tex` or `tex-reviewer` |
-| Identification, derivation, or code-theory alignment | `/review-domain` or `domain-reviewer` |
-| Grammar and presentation | `/proofread` or `proofreader` |
-| Ambiguous cause of a result or failure | `/trace` or `tracer` |
+These need the user's request: commits, pushes, merges, deleting or
+overwriting data or outputs that cannot be rebuilt, and work beyond what was
+asked, such as another module, another section of the paper, or an unrelated
+cleanup. A request already given covers the action: when the user asked for a
+commit or invoked `/commit`, do not confirm again.
 
-Choose one reviewer based on the riskiest changed component; do not spawn one
-reviewer per file type merely because a change touches several file types. Use
-multiple reviewers only under the full multi-agent rule above.
+Ordinary obstacles are not reasons to stop: errors, timeouts, failing tools,
+empty results, a busy file. Diagnose them, then work through them with the
+access you have. Deliberate blockers are different: a file protected by
+`.claude/hooks/protect-files.sh`, a path marked not to be touched, access
+withheld on purpose, a safety rule. Leave those alone, say what you found,
+and look for another way to finish.
 
-Tests are required in every category. Fix test failures independently and
-rerun the relevant checks before reporting. An explicit request for a fuller
-or lighter process overrides the default, subject to safety constraints.
+### Ask the User When
 
-### Automatic Execution
+Ask before making a choice that the request and the documented specification
+leave open, if it would change:
 
-Proceed through the applicable workflow without a plan-approval pause. Phrases
-such as "just do it" or "handle it" reinforce this default but are not required.
-Pause only when the user explicitly requests plan approval or when a material
-choice, missing authority, destructive operation, or scope expansion requires
-input. Automatic execution does not authorize commits, pushes, merges,
-destructive operations, or a broader scope unless the user requested them.
+- estimates, identification, sample definitions, or manuscript claims;
+- the structure of a quantitative or theory model: agents and their
+  objectives, timing, state variables, functional forms, market structure,
+  the equilibrium concept, or the assumptions behind a proposition;
+- calibration targets, parameter values, or the solution or estimation
+  method, including the solver algorithm, its tolerances, and its options.
 
-### Structured Handoffs
+A change the user explicitly asked for needs no question, even when estimates
+move. Neither does a correction that restores the documented specification.
+Resolve any other ambiguity with the documented default or the most
+reasonable reading, and state the choice in the report.
 
-Write a handoff only when context must transfer across a person, agent, branch,
-session, or major stage. Use `templates/handoff.md` and save it under
-`quality_reports/handoffs/YYYY-MM-DD_description/`. Do not create handoffs as
-routine stage paperwork.
+### What Done Means
 
----
+A task is done when the requested change is made, the checks relevant to what
+changed have been run and pass, failures caused by the change are fixed, and
+the report says what was verified and what was not. Choose checks by what
+changed:
 
-## Refactoring Protocol
+- code: build the relevant target with `make -C code/[task_group] [target]`
+  and confirm the expected outputs exist and look plausible;
+- a Makefile or its dependencies: a scoped `make -n`, then the build;
+- LaTeX: `make -C latex`, with no undefined citations or missing inputs;
+- instructions and documentation: no build.
 
-### Constraints
+Repeat a check only after a further change. If a check cannot be run, say so.
 
-- NEVER change solver tolerances, options, or convergence criteria
-- NEVER rename variables in numerical/hot-loop code
-- NEVER change function signatures without explicit approval
-- NEVER remove dead code unless explicitly instructed (flag it in section headers instead)
-- The ONLY acceptable refactoring outcome is identical output
-
-### Verify-Refactor-Verify Loop
-
-1. Run target script, record output checksums (CSV only -- skip binary formats like RDS, .mat, PDF)
-2. Apply style changes per language convention rules
-3. Re-run, compare checksums
-4. If mismatch: revert and report -- do not attempt to fix the mismatch
-
-### Approved Transformations
-
-- Comment style (headers, borders, docstrings)
-- Whitespace and indentation
-- Variable grouping and section organization
-- Adding missing documentation
-- Language-specific style conventions
-
-### Prohibited Transformations (without explicit approval)
-
-- Changing algorithm logic or control flow
-- Renaming function parameters or return values
-- Modifying solver configuration or tolerances
-- Removing or restructuring error handling
-- Changing data types or precision
-- Refactoring loops into vectorized form (or vice versa) in numerical code
-
-When in doubt, ask before changing.
-
----
-
-## Solver Debugging Protocol
-
-When debugging numerical solver failures (MATLAB, Julia, Python):
-
-### Diagnostic Checklist (follow in order)
-
-1. **Dimensions first** -- verify all matrices are conformable, vectors are correct length
-2. **NaN/Inf trace** -- find the first operation that produces NaN; trace backward
-3. **Finite-difference check** -- validate analytic gradients/Hessians before suspecting derivative bugs
-4. **Condition number** -- check key matrices (Jacobian, Hessian) for ill-conditioning
-5. **Boundary check** -- verify variables respect bounds (non-negative shares, probabilities in [0,1])
-6. **Input data** -- confirm data fed to solver contains no NaN/Inf/missing values
-7. **Initial guess** -- check that x0 is feasible (satisfies bounds and constraints)
-
-### Do NOT
-
-- Change tolerances or solver options as a diagnostic step
-- Change the solver algorithm without explicit approval
-- Propose fixes before completing the diagnostic checklist
-- Guess at root causes -- show evidence
-- Add `try`/`catch` blocks just to suppress solver errors
-
-### Report Format
-
-Present diagnosis with evidence, then implement the proposed fix when the task
-authorizes changes. For a diagnosis-only request, report the proposed fix
-without implementing it. Continue to require explicit approval for solver
-algorithm, tolerance, or option changes as specified above.
-
-```markdown
-## Diagnosis
-- **Symptom:** [what failed]
-- **First NaN/error at:** [file:line]
-- **Root cause:** [with evidence]
-- **Checklist completed:** [which steps, what was found]
-
-## Proposed Fix
-- [specific change with rationale]
-- [expected outcome]
-```
+Write every reply and report for a reader who did not watch the work. Lead
+with the outcome and what it means, give key numbers with units, name any
+decision the reader has to make, and say in one line what was verified and
+what was not. Leave out command logs and checklists, and keep it short.
+`Reports and Updates` in `protocols/writing.md` has the full rule.
 
 ---
 
-## General Trace Protocol
+## Defects That Block a Commit or Merge
 
-Use `/trace [observation]` when the main question is causal rather than
-implementational.
+Fix these before a commit or merge. If the user wants to go ahead anyway,
+name them in the report.
 
-Good fits:
+- a script, build, or compile that fails
+- a wrong estimand, formula, objective, or moment condition
+- an unguarded numerical error: NaN or Inf passing through, an unchecked
+  solver exit status, or a gradient or Hessian with the wrong sign or
+  dimension
+- an unchecked merge or reshape (keys, match rates, panel structure)
+- an absolute path, or stochastic code without a seed
+- a computed result typed into the manuscript by hand, an undefined citation,
+  or a missing `output/numbers/` input
+- a Makefile with a missing prerequisite or a circular dependency
 
-- estimates changed unexpectedly
-- merge or reshape outputs look wrong
-- build dependencies behave unexpectedly
-- outputs disagree across code, tables, and manuscript
-- a failure is real but the cause is not yet clear
-
-`/trace` should produce a ranked diagnosis with evidence, not a guessed fix.
-For numerical solver failures, combine it with the solver debugging checklist
-above.
-
----
-
-## Output Verification Formats
-
-When comparing outputs before and after code changes:
-
-| Format | Checksum-Stable? | How to Compare |
-|--------|-----------------|----------------|
-| CSV/TSV | Yes | MD5 checksum |
-| RDS | No (R-version dependent) | Read and compare values, or convert to CSV |
-| .dta | Partially | Read and compare values, or export to CSV first |
-| .mat | Partially | Load and compare specific variables |
-| JLD2 | Yes (Julia-version dependent) | MD5 or load-and-compare |
-| PDF/PNG | No (renderer dependent) | Visual diff only |
-| .tex (generated) | Yes | MD5 or text diff |
-
-**Gold standard:** CSV checksums. Use these for refactoring verification. Skip binary formats.
-
-- **For `.dta` files:** compare with a reader such as `haven::read_dta()` or
-  export both versions to CSV first.
-- **For `.mat` files:** load both versions and compare variables with an
-  explicit tolerance.
-- **For `RDS` files:** compare with `all.equal()` or convert to CSV first.
-- **For figures:** use visual inspection only; do not checksum PDF or PNG
-  outputs.
+Everything else is advisory, including style, formatting, and line length.
+Report it briefly and do not hold the work for it.
 
 ---
 
-## Routine Code Verification
+## Changed Numbers in the Manuscript
 
-For routine and substantive single-module R, Julia, Stata, or MATLAB changes:
-
-1. Implement the bounded change.
-2. Verify at the narrowest useful scope:
-   - If the change modifies a Makefile or dependency graph, run a scoped
-     `make -C code/[dir] -n [target]`, then build that target.
-   - If source code changes under a stable Makefile, run the relevant Make
-     target directly; a separate dry run is optional.
-   - If no Makefile governs the source, run it from its containing directory.
-   - Documentation or instruction-only changes do not require a Make dry run.
-   - Use a root `make -n` for cross-cutting or pre-merge verification when the
-     full dependency plan adds useful coverage.
-3. Confirm the script runs without error and creates the expected outputs.
-4. Fix failures, rerun the relevant checks, and report the evidence concisely.
-5. Use one targeted review only when independent judgment adds material value.
-
-### Verification Checklist
-
-- [ ] Applicable Make target passes; a dry run was used only when required above
-- [ ] Script runs without errors (R, Julia, Stata, and/or MATLAB)
-- [ ] Language setup is explicit at top (`library()`, `using`, `version`, `rng`)
-- [ ] No hardcoded absolute paths
-- [ ] `set.seed()` / `Random.seed!()` / `set seed` / `rng()` once at top if stochastic
-- [ ] Output files created at expected paths
-- [ ] Tolerance checks pass (if applicable)
-- [ ] No hardcoded computed results in manuscript prose
-- [ ] Quality score >= 80 when preparing a commit or merge and scoring is applicable
+When a build can rewrite `output/numbers/`, record the macro definitions
+beforehand and compare their contents afterward. Whenever a generated numeric
+macro changes value, review every prose use of it as `latex/AGENTS.md`
+describes, and report the old and new values.
 
 ---
 
-## Planning Workflow
-
-Plan in proportion to risk.
-
-Plans are working records, not approval gates. Do not enter an interactive plan
-mode solely because work is high risk; use it only when the user explicitly
-requests it.
-
-### The Protocol
-
-1. **Classify the work** using the risk-based workflow above.
-2. **Routine work** -- implement directly; no plan artifact or approval pause.
-3. **Substantive single-module work** -- give a brief in-conversation plan.
-4. **High-risk or cross-cutting work** -- check `MEMORY.md`, draft the approach,
-   save it to `quality_reports/plans/YYYY-MM-DD_short-description.md`, and
-   continue automatically. Pause only when the user explicitly asks to approve
-   the plan or a material unresolved choice requires user input.
-5. **Context transfer** -- save a plan for lower-risk work only when another
-   session, branch, person, or agent must resume it.
-6. **Manuscript review opt-in** -- when high-risk work touches manuscript or
-   slides (`latex/`), include domain review or proofreading only when the user
-   requested it. Do not pause to ask. Record requested and omitted optional
-   reviews in the saved plan under an `## Optional Reviews` section.
-7. **Implement and verify** using the applicable risk-based workflow.
-
-### Plans on Disk
-
-Plans survive context loss. When a saved plan is required, use:
-
-```
-quality_reports/plans/YYYY-MM-DD_short-description.md
-```
-
-Format: Status (IN PROGRESS/COMPLETED; use DRAFT or APPROVED only when the user
-explicitly requests a plan-approval step), approach, files to modify,
-verification steps.
-
-### Context Management
-
-- Prefer automatic compression while continuing the same task on the same branch.
-- Start a fresh session, or use `/clear`, when changing task or branch.
-- When the user starts an unrelated task or switches branches mid-session,
-  state the boundary, recommend a fresh session, and pause until the user says
-  whether to continue in the current session.
-- Save only the context needed for later recovery before ending a session.
-- Avoid sessions that accumulate unrelated work across several days or branches.
-
-### Session Recovery
-
-After compression or a new session:
-1. Read `AGENTS.md` and the most recent plan in `quality_reports/plans/`
-2. Read the most recent relevant handoff in `quality_reports/handoffs/`, if one exists
-3. Check `git log --oneline -10` and `git diff`
-4. State what you understand the current task to be
-
----
-
-## Quality Gates & Scoring Rubrics
-
-Use these rubrics for high-risk review, requested scoring, and commit or merge
-decisions. Do not perform a scoring exercise after every routine edit.
-
-### LaTeX Manuscript (.tex)
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | pdflatex compilation failure | -100 |
-| Critical | Typo in equation | -25 |
-| Critical | Undefined citation | -15 |
-| Critical | Hardcoded result (macro exists but unused) | -15 |
-| Critical | Overfull hbox > 10pt | -10 |
-| Major | Missing bibliography entries | -5 |
-| Major | Likely computed result with no macro | -5 |
-| Major | output/numbers/ file missing from Makefile dependencies | -5 |
-| Minor | Long lines (>100 chars) | -1 (EXCEPT documented math formulas) |
-
-### R Scripts (.R)
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | Syntax errors | -100 |
-| Critical | Domain-specific bugs (wrong estimand, incorrect formula) | -30 |
-| Critical | Numerical errors (division by zero, unguarded NaN propagation) | -25 |
-| Critical | Hardcoded absolute paths | -20 |
-| Major | Missing set.seed() | -10 |
-| Major | Missing figure generation | -5 |
-
-### Julia Scripts (.jl)
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | Runtime errors | -100 |
-| Critical | Domain-specific bugs (wrong estimand, incorrect formula) | -30 |
-| Critical | Numerical errors (NaN propagation, catastrophic cancellation, wrong precision) | -25 |
-| Critical | Hardcoded absolute paths | -20 |
-| Major | Type instability in hot loops | -15 |
-| Major | Missing `Random.seed!()` | -10 |
-| Major | Abstract-typed struct fields | -5 |
-| Major | Missing persistence (no CSV/JLD2 export) | -5 |
-| Minor | Unfused broadcasts (`.+` instead of `@.`) | -2 |
-| Minor | Globals captured in loops without `let` | -2 |
-
-### Stata Scripts (.do / .ado)
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | Runtime errors | -100 |
-| Critical | Domain-specific bugs (wrong estimand, incorrect formula) | -30 |
-| Critical | Unchecked merge/reshape invariants (keys, `_merge`, panel state) | -25 |
-| Critical | Hardcoded absolute paths or `cd` | -20 |
-| Major | Missing `version` | -10 |
-| Major | Missing `set seed` (if stochastic) | -10 |
-| Major | `capture` without `_rc` checks or heavy global macro dependence | -5 |
-| Major | Missing output persistence | -5 |
-| Minor | Noisy `display` / `pause` / `set trace on` in production | -2 |
-
-### MATLAB Scripts (.m)
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | Runtime errors | -100 |
-| Critical | Domain-specific bugs (wrong objective, incorrect moment conditions) | -30 |
-| Critical | Asymmetric Hessian | -25 |
-| Critical | Gradient/Hessian sign errors | -25 |
-| Critical | Gradient/Hessian dimension mismatch | -25 |
-| Critical | Hardcoded absolute paths | -20 |
-| Critical | Unchecked solver exitflag | -20 |
-| Critical | Index consistency errors (off-by-one, bounds/parameter mismatch) | -20 |
-| Major | Missing NaN/Inf guards | -10 |
-| Major | Missing `rng()` (if stochastic) | -10 |
-| Major | Missing output persistence | -5 |
-| Minor | `i`/`j` as loop variables | -2 |
-| Minor | Missing semicolons (unsuppressed output) | -1 |
-
-### Makefile
-
-| Severity | Issue | Deduction |
-|----------|-------|-----------|
-| Critical | Circular dependencies | -100 |
-| Critical | Missing prerequisites (stale builds) | -30 |
-| Major | Missing `.PHONY` on non-file targets | -10 |
-| Major | Absolute paths | -10 |
-| Major | Directories not using order-only prerequisites | -5 |
-
-### Enforcement
-
-- **Score < 80:** Block commit. List blocking issues.
-- **Score < 90:** Allow commit, warn. List recommendations.
-- User can override with justification.
-
-### Tolerance Thresholds (Research)
-
-<!-- Customize for your domain -->
-
-| Quantity | Tolerance | Rationale |
-|----------|-----------|-----------|
-| Point estimates | [e.g., 1e-6] | [Numerical precision] |
-| Standard errors | [e.g., 1e-4] | [MC variability] |
-| Coverage rates | [e.g., +/- 0.01] | [MC with B reps] |
-
----
-
-## Task Completion Verification Protocol
-
-**At the end of EVERY task, verify the output works correctly.** This is non-negotiable.
-
-### Make Verification
-
-- For a Makefile or dependency-graph change, run a scoped dry run such as
-  `make -C code/[subdir] -n [target]`, then build the target.
-- For a source change governed by an unchanged Makefile, build the relevant
-  target directly. Add a dry run only when checking staleness or dependency
-  selection is part of the task.
-- For cross-cutting or pre-merge verification, use root `make -n` when seeing
-  the complete dependency plan adds useful coverage.
-- Documentation and instruction-only changes do not require Make verification.
-- Any required build must exit successfully before proceeding to the
-  file-specific checks below.
-
-### Dynamic Number Context Review
-
-When a task can rebuild files in `output/numbers/`, record the current
-`\newcommand` definitions before running the producing scripts. After the
-rebuild, compare macro contents rather than file modification times.
-
-Whenever a generated numeric macro changes value, review every prose
-occurrence of that macro in all affected TeX documents. Inspect the containing
-sentence and enough nearby context to assess the claim. Check articles,
-singular and plural agreement, direction and sign language, units, comparisons,
-thresholds, and qualitative descriptions of magnitude. Fix unambiguous prose
-problems, flag substantive ambiguity, and recompile every affected document.
-Report the old and new values and every location reviewed. A regeneration with
-identical macro contents requires no contextual review.
-
-If no reliable pre-rebuild definitions are available, state that limitation
-and review every prose use of the macros in the regenerated files. Keep
-generated macros value-only; do not move surrounding prose into generated
-files or rely on a general article-selection function to replace contextual
-review.
-
-### For LaTeX Manuscript:
-1. Compile with `make -C latex` (preferred). Check for errors
-2. Verify PDF was generated with non-zero size
-3. Check for overfull hbox warnings
-4. Check for undefined citations
-5. Run `/review-tex` to check hardcoded numbers and changed-value prose contexts
-6. Verify all dynamic number `\input{...}` files exist in `output/numbers/`
-
-### For R Scripts:
-1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
-   `code/[subdir]/` as the command's working directory and run `Rscript script.R`
-2. Verify output files (PDF, RDS, CSV) were created with non-zero size
-3. Spot-check estimates for reasonable magnitude
-
-### For Julia Scripts:
-1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
-   `code/[subdir]/` as the command's working directory and run `julia script.jl`
-2. Verify output files (CSV, JLD2) were created with non-zero size
-3. Check file sizes are plausible (not suspiciously small or empty)
-4. If stochastic, verify reproducibility: run twice with same seed, diff outputs
-
-### For Stata Scripts:
-1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
-   `code/[subdir]/` as the command's working directory and run `stata -b do script.do`
-2. Verify output files (`.dta`, `.csv`, `.tex`, `.txt`, or logs used downstream) were created with non-zero size
-3. Check the batch log for Stata error codes and unexpected warnings
-4. Spot-check key counts, merge assertions, or exported estimates for reasonable magnitude
-
-### For MATLAB Scripts:
-1. Prefer `make -C code/[subdir] [target]`. If no Makefile exists, set
-   `code/[subdir]/` as the command's working directory and run
-   `matlab -batch "run('script.m')"`
-2. Verify output files (`.mat`, `.csv`, `.tex`, or figures) were created with non-zero size
-3. Check file sizes are plausible and solver output/logs show successful convergence where relevant
-
-### For Code Pipelines:
-1. When the task adds, renames, or restructures scripts under `code/`, verify
-   that every `.R`, `.jl`, `.do`, `.ado`, and `.m` file appears as a
-   prerequisite in some Makefile target.
-2. Flag orphaned scripts as warnings. They may be dead code or missing from the
-   build graph.
-
-### Common Pitfalls
-
-- **Relative paths:** use paths relative to the Makefile's directory
-- **Assuming success:** verify output files exist and contain plausible content
-
-### Verification Checklist:
-```
-[ ] Output file created successfully
-[ ] No compilation/render errors
-[ ] Images/figures display correctly
-[ ] Changed dynamic-number contexts reviewed (when applicable)
-[ ] Reported results to user
-```
-
----
-
-## Session Logging
-
-**Location:** `quality_reports/session_logs/YYYY-MM-DD_description.md`
-**Template:** `templates/session-log.md`
-
-Create a session log only when context must survive a session boundary or the
-task contains major decisions that future work will need. Record material
-design decisions, user corrections, durable blockers, and the final state. Do
-not log routine commands, every problem solved, or low-risk edits that are
-fully explained by the diff and final report.
-
-### Quality Reports
-
-Generated **only at merge time** -- not at every commit or PR.
-Save to `quality_reports/merges/YYYY-MM-DD_[branch-name].md` using `templates/quality-report.md`.
-
-## Structured Handoffs
-
-**Location:** `quality_reports/handoffs/YYYY-MM-DD_description/`
-**Template:** `templates/handoff.md`
-
-Write handoffs only when context actually transfers across a person, agent,
-branch, session, or major stage. Each note should be short and contain:
-
-- decisions made
-- alternatives rejected
-- active risks
-- files touched or relevant
-- what the next stage must verify or do
-
-## Structured Learning
-
-Use `/learn` or append directly to `MEMORY.md` when a lesson is both
-project-specific and likely to recur.
-
-Required format:
-
-```markdown
-[LEARN:category]
-- Date: YYYY-MM-DD
-- Trigger: [symptom, mistake, or question]
-- Wrong: [incorrect assumption or behavior]
-- Right: [correct rule or approach]
-- Scope: [where this applies]
-- Evidence: [file, command, output, or user correction]
-- Action: [what to do next time]
-```
-
-Do not save generic advice. Save only durable lessons that would materially help
-future work.
-
-### Template Repo Hygiene
-
-When maintaining this template repository itself, treat ad hoc files under
-`quality_reports/` as branch-local artifacts. Before merging back to `main`,
-remove task-specific plans, handoffs, session logs, merge reports, and scratch
-directories so the template stays fresh. Keep only `.gitkeep` placeholders and
-intentional template assets.
-
----
-
-## Command Conventions
-
-Issue one command per shell execution. Do not chain commands with `&&` or `;`.
-Claude and Codex evaluate permission rules by command segment, so a chain can
-replace one approved command with several interactive permission checks.
-
-- **Independent commands** -- issue in parallel when possible (e.g., `git status` and `git diff`)
-- **Dependent commands** -- issue sequentially, waiting for each result before the next (e.g., `git add` then `git commit`)
-- **Repeated dependent workflows** -- prefer an existing Make target or a
-  narrowly reviewed script over broad shell-chain permissions
-
-## Workflow Quick Reference
-
-**Workflow:** Risk-based (you set the goal; the agent applies proportionate planning, verification, and review)
-
-```
-Your instruction -> [CLASSIFY RISK] -> [PLAN if needed] -> [EXECUTE] -> [VERIFY] -> [REPORT]
-```
-
-**Ask the user when:** Design forks, code ambiguity, methodological edge cases, scope questions.
-**Just execute when:** Obvious fixes, verification, documentation, plotting, deployment.
+## Records
+
+Keep a record only when someone will use it.
+
+- **Plan** -- for high-risk work, or when another session, person, or agent
+  must pick the work up.
+- **Handoff** (`quality_reports/handoffs/`, `templates/handoff.md`) -- only
+  when context passes to another person, agent, branch, or session.
+- **Session log** (`quality_reports/session_logs/`,
+  `templates/session-log.md`) -- only when decisions must outlast the session.
+- **Merge report** (`quality_reports/merges/`, `templates/quality-report.md`)
+  -- only when the user asks for one at a merge.
+- **`MEMORY.md`** -- a lesson that is specific to this project and likely to
+  recur. Use `/learn`. Every entry states its reason and a review date;
+  delete an entry once its reason no longer holds, because old cautions make
+  agents hold back routine work.
+
+After context compression or in a new session, follow
+`protocols/skills/resume-custom.md`, then continue the task.
+
+In the template repository itself, remove task-specific files under
+`quality_reports/` before merging to `main`.

@@ -1,7 +1,6 @@
 # LaTeX CLAUDE.md
 
-When Claude is working anywhere under `latex/`, use [AGENTS.md](./AGENTS.md)
-as the source of truth for local LaTeX conventions.
+@AGENTS.md
 
-That file defines the shared manuscript, verification, dynamic-number, and
-Makefile standards used by both Claude and Codex in this repo.
+The file imported above is the source of truth for LaTeX conventions when
+Claude works under `latex/`.

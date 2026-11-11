@@ -16,6 +16,22 @@ These conventions apply to all scripts in `code/` and its subdirectories.
 - Path helpers such as `file.path()`, `joinpath()`, and `fullfile()` remain
   preferred for programmatic path construction
 
+## Running and Checking
+
+- Run a script through its Make target. When no Makefile governs it, use
+  `code/[task_group]/` as the command's working directory and run the script
+  there: `Rscript script.R`, `julia script.jl`, `stata -b do script.do`, or
+  `matlab -batch "run('script.m')"`. If your shell tool cannot set a working
+  directory, add a Make target for the script and run it with `make -C`.
+- After a run, confirm the expected output files exist and hold plausible
+  content. Read the Stata batch log or the solver output for errors and
+  failed convergence.
+- In stochastic code, set the seed once at the top, and confirm that two runs
+  with the same seed give the same output.
+- When scripts are added, renamed, or moved, check that every `.R`, `.jl`,
+  `.do`, `.ado`, and `.m` file is a prerequisite of some Make target. A script
+  outside the build is either unused or missing from it.
+
 ## Shared Research Code Style
 
 These standards apply across R, Julia, Stata, MATLAB, and Makefiles unless a
@@ -41,20 +57,12 @@ language-specific convention gives a narrower rule.
   estimation, diagnostics, and export.
 - Comments should explain economic intuition, data logic, identifying
   assumptions, and non-obvious transformations rather than restating syntax.
-- Use plain language or terminology standard in modern economics. Avoid
-  programmer jargon and software-style shorthand. A term fails this rule if an
-  economics PhD would not understand it immediately from ordinary research
-  practice. Examples to avoid include `harness`, `fixture`, `scaffold`,
-  `canonical`, `canon`, `contract`, `surface` (as a verb: a check finds
-  or reveals a problem, it does not surface one; this applies in
-  comments, docstrings, and identifiers alike, while a mathematical or
-  physical surface such as a criterion surface or surface temperature
-  is standard usage), `gate`, and `legacy`. Write `test setup`,
-  `example input`, `initial structure`, `main specification`, `required
-  behavior`, or `earlier method` instead. Name the
-  object or task directly. If a precise software term must appear, explain it
-  in plain language in the same comment or docstring. The full banned-term
-  and replacement table is in `protocols/writing.md`.
+- Comments, docstrings, and new identifiers follow the plain-language rule in
+  `protocols/writing.md`: a term fails if an economics PhD would not
+  understand it immediately from ordinary research practice. That file holds
+  the banned-term table and its replacements. Name the object or task
+  directly; if a precise software term must appear, explain it in plain
+  language in the same comment or docstring.
 - Comments and docstrings must be self-contained. Never reference issue or
   ticket numbers, commit hashes, pull requests, or conversations with Claude or
   Codex. The reader is a coauthor, referee, or future self without access to the

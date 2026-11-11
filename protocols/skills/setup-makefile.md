@@ -1,66 +1,31 @@
-# Generate Makefile from Directory Contents Protocol
+# Generate a Makefile
 
-Scan a directory for scripts and generate a Makefile following project
-conventions.
+Read `protocols/conventions/makefile.md`. Scan the requested directory for
+`.R`, `.jl`, `.do`, `.ado`, and `.m` scripts, their input paths, and write calls:
 
-## Steps
+- R: `write.csv`, `write_csv`, `saveRDS`, `ggsave`, `writeLines`.
+- Julia: `CSV.write`, `jldsave`, `savefig`, `open(..., "w")`.
+- Stata: `save`, `export delimited`, `putexcel`, `esttab`, `file write`.
+- MATLAB: `writetable`, `writematrix`, `save`, `saveas`.
 
-### 1. Scan the Directory
+Resolve constructed output paths: in `code/<task_group>/`, typical roots are
+`file.path("..", "..", "output")` in R,
+`joinpath("..", "..", "output")` in Julia, `../../output` in Stata, and
+`fullfile("..", "..", "output")` in MATLAB. Use local script prerequisites
+and `OUTPUT_ROOT ?= ../../output` for generated targets.
 
-Glob for `.R`, `.jl`, `.do`, `.ado`, and `.m` files.
+Generate `all` as the default target, `.PHONY` for non-file targets, order-only
+directory prerequisites, one production rule for a script's joint outputs,
+`.PRECIOUS` for costly intermediates, and a scoped `clean` target. List input
+data and helper scripts as prerequisites. Use automatic variables and the
+Stata recipe `$(STATA) -b do $<`; delegate subdirectories through `$(MAKE) -C`.
+For LaTeX builds use `make -C latex` rather than shell directory or environment
+changes.
 
-### 2. Parse Output Paths
+When generation or changes are requested, write the Makefile and update parent
+delegation as needed, then check target selection with a scoped dry run and
+build the affected target. For review-only requests, report without editing.
+Leave uncertain dependencies unchanged rather than inventing output paths.
 
-For each script, scan for write calls:
-
-- R: `write.csv`, `write_csv`, `saveRDS`, `ggsave`, `writeLines`
-- Julia: `CSV.write`, `jldsave`, `savefig`, `open(..., "w")`
-- Stata: `save`, `export delimited`, `putexcel`, `esttab`, `file write`
-- MATLAB: `writetable`, `writematrix`, `save`, `saveas`
-
-Concrete patterns to match include. In the standard `code/<task_group>/`
-layout, scripts usually define a working-directory-relative output root that
-points to the repo-root `output/` directory:
-
-- R: `output_root = file.path("..", "..", "output")`
-- R: `write.csv(df, file.path(output_root, "tables", "results.csv"))`
-- Julia: `output_root = joinpath("..", "..", "output")`
-- Julia: `CSV.write(joinpath(output_root, "tables", "results.csv"), df)`
-- Stata: `local output_root "../../output"`
-- Stata: `save "`output_root'/tables/results.dta", replace`
-- Stata: `export delimited using "`output_root'/tables/results.csv", replace`
-- Stata: `file open fh using "`output_root'/numbers/estimate.txt", write text replace`
-- MATLAB: `output_root = fullfile("..", "..", "output");`
-- MATLAB: `writetable(tbl, fullfile(output_root, "tables", "results.csv"))`
-
-Also scan for input paths to determine dependencies.
-
-### 3. Generate the Makefile
-
-Follow the relevant Makefile conventions:
-
-- `all` as the default target with `.PHONY`
-- Order-only prerequisites for directories
-- Automatic variables such as `$<` and `$@`
-- Joint production for multi-output scripts
-- `.PRECIOUS` for expensive intermediates
-- A `clean` target
-- For task-group Makefiles under `code/<task_group>/`, keep script
-  prerequisites local (for example `analysis.R`) and route outputs through
-  `OUTPUT_ROOT ?= ../../output`
-
-### 4. Present for Review
-
-Do not write directly. Present the generated content and ask for approval.
-
-### 5. Write After Approval
-
-Write the Makefile and update the parent `code/Makefile` delegation if needed.
-
-## Important
-
-- Always present for review before writing.
-- Follow Makefile conventions exactly.
-- Use the existing Stata recipe convention `$(STATA) -b do $<` when a generated
-  Makefile includes Stata targets.
-- Flag scripts whose outputs cannot be parsed reliably.
+Follow `Reports and Updates` in `protocols/writing.md`: describe the resulting
+build rules, checks, and scripts whose inputs or outputs could not be resolved.

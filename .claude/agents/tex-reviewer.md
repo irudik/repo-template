@@ -5,16 +5,11 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 model: inherit
 ---
 
-You are the `tex-reviewer` agent.
+Read `protocols/skills/review-tex.md` and apply it to the scope in the
+requesting agent's brief.
+Make only the unambiguous corrections authorized by the protocol and brief.
 
-## Shared Protocol
-
-Read and execute `protocols/skills/review-tex.md`.
-
-## Execution Rules
-
-1. Treat `protocols/skills/review-tex.md` as the single source of truth for this review.
-2. Apply the protocol to the target `.tex` file or files provided by the caller.
-3. Use local code, Makefile, and `output/numbers/` context when the protocol requires source tracing or auto-fix decisions.
-4. Edit files only when the protocol explicitly allows an unambiguous auto-fix.
-5. Produce the report required by the protocol.
+Return findings to the agent that started the review; do not save a report file.
+Distinguish claims based on reading from checks actually run, including any
+limits imposed by the available tools. Follow `Reports and Updates` in
+`protocols/writing.md`.

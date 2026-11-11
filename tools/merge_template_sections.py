@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Update shared root-document sections while retaining project sections.
+"""Update shared root-document sections while keeping project sections.
 
 Root `AGENTS.md` and `CLAUDE.md` combine template instructions with project
 facts. This command replaces only the named template sections, inserts missing
-template sections in their source order, and removes the retired replication
-instructions. Every other target section remains byte-for-byte unchanged.
+template sections in their source order, and removes sections the template has
+retired. Every other target section remains byte-for-byte unchanged.
 """
 
 from __future__ import annotations
@@ -37,38 +37,20 @@ except ModuleNotFoundError:
     )
 
 
-SHARED_SECTION_TITLES = (
+AGENTS_SECTION_TITLES = (
     "Core Principles",
-    "Quality Thresholds",
-    "Skills Quick Reference",
-    "Shared Skill Protocols",
-)
-
-AGENTS_SECTION_TITLES = SHARED_SECTION_TITLES + (
+    "Where Things Are",
     "Risk-Based Workflow",
-    "Refactoring Protocol",
-    "Solver Debugging Protocol",
-    "Diagnosis",
-    "Proposed Fix",
-    "General Trace Protocol",
-    "Output Verification Formats",
-    "Routine Code Verification",
-    "Planning Workflow",
-    "Quality Gates & Scoring Rubrics",
-    "Task Completion Verification Protocol",
-    "Session Logging",
-    "Structured Handoffs",
-    "Structured Learning",
-    "Command Conventions",
-    "Workflow Quick Reference",
+    "Defects That Block a Commit or Merge",
+    "Changed Numbers in the Manuscript",
+    "Records",
 )
 
-CLAUDE_SECTION_TITLES = SHARED_SECTION_TITLES + (
-    "Claude Loading Model",
-    "Claude-Specific Notes",
-    "Gemini CLI",
-    "Explicit Codex Handoff",
-    "Plan-First Notes",
+# Root CLAUDE.md imports AGENTS.md, so it owns only the import and the notes
+# that apply to Claude Code alone.
+CLAUDE_SECTION_TITLES = (
+    "Shared Instructions",
+    "Claude Code Notes",
 )
 
 OWNED_SECTION_TITLES = {
@@ -77,16 +59,67 @@ OWNED_SECTION_TITLES = {
 }
 
 # Commands combines shared path instructions with each project's own command
-# list. Folder Structure and Current Project State contain only project facts,
-# so Commands is the only project-owned section with a shared prose prefix.
+# list, so its opening prose is shared and its fenced block onward is the
+# project's. Root CLAUDE.md no longer has a shared Commands section.
 SHARED_PREAMBLE_SECTION_TITLES = {
     "AGENTS.md": ("Commands",),
-    "CLAUDE.md": ("Commands",),
+    "CLAUDE.md": (),
 }
+
+# Older CLAUDE.md files repeated these project sections from AGENTS.md. They
+# hold project facts, so the merge leaves them in place and reports them.
+CLAUDE_SECTIONS_NOW_IMPORTED = (
+    "Folder Structure",
+    "Commands",
+    "Current Project State",
+)
 
 RETIRED_STANDALONE_TITLES = {
     "Kimi Code CLI",
+    "Gemini CLI",
 }
+
+# Sections the shorter root files no longer carry. Their content moved to
+# files read only when needed, or was deleted. "Diagnosis" and "Proposed Fix"
+# were headings inside an example block that the section parser read as
+# sections of their own.
+RETIRED_TITLES_BY_FILE = {
+    "AGENTS.md": frozenset(
+        {
+            "Quality Thresholds",
+            "Skills Quick Reference",
+            "Shared Skill Protocols",
+            "Refactoring Protocol",
+            "Solver Debugging Protocol",
+            "Diagnosis",
+            "Proposed Fix",
+            "General Trace Protocol",
+            "Output Verification Formats",
+            "Routine Code Verification",
+            "Planning Workflow",
+            "Quality Gates & Scoring Rubrics",
+            "Task Completion Verification Protocol",
+            "Session Logging",
+            "Structured Handoffs",
+            "Structured Learning",
+            "Command Conventions",
+            "Workflow Quick Reference",
+        }
+    ),
+    "CLAUDE.md": frozenset(
+        {
+            "Core Principles",
+            "Quality Thresholds",
+            "Skills Quick Reference",
+            "Shared Skill Protocols",
+            "Claude Loading Model",
+            "Claude-Specific Notes",
+            "Explicit Codex Handoff",
+            "Plan-First Notes",
+        }
+    ),
+}
+
 RETIRED_FIRST_TITLE = "Replication-First Protocol"
 RETIRED_FOLLOWING_TITLES = {
     "Replication Targets: [Paper Author (Year)]",
@@ -97,10 +130,20 @@ RETIRED_FOLLOWING_TITLES = {
     "Environment",
 }
 
+# Applied in order, so a title from either earlier template becomes the
+# current one.
 RETIRED_PREAMBLE_REPLACEMENTS = (
     (
         b"# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI",
         b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI",
+    ),
+    (
+        b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI",
+        b"# AGENTS.md -- Shared Instructions for Claude Code, Codex, and Antigravity",
+    ),
+    (
+        b"# CLAUDE.md -- Academic Project Development with Claude Code",
+        b"# CLAUDE.md -- Claude Code Instructions",
     ),
 )
 
@@ -233,15 +276,16 @@ def headings_in_removed_section(section: DocumentSection) -> list[str]:
 
 def remove_retired_sections(
     sections: list[DocumentSection],
+    retired_titles: frozenset[str] | set[str],
 ) -> tuple[list[DocumentSection], list[str]]:
-    """Remove retired standalone sections and the retired replication sequence."""
+    """Remove this file's retired sections and the retired replication sequence."""
 
-    retained: list[DocumentSection] = []
+    kept: list[DocumentSection] = []
     removed: list[str] = []
     removing_replication = False
 
     for section in sections:
-        if section.title in RETIRED_STANDALONE_TITLES:
+        if section.title in retired_titles:
             removing_replication = False
             removed.extend(headings_in_removed_section(section))
             continue
@@ -253,9 +297,9 @@ def remove_retired_sections(
             removed.extend(headings_in_removed_section(section))
             continue
         removing_replication = False
-        retained.append(section)
+        kept.append(section)
 
-    return retained, removed
+    return kept, removed
 
 
 def update_retired_client_text(
@@ -341,7 +385,14 @@ def merge_document_contents(
     target_contents = target_path.read_bytes()
     preamble, target_sections = parse_sections(target_contents)
     require_unique_sections(target_path, target_sections)
-    target_sections, removed = remove_retired_sections(target_sections)
+    retired_titles = RETIRED_STANDALONE_TITLES | RETIRED_TITLES_BY_FILE.get(
+        target_path.name,
+        frozenset(),
+    )
+    target_sections, removed = remove_retired_sections(
+        target_sections,
+        retired_titles,
+    )
     preamble, target_sections, folder_changed = update_retired_client_text(
         preamble,
         target_sections,
@@ -357,11 +408,11 @@ def merge_document_contents(
                 f"{target_path} must contain the shared-preamble section {title!r}"
             )
 
-    core_source = source_by_title["Core Principles"]
-    source_by_title["Core Principles"] = restore_single_source_bullet(
-        core_source,
-        target_by_title.get("Core Principles"),
-    )
+    if "Core Principles" in source_by_title:
+        source_by_title["Core Principles"] = restore_single_source_bullet(
+            source_by_title["Core Principles"],
+            target_by_title.get("Core Principles"),
+        )
 
     missing_titles = {title for title in owned_titles if title not in target_by_title}
     inserted: list[str] = []
@@ -456,6 +507,17 @@ def merge_repository(
             target_path,
             owned_titles,
         )
+        if file_name == "CLAUDE.md":
+            _, merged_sections = parse_sections(merged)
+            merged_titles = {section.title for section in merged_sections}
+            for title in CLAUDE_SECTIONS_NOW_IMPORTED:
+                if title in merged_titles:
+                    report.warnings.append(
+                        f"CLAUDE.md keeps its own {title!r} section; AGENTS.md "
+                        "is now imported, so remove the section if it repeats "
+                        "AGENTS.md"
+                    )
+
         original = target_path.read_bytes()
         if merged == original:
             continue

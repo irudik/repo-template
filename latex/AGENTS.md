@@ -4,73 +4,24 @@ These conventions apply to all files in `latex/` and its subdirectories.
 
 ---
 
-## Verification
+## Building and Checking
 
-After any LaTeX change:
+Compile with `make -C latex` from the repository root. The Makefile sets
+`TEXINPUTS`, `BIBINPUTS`, and `BSTINPUTS`, so `\input` and
+`\includegraphics` find files in `output/numbers/`, `output/tables/`, and
+`output/figures/` without a path prefix. Do not run `pdflatex` by hand with
+exported variables; shell state does not carry from one command to the next.
 
-1. Compile with `make -C latex` (preferred -- handles TEXINPUTS/BIBINPUTS/BSTINPUTS automatically)
-2. For manual runs, first export environment variables from the `latex/` directory:
-   ```bash
-   export TEXINPUTS=.:./latex_extras/:../output/numbers/:../output/tables/:../output/figures/:
-   export BIBINPUTS=./references/:
-   export BSTINPUTS=./references/:
-   ```
-3. Verify PDF was generated with non-zero size
-4. Check for overfull hbox warnings
-5. Check for undefined citations
-6. Run `/review-tex` to check hardcoded numbers and changed-value prose contexts
-7. Verify all dynamic number `\input{...}` files exist in `output/numbers/` and are listed in `latex/Makefile` SOURCES
+After a build, confirm there are no undefined citations, no missing inputs,
+and no badly overfull lines. Run `/review-tex` when results or the prose
+around them changed, not after every edit.
 
----
-
-## Makefile Pattern
-
-```make
-TEX      = pdflatex
-BIBTEX   = bibtex
-TEXFLAGS = -interaction=nonstopmode
-
-# Resolve \input and \includegraphics from output/ subdirs without ../output/ prefixes
-export TEXINPUTS := .:./latex_extras/:../output/numbers/:../output/tables/:../output/figures/:
-export BIBINPUTS := ./references/:
-export BSTINPUTS := ./references/:
-
-MAIN     = manuscript
-SLIDES   = slides
-
-MAIN_SOURCES = $(MAIN).tex \
-               latex_extras/packages.tex \
-               latex_extras/custom_commands.tex \
-               latex_extras/dynamic_tables.tex \
-               references/references.bib
-
-SLIDES_SOURCES = $(SLIDES).tex \
-                 latex_extras/slides_setup.tex \
-                 latex_extras/dynamic_tables.tex \
-                 references/references.bib
-
-.PHONY: all clean
-
-all: $(MAIN).pdf $(SLIDES).pdf
-
-$(MAIN).pdf: $(MAIN_SOURCES)
-	$(TEX) $(TEXFLAGS) $(MAIN)
-	@if grep -q '\\citation' $(MAIN).aux 2>/dev/null; then $(BIBTEX) $(MAIN); fi
-	$(TEX) $(TEXFLAGS) $(MAIN)
-	$(TEX) $(TEXFLAGS) $(MAIN)
-
-$(SLIDES).pdf: $(SLIDES_SOURCES)
-	$(TEX) $(TEXFLAGS) $(SLIDES)
-	@if grep -q '\\citation' $(SLIDES).aux 2>/dev/null; then $(BIBTEX) $(SLIDES); fi
-	$(TEX) $(TEXFLAGS) $(SLIDES)
-	$(TEX) $(TEXFLAGS) $(SLIDES)
-
-clean:
-	rm -f $(MAIN).pdf $(SLIDES).pdf *.aux *.bbl *.blg *.log *.out *.toc \
-	      *.fdb_latexmk *.fls *.nav *.snm *.vrb *.synctex.gz *.run.xml *-blx.bib
-```
-
-List all `.tex` and `.bib` dependencies in SOURCES variables so Make can detect staleness. The conditional bibtex pattern avoids errors when there are no citations yet.
+`latex/Makefile` lists every dependency in `MAIN_SOURCES` and
+`SLIDES_SOURCES` so Make can tell when a PDF is out of date. Add new source
+files and generated inputs there. Make does not use `TEXINPUTS`, so a
+generated input needs its path in the Makefile
+(`../output/numbers/revenue_estimate.txt`) even though the `.tex` source
+omits it. Add citations to `references/references.bib` directly.
 
 ---
 
@@ -87,7 +38,7 @@ The pipeline keeps computed results out of `.tex` source by writing `\newcommand
 ### Adding a New Dynamic Number
 
 1. Add the write call to your R, Julia, Stata, or MATLAB script
-2. Add the `.txt` file as a prerequisite in the relevant `code/` Makefile
+2. In the relevant `code/` Makefile, declare the `.txt` file as a target built by that script, and add `../output/numbers/filename.txt` to `MAIN_SOURCES` or `SLIDES_SOURCES` in `latex/Makefile`
 3. Add `\input{filename.txt}` in the manuscript preamble
 4. Use the macro in prose
 5. Run `make` -- the code pipeline writes the file, then pdflatex picks it up

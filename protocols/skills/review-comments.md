@@ -1,53 +1,24 @@
-# Comment and Doc Cleanup Protocol
+# Comment and Documentation Cleanup
 
-## Purpose
+Review the requested files or directory, defaulting to the current directory.
+Follow `protocols/writing.md` and any supplied style reference.
 
-Clean up stale or misleading comments and docstrings, remove commented-out code,
-and align documentation with code reality.
+Find misleading or stale comments, incorrect docstrings, broken documentation
+paths, commented-out code, and prose that merely repeats obvious mechanics.
+Add comments where reasoning is not obvious, especially economic assumptions,
+sample choices, and numerical decisions. Explain inputs and returns in
+function documentation and keep file headers self-contained.
 
-## When to Use
+Use concise, plain language. Remove references to issue numbers, commits, or
+AI conversations that require unseen context. Prefer purpose-based section
+headings and mathematical notation when it helps; avoid a fixed comment quota.
 
-- You want a pass over comments or docstrings for correctness.
-- You need to remove commented-out code blocks.
-- You want to sync README or docs with the codebase.
+When cleanup is requested, edit and check documentation against actual behavior
+and referenced paths. Remove commented-out code within that scope; leave live
+unused code unchanged unless its removal was requested, because removing it
+could change behavior. For review-only requests, return findings without edits.
 
-## Workflow
-
-1. Identify the scope. Default to the current working directory when the user
-   does not provide a path.
-2. Identify a style reference if the user provides one.
-3. Explore files in scope and note:
-   - Commented-out code blocks
-   - Comments referencing non-existent features or files
-   - Docstrings that conflict with behavior
-   - Verbose comments that restate mechanics
-   - Programmer jargon or software-style shorthand that would not be
-     immediately clear to an economics PhD, including terms such as `harness`,
-     `fixture`, `scaffold`, `canonical`, and `legacy`
-   - Comments or docstrings that reference issue or ticket numbers, commit
-     hashes, pull requests, or conversations with Claude or Codex
-4. Check documentation files and verify referenced paths exist.
-5. Present findings grouped by issue type with file paths and line numbers.
-6. Get approval before editing.
-7. Make the edits.
-8. Verify that stale references are gone.
-
-## Default Style
-
-- Section headers:
-  `# ============================================================================`
-- File headers: clean and self-contained, with purpose, inputs, outputs, and
-  assumptions when relevant
-- Inline comments: short, explain domain logic rather than code mechanics
-- Plain language: name the object or task directly. Prefer `test setup`,
-  `example input`, `initial structure`, `main specification`, or `earlier
-  method` to programmer jargon or software-style shorthand. Explain any precise
-  software term in plain language in the same comment or docstring. The full
-  banned-term and replacement table is in `protocols/writing.md`.
-- Comments self-contained: strip references to issues, commit hashes, pull
-  requests, or Claude/Codex conversations
-- Do not prefix with "Economic intuition:"
-- Use Unicode math notation where appropriate
-- Delete rather than comment out unused code
-- Docstrings: structured with `Arguments` and `Returns`
-- Target roughly 15 to 20 percent comment density
+Return review findings to the agent that started the review, distinguishing
+reading from checks actually run. Follow `Reports and Updates` in
+`protocols/writing.md`: summarize changes or findings with relevant locations,
+proposed corrections, and anything left unchanged because its meaning is unclear.

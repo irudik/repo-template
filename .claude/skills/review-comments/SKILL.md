@@ -1,6 +1,6 @@
 ---
 name: review-comments
-description: Review and clean up comments, docstrings, and documentation across specified files or directories
+description: Review or clean up misleading comments, docstrings, and documentation. Use when documentation may disagree with code or the user requests comment cleanup.
 disable-model-invocation: true
 argument-hint: "[file or directory path]"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash"]
@@ -9,7 +9,7 @@ compatibility:
   - codex
   - claude-code
   - cursor
-  - gemini-cli
+  - antigravity
 version: 1.0.0
 tags:
   - comments
@@ -18,13 +18,4 @@ tags:
   - review
 ---
 
-# Review Comments Wrapper
-
-Use the shared protocol in `protocols/skills/review-comments.md`.
-
-## Wrapper Workflow
-
-1. Read `protocols/skills/review-comments.md`.
-2. Treat that file as the single source of truth for the substantive workflow.
-3. Apply the protocol to `$ARGUMENTS`.
-4. Keep Claude-specific behavior limited to this wrapper's frontmatter and tool access.
+Read `protocols/skills/review-comments.md` and apply it to `$ARGUMENTS`.

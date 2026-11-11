@@ -1,18 +1,14 @@
 ---
 name: review-domain
-description: Run the substantive domain review on manuscripts, slides, or lecture materials. Checks identification, derivations, citations, code-theory alignment, and logical consistency. Produces a report without editing files.
+description: Review identification, mathematics, citations, and code-theory agreement in academic materials. Use only when the user asks for it.
 disable-model-invocation: true
 argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 ---
 
-# Review Domain Wrapper
-
-Use the shared protocol in `protocols/skills/review-domain.md`.
-
-## Wrapper Workflow
-
-1. Resolve the target scope from `$ARGUMENTS`.
-2. Read `protocols/skills/review-domain.md`.
-3. Launch one `domain-reviewer` agent for the full approved target scope and instruct it to follow `protocols/skills/review-domain.md`.
-4. Present a concise summary of the findings.
+Resolve `$ARGUMENTS` to the requested files. Launch one `domain-reviewer` agent for the full requested target scope
+with a short, self-contained brief: files to review, what changed, what was
+already checked, and no conclusion. Instruct the reviewer to read
+`protocols/skills/review-domain.md`; the main agent need not read that protocol
+before delegation. Present the returned findings under `Reports and Updates`
+in `protocols/writing.md`, saving a report only if the user requested one.

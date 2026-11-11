@@ -1,61 +1,22 @@
-# Compare Branch Outputs Protocol
+# Compare Branch Outputs
 
-Compare script outputs between two branches to verify identical results.
+Given a reference branch, target branch, and script or directory, compare their
+outputs using `protocols/skills/verify-outputs.md` for formats and tolerances.
 
-## Arguments
+1. Create temporary worktrees at unused paths for the branches that need them;
+   preserve the user's current working tree and any pre-existing changes.
+2. Inspect input and output paths before running either branch. Worktrees may
+   share linked data or output directories; isolate outputs or capture the
+   reference results before the target run can overwrite them.
+3. In each worktree, run `make -n` for the relevant targets; if stale,
+   rebuild them with `make`. Without a governing Makefile, run the script from
+   its containing directory using the same inputs and environment.
+4. Compare the same discovered outputs on both branches. Show a short content
+   diff for differing CSVs smaller than 1 MB; distinguish missing files from
+   changed contents and formats that cannot be compared by checksum.
+5. Remove only temporary worktrees created by this task. Preserve source files
+   on both branches because this skill compares results rather than edits code;
+   make source changes only under a separate requested fix.
 
-- `base-branch`: reference branch such as `main`
-- `target-branch`: branch with changes
-- `dir-or-script`: directory or script to compare
-
-## Steps
-
-### 1. Set up a worktree for the base branch
-
-```bash
-git worktree add /tmp/branch-compare-base <base-branch>
-```
-
-### 2. Run scripts on the base branch
-
-In the worktree, check freshness before comparing outputs:
-
-1. If a relevant Makefile exists, run `make -n`.
-2. If targets are stale, rebuild them with `make` before recording checksums.
-3. If no Makefile exists, run the target script directly.
-
-Record checksums only for stable-format outputs such as CSV, TSV, and generated
-`.tex` files.
-
-### 3. Run scripts on the target branch
-
-Repeat the same freshness check on the target branch:
-
-1. Run `make -n` when a relevant Makefile exists.
-2. Rebuild stale targets with `make`.
-3. Run the target script directly only when no Makefile governs it.
-
-Then record checksums for the same stable-format outputs.
-
-### 4. Compare outputs
-
-```text
-## Branch Comparison: [base] vs [target]
-| File | Base MD5 | Target MD5 | Status |
-|------|----------|------------|--------|
-```
-
-For small CSVs smaller than 1 MB that differ, show a content diff.
-
-### 5. Clean up
-
-```bash
-git worktree remove /tmp/branch-compare-base
-```
-
-## Important
-
-- Follow the Output Verification Formats guidance in `AGENTS.md` for which
-  formats are checksum-stable.
-- Always clean up the worktree.
-- Do not modify files on either branch.
+Follow `Reports and Updates` in `protocols/writing.md`: name the branches,
+comparison coverage, differences, and any limits caused by inputs or environment.

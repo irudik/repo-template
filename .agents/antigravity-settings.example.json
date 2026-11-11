@@ -1,0 +1,42 @@
+{
+  "agentMode": "accept-edits",
+  "permissions": {
+    "allow": [
+      "command(git)",
+      "command(gh)",
+      "command(bash)",
+      "command(make)",
+      "command(Rscript)",
+      "command(julia)",
+      "command(python3)",
+      "command(stata)",
+      "command(stata-mp)",
+      "command(matlab)",
+      "command(ls)",
+      "command(rg)",
+      "command(find)",
+      "command(cat)",
+      "command(sed)",
+      "command(head)",
+      "command(tail)",
+      "command(wc)",
+      "command(sort)",
+      "command(grep)",
+      "command(awk)",
+      "command(jq)",
+      "command(chmod)",
+      "command(cp)",
+      "command(mv)",
+      "command(open)",
+      "command(mkdir)",
+      "command(xelatex)",
+      "command(pdflatex)",
+      "command(latexmk)",
+      "command(bibtex)",
+      "command(pdfinfo)",
+      "command(pdf2svg)",
+      "command(gs)",
+      "command(pdftk)"
+    ]
+  }
+}

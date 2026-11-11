@@ -56,6 +56,7 @@ prose must name an identifier, put the exact name in backticks.
 | deprecated | superseded / retired |
 | wire up / plumbing | connect / underlying setup |
 | maintained (as a qualifier: maintained scenario, solver, algorithm) | the implemented algorithm / the scenario workflow / the default settings, or drop the word |
+| retained (as a qualifier: retained countries, retained producers, retained rows) | in the sample / kept, or name the selection rule |
 
 Acceptable without rewriting (explicitly ruled on): cache, wrapper, stale,
 parse, dry run, upstream/downstream (including the input-output sense),
@@ -76,6 +77,37 @@ unlock, empower, transformative, paradigm shift, "in today's world", "there
 has been growing interest in". Avoid filler transitions at paragraph
 openings and motivational filler generally.
 
+## Mannered Prose
+
+Write the plain sentence and stop. Prose is mannered when a sentence does
+something other than convey its content: it signposts, performs, balances
+clauses for effect, or comments on itself. Cut it or rewrite it flat. None
+of the following is acceptable in any register this guide covers:
+
+- Signposting and throat-clearing: "It's worth noting", "Notably",
+  "Importantly", "Crucially", "To be clear", "Put differently", "In short",
+  "The upshot is", "Here's the thing", "That said", and "In other words"
+  when the first words were fine.
+- Performative candor or confidence: "frankly", "honestly", "I'll be
+  direct", "let me be blunt", "the truth is".
+- Rhetorical questions, and sentence fragments or one-word sentences used
+  for emphasis.
+- Contrast and parallelism used for drama: "not X but Y" or "less about X
+  than Y" when nobody claimed X, and lists of three assembled for rhythm. A
+  factual contrast ("the estimate uses the 2019 sample, not the 2020 one")
+  and an ordinary list of three variables are fine.
+- Editorial asides on how interesting, elegant, satisfying, or telling a
+  result is. Report the result and let the reader judge it.
+- Aphoristic closers or tag lines that restate the paragraph ("That is the
+  whole story.", "Simple as that.").
+- Dramatised transitions or reveals ("And then the picture changed.",
+  "Which brings us to ...").
+
+The test: if deleting the phrase or flattening the construction loses no
+information, do it. This applies to conversation replies, issues, pull
+request text, commit messages, plans, handoffs, comments, docstrings, and
+paper prose alike.
+
 ## Voice
 
 - Use first person. In issues, pull request comments, and notes, write "I",
@@ -94,20 +126,44 @@ openings and motivational filler generally.
 
 - Short documents and GitHub posts: flowing prose, or a plain bullet list
   when enumerating several parallel items. No section headers, and no bolded
-  pseudo-headers such as "**Bottom line.**" or "**Findings.**".
-- Conversation replies follow the same rules: answer first, plain language,
-  minimal structure.
+  pseudo-headers such as "**Bottom line.**" or "**Findings.**". A saved
+  record that follows a layout in `templates/` keeps that layout's headings.
+- Conversation replies follow the same rules, and `Reports and Updates`
+  below.
 - When discussing results or a model, describe the economics and the
   mathematics -- with displayed equations where useful -- rather than code
   mechanics. Mention file paths, function names, or pipeline stages only
   when the code itself is the topic.
 - Keep it short. Include what the reader needs to act or decide, and stop.
 
+## Reports and Updates
+
+Write every reply, progress update, final report, and handoff for a coauthor
+who did not watch the work and is switching in from something else.
+
+- Lead with the outcome and what it means for the project. Give the answer
+  before the reasons.
+- Give key numbers with units.
+- Name any decision the reader has to make, and recommend one option.
+- Say in one line what was verified and what was not.
+- List changed files and changed behavior briefly.
+- Leave out command logs, files that were only read, and checklists, unless
+  a check failed.
+- Use the full name of a file, variable, or decision. Do not use labels
+  coined during the work.
+- During long work, send a one-line update when something the reader would
+  care about changes: a finding, a change of approach, or a blocker.
+- Keep it short. Detail that someone may need later goes in a saved file,
+  with a summary and the path in the reply.
+
 ## Mechanics
 
 - Hyphenate only compound adjectives before a noun ("standard errors", but
   "standard-error estimates").
 - Define acronyms at first use.
+- Name a file by its repository path in backticks. Do not write `file://`
+  links or machine-specific absolute paths in replies or in repository
+  files.
 - Comments and docstrings are self-contained: no issue numbers, commit
   hashes, or references to AI conversations.
 - Commit messages in normal, human-authored language with no AI attribution.

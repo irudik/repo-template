@@ -1,21 +1,24 @@
-# Quality Report: Merge to Main -- [Date]
+# Merge Report: [Branch] -- [Date]
 
 ## Summary
-[1-2 sentences: what was merged and why]
 
-## Files Modified
-| File | Type | Quality Score |
-|------|------|---|
-| `path/to/file` | [Code/Slides/Config] | [N]/100 |
+[One or two sentences: what was merged and why]
+
+## Files Changed
+
+| File | What changed |
+|------|--------------|
+| `path/to/file` | [Short description] |
 
 ## Verification
-- [ ] Compilation/execution succeeds
-- [ ] Tolerance checks PASS (if applicable)
-- [ ] Tests pass (if applicable)
-- [ ] Quality gates >= 80
 
-## Status
-MERGED
+[What was run and what it showed. Say plainly what was not verified.]
+
+## Blocking Defects
+
+[None, or each defect from `Defects That Block a Commit or Merge` in
+`AGENTS.md` that remains, and why the merge went ahead.]
 
 ## Notes
-[Any learnings or follow-ups]
+
+[Advisory items and follow-ups, if any]
