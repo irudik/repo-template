@@ -24,11 +24,14 @@ gaps, and reports the exact evidence.
 
 Claude plans and reviews. It reviews Codex's changes, verification design,
 and reported results against the acceptance criteria, confirms that the
-relevant tests pass, and names gaps for Codex to fix. Allow one Codex fix and
-one Claude re-review by default. Use more rounds only when the user asks, or
-when a failure is still unexplained after normal diagnosis; state the open
-hypotheses and when to stop before adding rounds. Claude does not write the
-verification code or rerun the full verification unless the user asks.
+relevant tests pass, and names gaps for Codex to fix. Codex keeps correcting
+and rechecking until the acceptance criteria pass. Stop short of that only
+for a decision that belongs to the user or a deliberate blocker, as
+`Working Without Stopping` in `AGENTS.md` describes. Claude reviews again
+after the corrections, and once more only when a later correction was
+substantial; the limit is on extra reviews, never on needed corrections.
+Claude does not write the verification code or rerun the full verification
+unless the user asks.
 
 ## Background Jobs
 

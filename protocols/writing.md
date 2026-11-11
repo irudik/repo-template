@@ -126,7 +126,8 @@ paper prose alike.
 
 - Short documents and GitHub posts: flowing prose, or a plain bullet list
   when enumerating several parallel items. No section headers, and no bolded
-  pseudo-headers such as "**Bottom line.**" or "**Findings.**".
+  pseudo-headers such as "**Bottom line.**" or "**Findings.**". A saved
+  record that follows a layout in `templates/` keeps that layout's headings.
 - Conversation replies follow the same rules, and `Reports and Updates`
   below.
 - When discussing results or a model, describe the economics and the

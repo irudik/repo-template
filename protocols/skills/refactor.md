@@ -17,9 +17,11 @@ The only acceptable outcome of a style cleanup is identical output. Read
 4. Flag unused code without removing it unless removal was explicitly requested.
    When a change's effect is uncertain, leave it unchanged and say so in the
    report.
-5. Re-run and compare outputs with the baseline. On an output mismatch, undo
-   only this task's edits, preserve changes that were there before, and report
-   the mismatch; do not expand a style cleanup into a numerical repair.
+5. Re-run and compare outputs with the baseline. On an output mismatch, find
+   the edit that caused it, undo that edit, and compare again, so the rest of
+   the cleanup is kept. If the cause cannot be isolated, undo all of this
+   task's edits. Either way, preserve changes that were there before and
+   report the mismatch; do not expand a style cleanup into a numerical repair.
 6. Use a targeted independent review only when numerical code or substantial
    reorganization makes another reading useful. Give the final report after
    that review and any necessary corrections.

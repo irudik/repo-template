@@ -189,7 +189,7 @@ WORKFLOW_REQUIRED_SNIPPETS = {
         "When a Makefile or dependency declaration changes, run a scoped `make -n`",
     ),
     "protocols/codex-handoff.md": (
-        "Allow one Codex fix and\none Claude re-review by default.",
+        "until the acceptance criteria pass.",
     ),
 }
 
@@ -619,7 +619,7 @@ def check_review_skill_agent_scope(errors: list[str]) -> None:
             continue
         skill_text = skill_path.read_text()
         expected_text = (
-            f"Launch one `{agent_name}` agent for the full approved target scope"
+            f"Launch one `{agent_name}` agent for the full requested target scope"
         )
 
         if expected_text not in skill_text:

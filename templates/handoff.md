@@ -9,6 +9,10 @@ Date: [YYYY-MM-DD]
 first, name files and decisions in full, and do not use terms coined during
 the work. -->
 
+## Where Things Stand
+
+[What is finished, what was verified, and what the next stage starts from]
+
 ## Decisions Made
 
 - [Decision]

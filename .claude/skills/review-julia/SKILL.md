@@ -6,7 +6,7 @@ argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 ---
 
-Resolve `$ARGUMENTS` to the requested files. Launch one `julia-reviewer` agent for the full approved target scope
+Resolve `$ARGUMENTS` to the requested files. Launch one `julia-reviewer` agent for the full requested target scope
 with a short, self-contained brief: files to review, what changed, what was
 already checked, and no conclusion. Instruct the reviewer to read
 `protocols/skills/review-julia.md`; the main agent need not read that protocol
