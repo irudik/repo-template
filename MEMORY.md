@@ -1,12 +1,14 @@
 # Project Memory
 
-<!-- Claude Code stores [LEARN] entries here. Prefer structured entries:
+<!-- Lessons specific to this project that are likely to recur. Add entries
+with `/learn`, in this form:
+
 [LEARN:category]
+- Rule: [what to do, where it applies, and the exception if any]
+- Reason: [why the rule holds]
+- Evidence: [file, command, output, or user correction]
 - Date: YYYY-MM-DD
-- Trigger:
-- Wrong:
-- Right:
-- Scope:
-- Evidence:
-- Action:
-Do not edit manually unless you are intentionally maintaining the template. -->
+- Review by: [YYYY-MM-DD, or the event that would make the entry obsolete]
+
+Delete an entry once its reason no longer holds. Old cautions otherwise make
+agents hold back routine work. -->

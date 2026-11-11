@@ -312,31 +312,68 @@ class SurfaceDeclarationTests(unittest.TestCase):
             strict_result.stdout,
         )
 
-    def test_gemini_settings_require_agents_context_and_no_model_pin(self) -> None:
+    def test_antigravity_settings_match_other_tools_and_pin_no_model(self) -> None:
         repo = self.build_overleaf_style_repo(DECLARES_NOTHING_OPTIONAL)
-        settings_path = repo / ".gemini/settings.json"
+        settings_path = repo / ".agents/antigravity-settings.example.json"
         settings = json.loads(settings_path.read_text())
-        settings["model"] = "gemini-2.5-pro"
-        settings["context"] = {"fileName": "GEMINI.md"}
-        settings["tools"]["allowed"].append("run_shell_command")
-        settings["tools"]["allowed"].append("Edit")
-        settings["tools"]["exclude"] = ["run_shell_command"]
+        settings["model"] = "Gemini 4 Carbon (High)"
+        settings["permissions"]["allow"].remove("command(git)")
+        settings["permissions"]["allow"].append("command(curl)")
+        settings["permissions"]["allow"].append("run_shell_command(make)")
         settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
         result = run_checker(repo)
 
         self.assertEqual(result.returncode, 1)
-        self.assertIn(".gemini/settings.json pins Gemini model", result.stdout)
         self.assertIn(
-            ".gemini/settings.json does not include AGENTS.md in context.fileName",
+            ".agents/antigravity-settings.example.json pins Antigravity model",
             result.stdout,
         )
         self.assertIn(
-            "Permissions allowed only in Gemini config: ['invalid:Edit', 'invalid:run_shell_command']",
+            "Commands allowed only in Antigravity settings: ['curl']",
             result.stdout,
         )
         self.assertIn(
-            "Permissions allowed in Claude but denied in Gemini config:",
+            "Commands missing from Antigravity settings: ['git']",
+            result.stdout,
+        )
+        self.assertIn(
+            "has an unrecognized permission entry: 'run_shell_command(make)'",
+            result.stdout,
+        )
+
+    def test_oversized_instruction_files_are_flagged(self) -> None:
+        """Each tool cuts or ignores instruction text beyond its limit."""
+
+        repo = self.build_overleaf_style_repo(DECLARES_NOTHING_OPTIONAL)
+        agents_path = repo / "AGENTS.md"
+        agents_path.write_text(agents_path.read_text() + "\n" + "x" * 20_000 + "\n")
+        claude_path = repo / "CLAUDE.md"
+        claude_path.write_text(claude_path.read_text() + "\nextra line" * 200 + "\n")
+
+        result = run_checker(repo)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("AGENTS.md is", result.stdout)
+        self.assertIn("the limit is 20000", result.stdout)
+        self.assertIn("CLAUDE.md is", result.stdout)
+        self.assertIn("under 200 lines", result.stdout)
+
+    def test_missing_referenced_file_and_returning_scores_are_flagged(self) -> None:
+        repo = self.build_overleaf_style_repo(DECLARES_NOTHING_OPTIONAL)
+        (repo / "protocols/codex-handoff.md").unlink()
+        learn_path = repo / "protocols/skills/learn.md"
+        learn_path.write_text(learn_path.read_text() + "\nQuality Score: 85/100\n")
+
+        result = run_checker(repo)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(
+            "AGENTS.md refers to protocols/codex-handoff.md, which does not exist",
+            result.stdout,
+        )
+        self.assertIn(
+            "protocols/skills/learn.md still contains numeric scoring text",
             result.stdout,
         )
 

@@ -1,78 +1,26 @@
-# MATLAB Optimizer Derivative Audit Protocol
+# MATLAB Optimizer Derivative Audit
 
-## Purpose
+Audit objective gradients, Hessians, constraint Jacobians, and KNITRO callback
+connections. For solver failures, also use
+`protocols/solver-debugging.md`.
 
-Validate analytic gradients, Hessians, and constraint Jacobians against
-numerical derivatives and confirm optimizer callback wiring is correct.
+1. Locate objectives, constraints, solver calls, and callback registration.
+   Check parameter ordering, dimensions, transformations and inverses, bounds,
+   and scaling against the mathematical specification.
+2. Compare analytic gradients and constraint Jacobians with finite differences
+   at several parameter vectors, including feasible points near bounds. Choose
+   feasible perturbations and check sensitivity to finite-difference step size.
+3. Check Hessian symmetry and finite-difference or Hessian-vector agreement,
+   including the constraint contributions expected by the solver callback.
+4. Isolate sign errors, missing terms, index offsets, and scaling errors with
+   small reproducible inputs. Record absolute and relative errors against
+   explicit, justified tolerances; keep a small regression test for a fix.
+5. For an audit-only request, return findings. When fixes are requested, correct
+   demonstrated errors and compare derivatives again. Keep solver algorithms,
+   options, and convergence criteria unchanged during an audit because changing
+   them obscures the source of failure; change them only when requested.
 
-## When to Use
-
-- Debugging MATLAB optimization functions and solver call sites
-- KNITRO convergence failures or suspicious solutions
-- Suspected sign, index, or scaling errors in derivative code
-- Pre-port validation before translating MATLAB solver logic
-
-## Workflow
-
-1. Locate the optimization stack.
-2. Verify parameter plumbing.
-3. Validate derivatives numerically.
-4. Isolate mismatch sources.
-5. Report and patch.
-
-### 1. Locate the Optimization Stack
-
-- Find objective and constraint definitions.
-- Find KNITRO call sites and callback registration.
-
-### 2. Verify Parameter Plumbing
-
-- Confirm variable ordering and shape assumptions.
-- Confirm scaling and bounds mapping.
-- Confirm transformed parameterizations are inverted correctly.
-
-### 3. Validate Derivatives Numerically
-
-- Compute finite-difference gradient checks.
-- Compute Hessian checks or Hessian-vector checks where appropriate.
-- Validate constraint Jacobian entries.
-
-### 4. Isolate Mismatch Sources
-
-- Classify sign errors, missing terms, index offsets, and scaling issues.
-- Reproduce problems on minimal parameter vectors and test cases.
-
-### 5. Report and Patch
-
-- Provide a mismatch table with absolute and relative errors.
-- Provide concrete patch suggestions tied to line-level logic.
-- Re-run checks after edits.
-
-## Required Checks
-
-- Objective gradient vs finite differences
-- Hessian symmetry and finite-difference consistency
-- Constraint Jacobian vs finite differences
-- Callback dimensions and order expected by KNITRO
-- Bounds and scaling consistency
-
-## Output Template
-
-- `Functions audited`: objective, constraints, callbacks
-- `Check points`: parameter vectors used
-- `Derivative errors`: max abs/rel by block
-- `Likely causes`: ranked root causes
-- `Patch plan`: file-level actions
-- `Recheck`: pass/fail after changes
-
-## Guardrails
-
-- Keep the algorithm choice unchanged unless requested.
-- Treat "numerically close enough" with explicit tolerances.
-- Separate optional Julia-port notes from the core derivative audit.
-
-## Test Guidance
-
-- Use multiple points, not just one nominal calibration.
-- Include edge-case points near bounds.
-- Persist a small reproducer test to prevent regression.
+Return findings to the agent that started the review, distinguishing code
+reading from checks actually run. Follow `Reports and Updates` in
+`protocols/writing.md`: name audited functions and test points, derivative
+errors and tolerances, supported causes, fixes, and remaining uncertainty.

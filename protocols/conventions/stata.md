@@ -1,40 +1,24 @@
-# Stata Code Standards
+# Stata Conventions
 
-**Standard:** Senior Principal Econometrician + PhD researcher quality
+Read alongside `protocols/conventions/shared.md`.
 
-## 1. Reproducibility
+## Setup and Program Design
 
-- `version` pinned near the top of each script or program
-- `set more off` in batch scripts
-- `set seed` called ONCE at top if stochastic operations are present
-- All paths relative to the script working directory (usually `code/[task_group]/`)
-- No hardcoded absolute paths and no `cd`
-- Prefer local macros and program arguments over global macros
-- Rely on the Makefile to make directories
+- Pin `version` and `set more off` near the top of batch scripts, and call `set seed YYYYMMDD` once at the top when stochastic commands run.
+- Never use `cd` inside project `.do` files, because changing Stata's working directory breaks relative paths later in the batch run; the only exception is wrapping a third-party command that requires its own directory and restoring the original directory immediately afterward.
+- Prefer `local` macros and `syntax` arguments over `global` macros in analysis scripts, because globals persist across `.do` files and create hidden dependencies; reserve globals for session-wide configuration when unavoidable.
+- Wrap reusable logic in `program define` validated with `syntax`, use `tempfile`, `tempname`, and `tempvar` for temporary files, scalars, and variables, and keep `preserve` / `restore` blocks short and balanced.
 
-## 2. Program Design
+## Data Integrity and Estimation
 
-- Wrap reusable logic in `program define`
-- Use `syntax` to validate arguments and options for non-trivial programs
-- Use `tempfile`, `tempname`, and `tempvar` for temporary state
-- Keep locals descriptive and scoped tightly
-- Avoid magic numbers; lift them into named locals or documented parameters
+- Match estimators, fixed effects, clustering, and weights to `latex/manuscript.tex`.
+- Check key uniqueness before `merge` (`isid` or `duplicates report`), `assert` the expected `_merge` pattern afterward, and verify observation counts and keys after `reshape`.
+- Declare panel or time-series structure with `xtset` or `tsset`, and sort explicitly (`sort` or `bysort`) before order-dependent grouped calculations.
+- Never leave `capture` without an immediate `_rc` check in data construction or estimation steps, because unchecked `capture` silences real failures; omit the `_rc` check only on benign cleanup lines such as `capture log close` or `capture drop` before creating a variable.
 
-## 3. Data Integrity & Domain Correctness
+## Output Paths
 
-- Verify estimators and transformations match paper formulas (`latex/manuscript.tex`)
-- Check merge keys with `isid`, `duplicates report`, or `assert`
-- After `merge`, inspect `_merge` and assert the expected match pattern
-- After `reshape`, assert the expected observation count and key uniqueness
-- Set `xtset` / `tsset` explicitly for panel or time-series work
-- Match cluster, FE, and weight choices to the intended estimand
-
-## 4. Output Paths
-
-Task-group scripts usually run from `code/[task_group]/`, so paths are
-relative to that working directory. In the standard layout, define
-`output_root` once and write into the main subdirectories under the repo-root
-`output/` directory:
+Task-group scripts run from the script working directory (usually `code/[task_group]/`). Define `output_root` once and write into the repository-root `output/` subdirectories:
 
 ```stata
 local output_root "../../output"
@@ -47,38 +31,4 @@ file write fh "\newcommand{\myEstimate}{2.31}" _n
 file close fh
 ```
 
-**Heavy computations should be saved to disk; downstream scripts should load pre-computed data where possible.**
-
-## 5. Common Pitfalls
-
-| Pitfall | Impact | Prevention |
-|---------|--------|------------|
-| Missing `version` | Results may change across Stata releases | Pin `version` at top |
-| Hardcoded paths or `cd` | Breaks on other machines | Use working-directory-relative paths only |
-| Unchecked `_merge` after `merge` | Silent sample corruption | Assert expected `_merge` values |
-| Globals for routine state | Hidden dependencies across scripts | Prefer locals and `syntax` |
-| `capture` without `_rc` check | Real failures get silenced | Check `_rc` immediately |
-| Unbalanced `preserve` / `restore` | Wrong dataset state later in script | Keep blocks tight and paired |
-| Hidden sort dependence | Wrong grouped calculations | Use `sort` / `bysort` explicitly |
-
-## 6. Line Length & Continuations
-
-**Standard:** Keep lines <= 100 characters where practical. Use `///` continuations consistently, and align long option lists when that improves readability.
-
-## 7. Code Quality Checklist
-
-```
-[ ] version pinned at top
-[ ] set more off in batch scripts
-[ ] set seed once at top if stochastic
-[ ] Clean header block with purpose, inputs, outputs, and assumptions
-[ ] All paths relative and no cd
-[ ] Programs documented and arguments validated with syntax
-[ ] merge/reshape steps checked with assert/isid/duplicates logic
-[ ] Outputs saved under the repo-root output/ directory via relative paths
-[ ] One operation per line; long commands split with aligned /// continuations
-[ ] Descriptive snake_case locals, variables, and program names
-[ ] Comments explain WHY not WHAT
-[ ] capture followed by _rc checks
-[ ] preserve/restore blocks are balanced
-```
+Save datasets and estimates that later steps or reproduction need, rather than every intermediate dataset. Let the Makefile create output directories.

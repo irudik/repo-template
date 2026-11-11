@@ -1,533 +1,199 @@
-# AI-Assisted Academic Research Template (Make + R/Julia/Stata/MATLAB)
+# AI-Assisted Academic Research Template
 
-> **Work in progress.** This is a summary of how I use AI coding assistants for computational research — running analysis pipelines with Make, writing R, Julia, Stata, and MATLAB scripts, and managing build dependencies. I keep updating these files as I learn new things.
+A starting point for economics research with Claude Code, Codex, or
+Antigravity, using Make and R, Julia, Stata, or MATLAB. The assistant
+applies the risk-based workflow in [AGENTS.md](AGENTS.md): it completes the
+requested work, checks the result, and adds planning or independent review
+when the consequences warrant it.
+This template evolves with research practice and the tools it supports.
 
-A ready-to-fork starter kit for researchers using [Claude Code](https://code.claude.com/docs/en/overview), [OpenAI Codex CLI](https://github.com/openai/codex), or [Gemini CLI](https://github.com/google-gemini/gemini-cli) with **Make + R + Julia + Stata + MATLAB** build systems. You describe what you want; the assistant selects the appropriate risk tier, implements and tests routine work directly, and adds plans, independent review, or durable context only when the task warrants them.
+## Set up a project
 
-**All three tools are supported.** Claude Code uses a `CLAUDE.md` hierarchy plus
-`.claude/`; Codex CLI uses an `AGENTS.md` hierarchy plus `.codex/` and
-`.agents/`; Gemini CLI uses the same `AGENTS.md` hierarchy and `.agents/skills/`
-wrappers through `.gemini/settings.json`. The same workflow, quality checks,
-and skills work with each.
-
----
-
-## Quick Start: Claude Code (5 minutes)
-
-### 1. Fork & Clone
+Fork this repository on GitHub, then clone your fork:
 
 ```bash
-# Fork this repo on GitHub (click "Fork" on the repo page), then:
 git clone https://github.com/YOUR_USERNAME/repo-template.git my-project
 cd my-project
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username.
+Install an assistant and the tools your project uses:
 
-### 2. Start Claude Code and Paste This Prompt
+| Tool | Purpose and setup |
+|------|-------------------|
+| Claude Code | Follow the [installation guide](https://code.claude.com/docs/en/overview). |
+| Codex | Follow the [Codex CLI guide](https://learn.chatgpt.com/docs/cli). |
+| Antigravity | Install the `agy` CLI for your Google account. |
+| GNU Make | Run the analysis and manuscript builds; install if `make` is unavailable. |
+| R, Julia, Stata, MATLAB | Install only the languages used by your analysis; put their command-line executables on `PATH`. |
+| TeX Live or MacTeX | Provides `pdflatex` and `bibtex` for the manuscript and slides. |
+| Python 3.11 or later | Runs the template checker and update tools. |
+| GitHub CLI (`gh`) | Creates and manages pull requests; authenticate with `gh auth login`. |
+| `jq` | Used by the Claude hooks and PR review commands. |
+
+Start your assistant from the project directory using one of the quick starts
+below, then paste this prompt with your project details:
+
+> I am starting **[PROJECT NAME]** at **[INSTITUTION]**. **[Describe the
+> research question, data, and analysis stages in two or three sentences.]**
+> Read this repository's instructions and adapt the template to my project.
+> Fill in the root `AGENTS.md` placeholders, set up numbered analysis scripts
+> and a Makefile for each task group under `code/`, and adapt the manuscript
+> setup. Use **[R/Julia/Stata/MATLAB]**. Finish the setup and relevant checks,
+> and report any decisions that require my input. Leave changes uncommitted.
+
+After setup, replace this README with your project's purpose, data-access
+instructions, required packages, and reproduction commands. Set
+`readme_documents_framework = false` in `tools/template_check.toml` so the
+checker no longer requires framework examples in your project README.
+
+### Quick Start: Claude Code
 
 ```bash
 claude
 ```
 
-**Using VS Code?** Open the Claude Code panel instead. Everything works the same.
+The Claude Code panel in VS Code also works. Root `CLAUDE.md` imports the
+shared instructions with `@AGENTS.md`; `code/CLAUDE.md` and `latex/CLAUDE.md`
+import the `AGENTS.md` beside them.
 
-Then paste the following, filling in your project details:
+To enable the supplied permissions and optional hooks, review
+[.claude/settings.json.example](.claude/settings.json.example) and copy it to
+`.claude/settings.json` if you do not already have that file. If you do,
+merge the desired entries. The local file is gitignored. The hooks provide
+notifications and protect `settings.json`; `references.bib` is editable.
 
-> I am starting to work on **[PROJECT NAME]** in this repo. **[Describe your project in 2–3 sentences — what you're building, what data you use, what your pipeline stages are (e.g., data cleaning, estimation, figures).]**
->
-> I want our collaboration to be structured, precise, and rigorous. Code should be reproducible, build-system driven, and written for clarity over cleverness.
->
-> I've set up the Claude Code academic workflow (forked from `irudik/repo-template`). The configuration files are already in this repo. Please read them, understand the workflow, and then **update all configuration files to fit my project** — fill in placeholders in `CLAUDE.md`, set up the `code/` directory structure with sub-Makefiles for my pipeline stages, and propose any customizations specific to my use case.
->
-> After that, use the risk-based workflow: implement and test routine changes
-> directly; use a brief in-conversation plan for substantive single-module
-> work; and save a plan before high-risk, cross-cutting, numerical, or
-> pre-merge work, then continue automatically unless I explicitly request plan
-> approval.
->
-> Start adapting the workflow configuration for this project.
+To have Claude plan and Codex execute, install the Codex plugin for Claude
+and explicitly request “hand this to Codex” or mark plan steps `[codex]`.
+[protocols/codex-handoff.md](protocols/codex-handoff.md) defines the handoff
+and each agent's responsibilities.
 
-**Optional for Claude Code + Codex plugin users:** Add this to the prompt when
-you want Claude to plan but Codex to execute and verify:
-
-> During planning, mark the implementation and verification steps that Codex
-> should own with `[codex]`. After saving the plan, hand those steps to
-> Codex through the Codex plugin
-> (`codex:codex-rescue`) in write-capable mode. Codex should implement the
-> changes, add or update the tests/checks needed to verify them, run that
-> proof-of-correctness itself, self-review the diff and verification design,
-> report exact evidence, and address at most one Claude-identified fix pass by
-> default. Claude then performs one re-review. Leave changes uncommitted unless
-> I explicitly ask for a commit.
-
-**What this does:** Claude reads the root and nested `CLAUDE.md` files plus the
-tool-specific `.claude/` configuration, sets up your `code/` directory with
-sub-Makefiles for each pipeline stage, fills in your project details, then
-applies the risk-based workflow: direct execution for routine work and stronger
-planning, verification, or review for consequential changes.
-
-### 3. Configure Hooks (Optional)
-
-Hooks are configured per-user in `.claude/settings.json` (gitignored by default). To enable the bundled hooks, create the file with the format below. The `hooks` key uses nested arrays with optional `matcher` and `timeout` fields. `$CLAUDE_PROJECT_DIR` resolves to the project root at runtime.
-
-```bash
-cat > .claude/settings.json << 'EOF'
-{
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-compact.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  }
-}
-EOF
-```
-
----
-
-## Quick Start: Codex CLI (5 minutes)
-
-### 1. Fork & Clone
-
-Same as above — fork this repo, clone it, and `cd` into it.
-
-### 2. Start Codex CLI and Paste This Prompt
+### Quick Start: Codex
 
 ```bash
 codex
 ```
 
-Then paste the same project-description prompt as the Claude Code section above.
+Codex uses `AGENTS.md`, the applicable nested instructions, and the skills
+in `.agents/skills/`. The template's `.codex/config.toml` leaves model and
+reasoning effort to your own settings. Project command permissions live in
+`.codex/rules/default.rules`.
 
-**What this does:** Codex reads the root `AGENTS.md`, then uses
-`code/AGENTS.md` or `latex/AGENTS.md` to load only the conventions needed for
-the files in scope.
+As verified against official OpenAI documentation on **November 10, 2026**:
 
-### 3. Configuration
+- Codex supports subagents and custom agent definitions in
+  `.codex/agents/*.toml` or `~/.codex/agents/*.toml`. Delegation follows a
+  direct request or applicable project or skill instructions. See
+  [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
+- Codex supports lifecycle hooks, configured in `.codex/hooks.json` or
+  `[hooks]` in `config.toml`, including user-level equivalents. Non-managed
+  hooks require trust review; `/hooks` manages them. See
+  [Hooks](https://learn.chatgpt.com/docs/hooks).
 
-Codex project configuration lives in:
+This repository supplies shared review skills for Codex, but no custom Codex
+agent definitions or hook configuration. The Claude hook files are not
+installed as Codex hooks by this template.
 
-- **`AGENTS.md`** (root) — project instructions and workflow rules (loaded every session)
-- **`code/AGENTS.md`** — router for shared and file-type-specific conventions under `protocols/conventions/`
-- **`latex/AGENTS.md`** — LaTeX conventions (loaded when working in `latex/`)
-- **`protocols/skills/*.md`** — canonical shared skill bodies for all three tools
-- **`.codex/config.toml`** — model, sandbox, and approval settings
-- **`.codex/rules/default.rules`** — command execution permissions (Starlark format)
-- **`.agents/skills/*/SKILL.md`** — thin Codex wrappers around the shared protocols
+### Quick Start: Antigravity
 
-### Claude Code vs Codex CLI vs Gemini CLI: Key Differences
-
-| Aspect | Claude Code | Codex CLI | Gemini CLI |
-|--------|-------------|-----------|------------|
-| Instructions file | `CLAUDE.md` hierarchy | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy (via `context.fileName` in `.gemini/settings.json`) |
-| Settings | `.claude/settings.json` (JSON) | `.codex/config.toml` (TOML) | `.gemini/settings.json` (JSON) |
-| Permission rules | Glob patterns in settings.json | `.codex/rules/default.rules` (Starlark) | `tools.allowed` in `.gemini/settings.json` |
-| Project conventions | `CLAUDE.md` hierarchy plus shared `AGENTS.md` local conventions | `AGENTS.md` hierarchy | `AGENTS.md` hierarchy |
-| Shared skill bodies | `protocols/skills/*.md` | `protocols/skills/*.md` | `protocols/skills/*.md` |
-| Agent definitions | `.claude/agents/*.md` | Not supported | Not tracked (reviews run through `.agents/skills/`) |
-| Skills | Thin wrappers in `.claude/skills/*/SKILL.md` | Thin wrappers in `.agents/skills/*/SKILL.md` | Reuses `.agents/skills/` natively |
-| Hooks | `.claude/hooks/*` | Not supported (use git hooks) | Optional in `~/.gemini/settings.json` |
-
-### Known Limitations (Codex)
-
-Codex CLI does not support hooks, so these Claude Code features have no direct equivalent:
-- **File protection** (`.claude/hooks/protect-files.sh`) — be careful editing `references.bib` and `settings.json`
-- **Context snapshot before compaction** (`.claude/hooks/pre-compact.sh`) — save context to plans/ manually
-- **Desktop notifications** (`.claude/hooks/notify.sh`) — not available
-
----
-
-## Quick Start: Gemini CLI (5 minutes)
-
-### 1. Fork & Clone
-
-Same as above — fork this repo, clone it, and `cd` into it.
-
-### 2. Start Gemini CLI and Paste This Prompt
+Antigravity (`agy`) replaces Gemini CLI, which Google retired for individual
+accounts. Start it from the project directory:
 
 ```bash
-gemini
+agy --settings .agents/antigravity-settings.example.json
 ```
 
-Approve folder trust when prompted on first launch, then paste the same
-project-description prompt as the Claude Code section above.
+Antigravity finds `AGENTS.md` by walking up from the working directory and
+scans `.agents/skills/` itself. It reads no project-level settings file.
+Pass the example above for one session, or merge its entries into
+`~/.gemini/antigravity-cli/settings.json`. Permissions use entries such as
+`command(git)` under `permissions.allow`. Antigravity does not read the
+`.gemini/settings.json` that Gemini CLI used.
 
-**What this does:** Once the folder is trusted, Gemini CLI reads
-`.gemini/settings.json`, loads the root `AGENTS.md`, and uses `code/AGENTS.md`
-or `latex/AGENTS.md` to load only the conventions needed for the files in
-scope. It also scans `.agents/skills/` natively (tested on Gemini CLI 0.29.5+),
-so all shared skills work without extra setup.
+Choose model and effort through the model name, for example:
 
-### 3. Configuration
-
-Gemini CLI project integration lives in:
-
-- **`AGENTS.md` hierarchy** — same instructions and workflow rules as Codex CLI
-- **`.agents/skills/*/SKILL.md`** — scanned natively; no Gemini-specific wrappers needed
-- **`.gemini/settings.json`** — configures `context.fileName` (`["GEMINI.md", "AGENTS.md"]`) and `tools.allowed` command permissions
-
-Keep personal model, authentication, and UI preferences in the user-level
-`~/.gemini/settings.json` rather than the tracked project file.
-
-### Known Limitations (Gemini)
-
-- **Folder trust required on first launch** — Gemini CLI ignores workspace
-  settings, `AGENTS.md`, and `.agents/skills/` until the repository folder is
-  trusted
-- **Workspace `tools.allowed` overrides user-level `tools.allowed`** — Gemini
-  CLI replaces rather than merges `tools.allowed` across scopes, and shell
-  commands with inline environment assignments (`VAR=value cmd`) or output
-  redirection (`>`) still prompt for confirmation
-- **No tracked skill wrappers of its own** — by design; it reuses
-  `.agents/skills/`
-
----
-
-## How It Works
-
-### Make as the Backbone
-
-A root Makefile delegates to `code/` (analysis pipeline) and `latex/` (manuscript):
-
-```
-my-project/
-├── Makefile              # Root — delegates to code/ and latex/
-├── code/
-│   ├── Makefile          # Delegates to sub-Makefiles
-│   ├── data_prep/
-│   │   ├── Makefile      # Targets for cleaning raw data
-│   │   ├── clean.do
-│   │   └── merge.R
-│   ├── estimation/
-│   │   ├── Makefile      # Targets for running models
-│   │   ├── model.R
-│   │   └── bootstrap.R
-│   ├── simulation/
-│   │   ├── Makefile      # Targets for trade model simulation
-│   │   ├── simulate_trade.jl
-│   │   └── process_results.jl
-│   ├── structural_model/
-│   │   ├── Makefile      # Targets for numerical optimization
-│   │   └── solve_equilibrium.m
-│   ├── tables/
-│   │   ├── Makefile      # Targets for regression tables
-│   │   └── reg_tables.do
-│   └── figures/
-│       ├── Makefile      # Targets for generating plots
-│       └── main_figures.R
-└── latex/
-    ├── Makefile          # pdflatex 3-pass build
-    ├── manuscript.tex    # Main paper
-    ├── slides.tex        # Presentation slides
-    ├── latex_extras/     # Preamble files
-    └── references/       # .bib and .bst files
+```bash
+agy --model gemini-4-carbon-high
 ```
 
-- `make` from project root builds everything (code first, then latex)
-- `make -n` shows what would be rebuilt (dry-run)
-- `make -C code` rebuilds all code targets
-- `make -C code/estimation all` rebuilds one pipeline stage
-- `make -C latex` compiles the manuscript
-- Scripts never create directories — Makefiles own that via order-only prerequisites
+## Where to find the rules
 
-Run these Make commands from the project root. `make -C path` changes Make's
-working directory to `path`, so targets, prerequisites, and scripts use paths
-relative to that directory. For example, code under `code/estimation/` reaches
-the project output directory through `../../output`; it does not treat
-`output/` as relative to the project root.
+| File or directory | Contents |
+|-------------------|----------|
+| [AGENTS.md](AGENTS.md) | Shared rules for Claude Code, Codex, and Antigravity. |
+| [code/AGENTS.md](code/AGENTS.md) | Selects shared and language-specific conventions from `protocols/conventions/`. |
+| [latex/AGENTS.md](latex/AGENTS.md) | Manuscript builds, generated numbers, and TeX prose. |
+| [protocols/writing.md](protocols/writing.md) | Writing rules; `Reports and Updates` governs replies and reports. |
+| [protocols/solver-debugging.md](protocols/solver-debugging.md) | Numerical failure diagnosis. |
+| [protocols/skills/](protocols/skills/) | Shared procedures for all 20 skills. |
+| [MEMORY.md](MEMORY.md) | Project lessons with Rule, Reason, Evidence, Date, and Review by fields. |
+| [templates/](templates/) | Layouts for records kept under `quality_reports/` when needed. |
 
-### Risk-Based Workflow
+`Risk-Based Workflow` in root `AGENTS.md` contains the single ask rule and
+the steps that need no further approval. Agents finish authorized work without
+pausing for approval of each step. `Defects That Block a Commit or Merge`
+replaces numeric scoring; other findings are advisory.
 
-The workflow matches process to the consequences of a wrong result:
+Keep instruction files small. Antigravity cuts an instruction file at
+24,000 bytes. Codex's combined `AGENTS.md` allowance is 32,768 bytes, including
+global and applicable nested instructions. `make check-template` fails when
+root `AGENTS.md` exceeds 20,000 bytes and also checks the repository's nested
+instruction totals. Keep personal instructions within the remaining allowance.
+Root `CLAUDE.md` should stay under 200 lines.
 
-1. **Routine or bounded change:** implement, test, and report concisely. No
-   saved plan, handoff, score, or reviewer agent by default.
-2. **Substantive single-module change:** give a brief in-conversation plan,
-   implement, test, and use one targeted review only when independence adds
-   material value.
-3. **High-risk, cross-cutting, numerical, or pre-merge work:** save a plan,
-   continue automatically, implement, verify, run one independent review, and
-   allow at most one fix/re-review by default. Pause for plan approval only
-   when the user explicitly requests it.
-4. **Full multi-agent loop:** use only when explicitly requested or when
-   failures remain genuinely ambiguous after normal diagnosis.
+### Skills and reviewers
 
-Tests remain required at every level. Session logs and handoffs preserve
-context and major decisions; they are not mandatory stage paperwork. Plan
-approval is opt-in; automatic execution does not authorize a commit, push,
-merge, destructive operation, or broader scope.
+Use a skill by name in your request; Claude also offers slash commands.
+Read the linked procedure for its scope:
 
-When a review is useful, choose one reviewer for the main risk: the matching
-R, Julia, Stata, MATLAB, Makefile, or LaTeX reviewer; domain review for
-identification or code-theory alignment; proofreading for presentation; or
-trace for an ambiguous cause. Touching several file types does not by itself
-justify several agents.
+| Task | Skills |
+|------|--------|
+| Build analysis | `/data-analysis`, `/setup-makefile` |
+| Check outputs or reorganize code | `/verify-outputs`, `/compare-branches`, `/refactor` |
+| Review research code | `/review-r`, `/review-julia`, `/review-stata`, `/review-matlab`, `/matlab-optim-derivatives` |
+| Review dependencies or documentation | `/review-makefile`, `/review-comments`, `/review-tex` |
+| Requested academic review | `/review-domain`, `/proofread` |
+| Diagnose or recover context | `/trace`, `/resume-custom`, `/learn` |
+| Requested GitHub work | `/commit`, `/review-pr` |
 
-Make verification is also scoped by risk. Dry-run a changed dependency graph,
-run the relevant target directly for an ordinary source change under a stable
-Makefile, skip Make for documentation-only changes, and use a full root dry run
-for cross-cutting or pre-merge checks when the complete build plan adds value.
+`.claude/skills/` and `.agents/skills/` are thin wrappers around those shared
+procedures. The latter serves both Codex and Antigravity. Claude reviewer
+agents in `.claude/agents/` return findings to the main agent and do not save
+report files.
 
-### Claude + Codex Handoff
+Six mechanical Claude wrappers set `effort: medium`: `commit`,
+`compare-branches`, `learn`, `resume-custom`, `setup-makefile`, and
+`verify-outputs`. Codex takes effort from the user's settings; Antigravity
+uses the selected model name. The template does not pin a project model.
 
-When using Claude Code with the Codex plugin available, you can explicitly ask
-Claude to plan and then delegate execution to Codex. Put the request in the
-original task or planning prompt with language such as "hand this to Codex",
-"delegate execution to Codex", "Codex executes", or by marking plan steps with
-`[codex]`.
+## Build layout and paths
 
-For those marked steps, Claude records the Codex-owned scope and acceptance
-criteria in the saved plan. After saving it, Claude hands the plan to
-`codex:codex-rescue`; Codex implements the feature/fix and implements the
-verification needed to prove it, such as unit tests, example inputs, Makefile
-targets, checksum scripts, or data-property checks.
+The root Makefile builds `code/` before `latex/`. Each analysis task group
+has its own Makefile; outputs go to `output/figures/`, `output/tables/`, and
+`output/numbers/`. The manuscript is `latex/manuscript.tex`, with slides in
+`latex/slides.tex` and bibliography files in `latex/references/`.
 
-Codex runs in the same checkout and follows the root and nested `AGENTS.md`
-instructions, including the routed code conventions and risk-based verification
-policy. The recorded handoff supplies the narrower task scope and acceptance
-criteria. Codex then self-reviews its diff and verification design, runs the
-tests/builds/checks, fixes obvious gaps, and reports the evidence.
+Run these Make commands from the project root.
 
-Claude reviews the changed code, the verification design, and the reported
-results against the acceptance criteria. In this two-agent workflow, Claude's
-review is the independent review required for high-risk work, so Codex does not
-launch another reviewer by default. If Claude flags gaps, the task goes back to
-Codex for one fix followed by one Claude re-review. A fuller loop requires an
-explicit request or genuinely ambiguous failures with stated hypotheses and a
-stop condition. Claude does not write the verification code or rerun the full
-verification loop unless explicitly asked.
+```bash
+make                              # Analysis, then manuscript and slides
+make -n                           # Show what would be built
+make -C code                      # Analysis only
+make -C code/estimation all        # One task group, after creating it
+make -C latex                     # Manuscript and slides
+make check-template               # Instruction checks and tool tests
+```
 
-This is intentionally Claude-only and does not live in `AGENTS.md`, so Codex
-does not read Claude orchestration instructions as its own operating procedure.
+With `make -C path`, targets, prerequisites, and scripts use paths relative
+to `path`. Thus a script in `code/estimation/` uses `../../output` to reach
+the project output directory. Makefiles create output directories; scripts
+use working-directory-relative paths. See
+[the Make conventions](protocols/conventions/makefile.md) for dependency rules.
 
-### PR Review (`/review-pr`)
+### Generated numbers: a minimal example
 
-When reviewers leave comments on a pull request, `/review-pr <PR#>` automates the triage-fix-reply loop:
-
-1. **Fetches** all unresolved review threads via GitHub's GraphQL API
-2. **Classifies** each thread by confidence:
-   - **HIGH** — clear code fix (typo, bug, missing import). Implements, commits, replies with the commit hash, and resolves the thread.
-   - **MEDIUM** — ambiguous but likely intent. Implements and stages changes but does *not* commit. Presents the interpretation for your approval.
-   - **LOW** — design question or unclear fix. Reports the thread with a suggested approach. No code changes.
-3. **Groups** fixes by file so each commit is atomic
-4. **Runs the applicable risk-based workflow** on each group, including Make verification and targeted review
-5. **Pushes** and prints a summary table of what was addressed, what needs approval, and what needs your input
-
-Outdated threads (code has moved since the comment) are reported but never touched.
-
-### Trace (`/trace`)
-
-When the main question is causal rather than implementational, `/trace` runs a
-diagnostic workflow that:
-
-1. Restates the observation
-2. Generates competing hypotheses
-3. Collects evidence for and against each explanation
-4. Ranks the explanations by evidence strength
-5. Recommends the single best next probe
-
-This is useful for estimate shifts, merge-key problems, stale build behavior,
-solver failures, and code-manuscript mismatches.
-
-### Structured Handoffs and Learning
-
-When context must transfer across a person, agent, branch, session, or major
-stage, the workflow can write a short handoff under `quality_reports/handoffs/`.
-Durable project-specific lessons are stored in `MEMORY.md` using structured
-`[LEARN:category]` entries rather than loose bullets.
-
-### Specialized Agents
-
-Focused agents each check one dimension:
-
-| Agent | What It Checks |
-|-------|---------------|
-| `r-reviewer` | R code quality, reproducibility, domain correctness |
-| `julia-reviewer` | Julia code quality, type stability, performance |
-| `stata-reviewer` | Stata code quality, data integrity, and research workflow safety |
-| `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
-| `domain-reviewer` | Substantive manuscript/slide review: identification, derivations, citations, code-theory alignment |
-| `proofreader` | Grammar, typos, overflow risks, and consistency for academic documents |
-| `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
-| `tracer` | Evidence-driven diagnosis for ambiguous failures and output shifts |
-
-For manuscript or slide tasks, choose at most one **opt-in review pass** based
-on the main risk unless the user explicitly requests both:
-- `domain-reviewer` for substantive identification and citation checks
-- `proofreader` for grammar, overflow, and consistency checks
-
-The selected reviewer runs once on the final state and produces a report only;
-fixes require user review.
-
-### Quality Gates
-
-Use a score (0–100) for requested or high-risk review and for commit or merge
-decisions when the rubric adds value. Do not score every routine edit. When
-scoring applies, scores below threshold block the action:
-- **80** — commit threshold
-- **90** — PR threshold
-- **95** — excellence (aspirational)
-
-Rubrics cover R scripts, Julia scripts, Stata scripts, MATLAB scripts, Makefiles, and LaTeX manuscripts. See `AGENTS.md` for the full deduction table.
-
----
-
-## What's Included
-
-<details>
-<summary><strong>Agents, skills, and guidance</strong> (click to expand)</summary>
-
-### Agents (`.claude/agents/`)
-
-| Agent | What It Does |
-|-------|-------------|
-| `r-reviewer` | R code quality, reproducibility, and domain correctness |
-| `julia-reviewer` | Julia code quality, type stability, and performance |
-| `stata-reviewer` | Stata code quality, data integrity, and research workflow safety |
-| `matlab-reviewer` | MATLAB code quality, solver configuration, derivative correctness |
-| `domain-reviewer` | Substantive review for manuscripts, slides, and teaching materials |
-| `proofreader` | Academic proofreading for manuscripts, slides, and notes |
-| `tex-reviewer` | LaTeX hardcoded-number and updated-result prose review |
-| `makefile-reviewer` | Makefile conventions, dependency correctness, script coverage |
-
-### Key Skills (`.claude/skills/`)
-
-| Skill | What It Does |
-|-------|-------------|
-| `/commit` | Stage, commit, PR, merge on the current non-`main` branch; create a branch only when needed |
-| `/data-analysis` | End-to-end R analysis workflow |
-| `/refactor [file-or-dir]` | Verify-refactor-verify loop for safe style changes |
-| `/verify-outputs [script]` | Checksum outputs, compare to reference |
-| `/compare-branches [b1] [b2]` | Cross-branch output comparison via worktrees |
-| `/resume-custom` | Recover context after compression/new session |
-| `/trace [question]` | Evidence-driven diagnosis for ambiguous failures and result shifts |
-| `/learn [insight]` | Save a durable, project-specific lesson to `MEMORY.md` |
-| `/setup-makefile [dir]` | Generate Makefile from directory contents |
-| `/review-pr [PR#]` | Address PR review comments, commit fixes, resolve threads |
-| `/review-r [file]` | R code quality review via r-reviewer agent |
-| `/review-julia [file]` | Julia code quality review via julia-reviewer agent |
-| `/review-stata [file]` | Stata code quality review via stata-reviewer agent |
-| `/review-matlab [file]` | MATLAB code quality review via matlab-reviewer agent |
-| `/review-tex [file]` | LaTeX hardcoded-number and updated-result prose review via tex-reviewer agent |
-| `/review-makefile [file]` | Makefile conventions review via makefile-reviewer agent |
-| `/review-domain [file]` | Opt-in substantive domain review via domain-reviewer agent |
-| `/proofread [file]` | Opt-in proofreading review via proofreader agent |
-| `/review-comments [path]` | Clean up comments, docstrings, dead code |
-| `/matlab-optim-derivatives` | Audit MATLAB optimization derivatives |
-
-### Shared Skill Protocols (`protocols/skills/`)
-
-Canonical bodies for all 20 shared skills. Both `.claude/skills/` and `.agents/skills/` point at these files, and Claude review agents execute the same protocol files rather than owning separate copies.
-
-### Shared Guidance Surfaces
-
-| File | What It Covers |
-|------|----------------|
-| `AGENTS.md` | Risk-based workflow, quality gates, verification, and session logging |
-| `code/AGENTS.md` | Router that selects the applicable code convention files |
-| `protocols/conventions/shared.md` | Path and research-code conventions used for all code work |
-| `protocols/conventions/{r,julia,stata,matlab,makefile}.md` | File-type-specific conventions loaded only when applicable |
-| `latex/AGENTS.md` | Shared LaTeX build, manuscript, and dynamic-number conventions |
-| `CLAUDE.md` | Claude-specific loading model, plan-mode notes, and tool-specific mechanics |
-| `code/CLAUDE.md` | Claude entry point that loads the shared code conventions |
-| `latex/CLAUDE.md` | Claude entry point that loads the shared LaTeX conventions |
-
-### Claude Code Configuration
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `CLAUDE.md` (root) | Project root | Core workflow rules and project-wide instructions |
-| `code/CLAUDE.md` | `code/` | Claude entry point for shared code conventions |
-| `latex/CLAUDE.md` | `latex/` | Claude entry point for shared LaTeX conventions |
-| `.claude/agents/*.md` | `.claude/agents/` | Review-oriented Claude execution surfaces |
-| `.claude/hooks/*` | `.claude/hooks/` | Optional Claude-only hook scripts |
-| `.claude/skills/*/SKILL.md` | `.claude/skills/` | Thin Claude wrappers around shared protocols |
-
-### Codex CLI Configuration
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `AGENTS.md` (root) | Project root | Core instructions + workflow rules |
-| `code/AGENTS.md` | `code/` | Router for shared and file-type-specific conventions |
-| `latex/AGENTS.md` | `latex/` | LaTeX conventions |
-| `protocols/skills/*.md` | `protocols/skills/` | Canonical shared skill bodies |
-| `.codex/config.toml` | `.codex/` | Optional Codex project overrides for sandbox, approval, and model behavior |
-| `.codex/rules/default.rules` | `.codex/rules/` | Command execution permissions (Starlark) |
-| `.agents/skills/*/SKILL.md` | `.agents/skills/` | 20 thin wrappers around the shared protocols |
-
-### Gemini CLI Configuration
-
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| `AGENTS.md` (root) | Project root | Core instructions + workflow rules (shared with Codex CLI) |
-| `.agents/skills/*/SKILL.md` | `.agents/skills/` | Scanned natively; same wrappers Codex uses |
-| `.gemini/settings.json` | `.gemini/` | Configures `context.fileName` and `tools.allowed` permissions |
-
-</details>
-
----
-
-## Prerequisites
-
-| Tool | Required For | Install |
-|------|-------------|---------|
-| [Claude Code](https://code.claude.com/docs/en/overview), [Codex CLI](https://github.com/openai/codex), or [Gemini CLI](https://github.com/google-gemini/gemini-cli) | AI assistant | `npm install -g @anthropic-ai/claude-code`, `npm install -g @openai/codex`, or `npm install -g @google/gemini-cli` |
-| [GNU Make](https://www.gnu.org/software/make/) | Build system | Pre-installed on macOS/Linux |
-| R | Data analysis, figures | [r-project.org](https://www.r-project.org/) |
-| Julia | Computation, simulation | [julialang.org](https://julialang.org/downloads/) |
-| Stata | Replication, cleaning, and panel workflows | Vendor installer; ensure `stata-mp`, `stata-se`, or `stata` is on `PATH` |
-| MATLAB | Numerical optimization and structural models | MathWorks installer; ensure `matlab` is on `PATH` |
-| pdflatex | Manuscript compilation | Included with TeX Live / MacTeX |
-| [gh CLI](https://cli.github.com/) | PR workflow | `brew install gh` (macOS) |
-| [jq](https://jqlang.github.io/jq/) | Claude Code hooks and `/review-pr` thread parsing | `brew install jq` (macOS) |
-
-Not all tools are needed — install only what your project uses. One of Claude Code, Codex CLI, or Gemini CLI is the only hard requirement.
-
-By default, this template does not pin an AI model for any tool. Codex CLI uses the default model from your local Codex CLI setup (for example `~/.codex/config.toml` or an explicit `codex --model ...` override), Claude Code uses the default model configured in your local Claude Code CLI/app session, and Gemini CLI uses the default model from `~/.gemini/settings.json` or a `gemini --model ...` override. Prefer user-level configuration or explicit session/CLI overrides to tracked project model and reasoning-effort pins.
-
----
-
-## Dynamic Numbers in LaTeX
-
-The pipeline keeps computed results out of your `.tex` source by writing `\newcommand` definitions to `output/numbers/` and resolving them at compile time via `TEXINPUTS`.
-
-### How it works
-
-1. **Code generates a `.txt` file** with a `\newcommand`.
-   In the standard `code/[task_group]/` layout, task-group scripts reach the
-   repo-root `output/` directory via a working-directory-relative
-   `output_root`:
+Have your analysis write a value-only macro to `output/numbers/`. These
+examples use an illustrative value; replace it with the computed estimate.
+Run them from `code/[task_group]/` after Make creates the output directory.
 
    **R:**
    ```r
@@ -560,197 +226,69 @@ The pipeline keeps computed results out of your `.tex` source by writing `\newco
    fclose(fid);
    ```
 
-2. **The manuscript inputs the file** (plain filename — no path prefix needed):
-   ```latex
-   \input{revenue_estimate.txt}
-   A U.S. carbon tariff raises \$\revenueEstimate\ billion in revenue.
-   ```
+The manuscript loads the definition and uses the macro:
 
-3. **`TEXINPUTS` resolves the path.** The `latex/Makefile` exports:
-   ```make
-   export TEXINPUTS := .:./latex_extras/:../output/numbers/:../output/tables/:../output/figures/:
-   ```
-   So `pdflatex` finds `revenue_estimate.txt` in `../output/numbers/` without your `.tex` files needing `../output/` prefixes.
+```latex
+\input{revenue_estimate.txt}
+A U.S. carbon tariff raises \$\revenueEstimate\ billion in revenue.
+```
 
-### Adding a new dynamic number
+Declare the generated `.txt` file as a target of its producing script in
+the task-group Makefile, and as a prerequisite of the consuming PDF in
+`latex/Makefile`. Its `TEXINPUTS` setting locates numbers, tables, and figures
+without path prefixes in the TeX source.
 
-1. Add the write call to your R, Julia, Stata, or MATLAB script
-2. Add the `.txt` file as a prerequisite in the relevant `code/` Makefile
-3. Add `\input{filename.txt}` in the manuscript preamble (or wherever the macro is first used)
-4. Use the macro (`\revenueEstimate`) in prose
-5. Run `make` — the code pipeline writes the file, then `pdflatex` picks it up
+When an agent-driven build can rewrite `output/numbers/`, follow the
+before-and-after comparison and prose review in
+[latex/AGENTS.md](latex/AGENTS.md#reviewing-updated-values).
 
-### Reviewing updated values
+## Maintaining the template and updating projects
 
-When an agent-driven build can rewrite `output/numbers/`, the agent records the
-current macro definitions before rebuilding and compares their contents
-afterward. If a macro value changes, the agent reviews every prose occurrence
-in all affected TeX documents for grammar and substantive consistency, fixes
-unambiguous wording, and recompiles the affected documents. Regenerating an
-identical definition does not trigger this review.
+When adding a skill, write its shared procedure under `protocols/skills/`,
+add both wrappers, and update the Claude reviewer definition if needed.
+Keep command permissions aligned across `.claude/settings.json.example`,
+`.codex/rules/default.rules`, and the Antigravity settings example.
+Run `make check-template` after instruction changes. It checks required
+references, retired text, size limits, permissions, and skill inventories,
+and runs the tests under `tools/tests/`.
 
-This review considers the full sentence and nearby context, including articles,
-singular and plural agreement, sign and direction language, units, comparisons,
-thresholds, and descriptions of magnitude. Generated macros remain values
-rather than complete prose phrases; contextual review is not replaced by a
-general article-selection function.
+Project repositories declare optional parts in `tools/template_check.toml`:
+set `has_latex = false` for an external manuscript, `has_code = false` if
+there is no code directory, and `readme_documents_framework = false` for a
+project-specific README. Omitted declarations default to the full template.
 
-The same `TEXINPUTS` mechanism resolves figures (`output/figures/`) and tables (`output/tables/`), so `\includegraphics{plot.pdf}` and `\input{reg_table.tex}` also work without path prefixes.
+To carry template updates into an existing project, run these from the
+template checkout; both default to a dry run:
 
----
+```bash
+python3 tools/sync_template.py --repo ../my-project
+python3 tools/merge_template_sections.py --repo ../my-project
+```
 
-## Maintenance: Keeping Claude, Codex, and Gemini in Sync
+Inspect the proposed changes, then add `--apply` to apply them. The sync tool
+copies shared files and handles retired files. The section merge tool updates
+`Core Principles`, `Where Things Are`, `Risk-Based Workflow`,
+`Defects That Block a Commit or Merge`, `Changed Numbers in the Manuscript`,
+and `Records` in `AGENTS.md`, plus the opening prose of `Commands`. In
+`CLAUDE.md` it updates `Shared Instructions` and `Claude Code Notes`. It
+removes retired sections while preserving project material outside its owned
+sections and the project's manuscript location.
 
-This repo now uses a three-layer skill architecture:
-
-- **`protocols/skills/`** — shared skill bodies
-- **`.claude/skills/`** — Claude wrappers
-- **`.agents/skills/`** — Codex wrappers, also scanned natively by Gemini CLI
-
-Claude also has a tool-specific execution layer in **`.claude/agents/`** for review-oriented skills. Those agents execute the same shared protocol files rather than owning separate checklists.
-
-Gemini CLI needs no wrapper layer of its own: once `.gemini/settings.json` sets
-`context.fileName` to `["GEMINI.md", "AGENTS.md"]`, it loads the `AGENTS.md`
-hierarchy and scans `.agents/skills/` out of the box. Its tracked project
-settings in `.gemini/settings.json` also mirror the command permissions under
-`tools.allowed`.
-
-### What must stay in sync
-
-| Component | Location | Keep in sync? |
-|-----------|----------|---------------|
-| Command permissions | `.claude/settings.json.example`, `.codex/rules/default.rules`, and `.gemini/settings.json` | Yes |
-| Shared skill bodies | `protocols/skills/*.md` | Yes |
-| Skill wrapper names and descriptions | `.claude/skills/*/SKILL.md` and `.agents/skills/*/SKILL.md` | Yes |
-| Project conventions | `CLAUDE.md`, `code/CLAUDE.md`, `latex/CLAUDE.md`, and the `AGENTS.md` hierarchy | Yes |
-
-### What intentionally differs
-
-- **Frontmatter format.** Claude wrappers use Claude frontmatter; Codex wrappers use Codex frontmatter.
-- **Agent layer.** Claude has `.claude/agents/` for review-oriented agents. Codex and Gemini do not track repo-level agent files.
-- **Hooks.** Claude supports `.claude/hooks/`; Codex does not, and Gemini hooks remain optional in user-level settings.
-- **Config scope.** Codex and Gemini read tracked project config in `.codex/` and `.gemini/settings.json`; Claude reads `.claude/settings.json.example` as a template for local `.claude/settings.json`.
-
-### When adding a new skill or convention
-
-1. Add or update the shared body in `protocols/skills/<name>.md`
-2. Update `.claude/skills/<name>/SKILL.md`
-3. Update `.agents/skills/<name>/SKILL.md` (Gemini picks this up automatically)
-4. If it is a review-oriented Claude agent, update the matching file in `.claude/agents/`
-5. If the skill needs new commands, update all three permission config files
-6. Run `make check-template`
-
-## Template Consistency Checker
-
-Run `make check-template` to validate:
-
-- permission parity between Claude, Codex, and Gemini configs
-- shared protocol and wrapper inventory parity
-- wrapper references to `protocols/skills/*.md`
-- Claude review-agent references to the same shared protocol files
-
-`tools/check_template_consistency.py` is identical in every repository built
-from this template. Repositories differ in structure, so each one declares in
-`tools/template_check.toml` which optional parts it carries:
-
-| Declaration | Set to `false` when |
-|---|---|
-| `has_latex` | the manuscript lives in an Overleaf checkout reached through `MANUSCRIPT_DIR` and the repository has no `latex/` directory |
-| `has_code` | the repository has no `code/` directory |
-| `readme_documents_framework` | `README.md` is a project README rather than a copy of this framework documentation |
-
-Checks for a declared-absent part are skipped; every other check still runs. A
-declaration cannot hide a file that should be there: with `has_latex = true`, a
-missing `latex/AGENTS.md` is still an error. Checks for retired rules apply to
-whatever a repository has, so obsolete text in a project README is still
-reported. When the declaration file is absent, the whole template is required.
-
-Tests for this behavior live in `tools/tests/` and run as part of
-`make check-template`.
-
-Some projects deliberately adapt a shared framework file. Record each such
-choice in the target repository's `tools/template_departures.toml`:
+Record deliberate project adaptations in the target's
+`tools/template_departures.toml`, for example:
 
 ```toml
 [[departure]]
 path = "protocols/conventions/*.md"
-reason = "Adapted to this project's R, Julia, and MATLAB practice."
+reason = "Adapted to this project's language conventions."
 ```
 
-`tools/sync_template.py` reads this file from the target repository. A `path`
-may name one file or use a path pattern such as `*.md`. The command leaves each
-matching path alone during copying, removal, and generation, and reports the
-path with its stated reason. A pattern that matches nothing produces a warning
-so renamed files can be reviewed. The template itself has no departures file.
+The update tools honor matching departures and report their reasons. Use
+file paths or patterns; unmatched patterns produce a warning. The template
+itself has no departures file. Rules for keeping task-specific records out
+of the template's `main` branch are in `AGENTS.md` under `Records`.
 
-## Fresh Main Branch
+## License and acknowledgments
 
-When maintaining this template repo itself, treat ad hoc files under
-`quality_reports/` as branch-local working artifacts rather than permanent
-template content. Before merging back to `main`, remove task-specific plans,
-handoffs, session logs, merge reports, and scratch directories so the default
-branch ships clean. Keep only placeholder `.gitkeep` files and intentional
-template assets.
-
----
-
-## Project Structure
-
-```
-my-project/
-├── CLAUDE.md                    # Root Claude Code instructions
-├── AGENTS.md                    # Codex CLI instructions (loaded every session)
-├── MEMORY.md                    # Persistent structured [LEARN] entries
-├── Makefile                     # Root — delegates to code/ and latex/
-├── protocols/
-│   ├── writing.md               # Plain-language writing guide
-│   ├── conventions/             # Shared, language, and Makefile code conventions
-│   └── skills/                  # Shared skill bodies
-├── .claude/                     # Claude Code: rules, wrappers, agents, hooks
-├── .codex/                      # Codex CLI: config and permission rules
-├── .agents/                     # Codex/Gemini: thin skill wrappers
-├── .gemini/                     # Gemini CLI: project settings and permissions
-├── code/
-│   ├── CLAUDE.md                # Claude instructions for code/
-│   ├── AGENTS.md                # Routes work to protocols/conventions/
-│   ├── Makefile                 # Delegates to sub-Makefiles
-│   ├── [task_group_a]/          # e.g., data cleaning (R or Stata)
-│   │   ├── Makefile
-│   │   └── *.R, *.jl, *.do, *.ado, or *.m
-│   ├── [task_group_b]/          # e.g., simulation (Julia or MATLAB)
-│   │   ├── Makefile
-│   │   └── *.R, *.jl, *.do, *.ado, or *.m
-│   └── [task_group_c]/          # e.g., figures (R or Stata)
-│       ├── Makefile
-│       └── *.R, *.jl, *.do, *.ado, or *.m
-├── latex/
-│   ├── CLAUDE.md                # Claude instructions for latex/
-│   ├── Makefile                 # pdflatex 3-pass build
-│   ├── manuscript.tex           # Main paper
-│   ├── slides.tex               # Presentation slides
-│   ├── latex_extras/            # packages.tex, custom_commands.tex, etc.
-│   └── references/              # references.bib, econ.bst
-├── output/                      # Code pipeline outputs (gitignored)
-│   ├── figures/                 # Generated figures
-│   ├── tables/                  # Generated tables
-│   └── numbers/                 # Inline numbers for manuscript
-├── quality_reports/             # Plans, handoffs, session logs, merge reports
-└── templates/                   # Session, handoff, learning, and quality templates
-```
-
-Each `code/[task_group]/Makefile` follows
-`protocols/conventions/makefile.md`: `all` and `clean` targets, order-only
-prerequisites for directories, pattern rules for parametric outputs, and
-`.PRECIOUS` for expensive intermediates.
-
----
-
-## License
-
-MIT License. Use freely for research or any academic purpose.
-
----
-
-## Acknowledgments
-
-This workflow is heavily based on [Pedro H.C. Sant'Anna's Claude Code workflow](https://github.com/pedrohcgs/claude-code-my-workflow).
+MIT License. This workflow draws on
+[Pedro H.C. Sant'Anna's Claude Code workflow](https://github.com/pedrohcgs/claude-code-my-workflow).

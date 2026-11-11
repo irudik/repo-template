@@ -1,132 +1,71 @@
-# R Code Standards
+# R Conventions
 
-**Standard:** Senior Principal Data Engineer + PhD researcher quality
+Read alongside `protocols/conventions/shared.md`.
 
-## 1. Reproducibility
+## Setup and Estimation
 
-- `set.seed()` called ONCE at top (YYYYMMDD format)
-- All packages loaded at top via `library()` (not `require()`)
-- All paths relative to the script working directory (usually `code/[task_group]/`)
-- Rely on the Makefile to make directories
+- Load packages at the top with `library()` rather than `require()` in analysis scripts, so missing packages stop the run immediately instead of failing later; use `requireNamespace()` only when checking for an optional package.
+- In stochastic scripts, call `set.seed(YYYYMMDD)` once at the top.
+- Match estimator implementations, weights, fixed effects, and standard errors to `latex/manuscript.tex`.
+- Return named lists or tibbles when a function returns multiple estimates or objects.
+- Let the Makefile create output directories.
 
-## 2. Function Design
+## Output Paths
 
-- `snake_case` naming, verb-noun pattern
-- Roxygen-style documentation
-- Default parameters, no magic numbers
-- Named return values (lists or tibbles)
-
-## 3. Domain Correctness
-
-<!-- Customize for your field's known pitfalls -->
-- Verify estimator implementations match paper formulas (`latex/manuscript.tex`)
-- Check known package bugs (document below in Common Pitfalls)
-
-## 4. Visual Identity
+Task-group scripts run from the script working directory (usually `code/[task_group]/`). Define `output_root` once and write into the repository-root `output/` subdirectories:
 
 ```r
-# --- Your institutional palette ---
+output_root = file.path("..", "..", "output")
+
+ggsave(file.path(output_root, "figures", "my_plot.pdf"), width = 8, height = 8, bg = "transparent")
+saveRDS(result, file.path(output_root, "tables", "my_results.rds"))
+writeLines("\\newcommand{\\myEstimate}{2.31}",
+           file.path(output_root, "numbers", "my_estimate.txt"))
+```
+
+Save with `saveRDS()` what later steps, slide rendering, or reproduction need, rather than every intermediate object.
+
+## Visual Identity (Optional)
+
+Use this palette and these themes when the project wants uniform figure
+styling. The fonts must already be installed. Do not download them in a
+script the build runs: `sysfonts::font_add_google()` fails without a network
+connection.
+
+```r
 plot_blue = "#4575b4"
 plot_mid = "#ffffdf"
 plot_red = "#d73027"
 plot_purple = "#c51b7d"
 plot_green = "#3a7813"
-```
 
-### Fonts
-
-```
-sysfonts::font_add_google("Lato")
-sysfonts::font_add_google("Fira Sans")
-```
-
-### Custom Themes
-
-```r
 # Regular plots
-main_theme <-
+main_theme =
   theme_classic() +
   theme(
     legend.position = "none",
     title = element_text(size = 24),
     text = element_text(family = font_choice),
-    axis.text.x = element_text(size = 30), axis.text.y = element_text(size = 30),
-    axis.title.x = element_text(size = 30), axis.title.y = element_text(size = 30),
-    panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(), panel.grid.major.x = element_blank(),
-    axis.line = element_line(colour = "black"), axis.ticks = element_line(colour = "black"),
+    axis.text = element_text(size = 30),
+    axis.title = element_text(size = 30),
+    panel.grid = element_blank(),
+    axis.line = element_line(colour = "black"),
+    axis.ticks = element_line(colour = "black"),
     plot.background = element_rect(fill = "#ffffff")
   )
 
 # Maps
-map_theme <-
+map_theme =
   theme_void() +
   theme(
     legend.position = "bottom",
     legend.key.height = unit(.35, "cm"),
     legend.key.width = unit(.6, "cm"),
     legend.text = element_text(size = 8),
-    text = element_text(family = "Lato"),
+    text = element_text(family = font_choice)
   )
 ```
 
-### Figure Dimensions (for slides template)
-
-```r
-# Maps
-ggsave(filepath, width = 8, height = 4, bg = "transparent")
-# Figures
-ggsave(filepath, width = 8, height = 8, bg = "transparent")
-```
-
-## 5. Output Paths
-
-Task-group scripts usually run from `code/[task_group]/`, so paths are
-relative to that working directory. In the standard layout, define
-`output_root` once and write into the main subdirectories under the repo-root
-`output/` directory:
-
-```r
-output_root = file.path("..", "..", "output")
-
-# Figures
-ggsave(file.path(output_root, "figures", "my_plot.pdf"), width = 8, height = 8, bg = "transparent")
-
-# Tables / RDS
-saveRDS(result, file.path(output_root, "tables", "my_results.rds"))
-
-# Inline numbers for manuscript (\newcommand .txt files)
-writeLines("\\newcommand{\\myEstimate}{2.31}",
-           file.path(output_root, "numbers", "my_estimate.txt"))
-```
-
-**Heavy computations saved as RDS; slide rendering loads pre-computed data.**
-
-## 6. Common Pitfalls
-
-<!-- Add your field-specific pitfalls here -->
-| Pitfall | Impact | Prevention |
-|---------|--------|------------|
-| Missing `bg = "transparent"` | White boxes on slides | Always include in ggsave() |
-| Hardcoded paths | Breaks on other machines | Use relative paths |
-
-## 7. Line Length & Mathematical Exceptions
-
-**Standard:** Keep lines <= 120 characters.
-
-**Exception:** Mathematical formulas may exceed 120 chars if breaking the line would harm readability, an inline comment explains the operation, and the line is in a numerically intensive section.
-
-## 8. Code Quality Checklist
-
-```
-[ ] Packages at top via library()
-[ ] set.seed() once at top
-[ ] Clean header block with purpose, inputs, outputs, and assumptions
-[ ] All paths relative to the script working directory
-[ ] Functions documented (Roxygen)
-[ ] One operation per line; long calls split by argument where readable
-[ ] Descriptive snake_case names that read like prose
-[ ] Figures: transparent bg, explicit dimensions
-[ ] RDS: every computed object saved
-[ ] Comments explain WHY not WHAT
-```
+For the slides template, save figures with `width = 8, height = 8` and maps
+with `width = 8, height = 4`, and pass `bg = "transparent"` to `ggsave()` so
+figures do not show white boxes on slides.

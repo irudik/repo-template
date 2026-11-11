@@ -1,54 +1,28 @@
 # Session Log: [Date] -- [Brief Title]
 
-**Status:** IN PROGRESS | COMPLETED
+Status: IN PROGRESS | COMPLETED
+
+<!-- Write for a reader who has not seen this session. Record only what later
+work will need. Delete any section with nothing to record. -->
 
 ## Objective
-[What we set out to accomplish this session]
 
-## Changes Made
+[What this session set out to do]
 
-| File | Change | Reason |
-|------|--------|--------|
-| `path/to/file` | [What changed] | [Why] |
+## Decisions
 
-## Design Decisions
-
-| Decision | Alternatives Considered | Rationale |
-|----------|------------------------|-----------|
+| Decision | Alternatives considered | Reason |
+|----------|-------------------------|--------|
 | [Choice made] | [Other options] | [Why this one] |
 
-## Material Decisions and Context Changes
+## State at the End
 
-[Use this section only when the information would help transfer or recover the
-task. Omit it when there is nothing material to record.]
+[What is finished, what was verified, and what remains]
 
-**HH:MM UTC:** [major decision, correction, blocker, or context needed for transfer]
+## Open Questions
 
-## Linked Handoffs
+- [Question or blocker]
+
+## Linked Records
 
 - `quality_reports/handoffs/YYYY-MM-DD_description/[stage-file].md`
-
-## Learnings & Corrections
-
-[LEARN:category]
-- Date: YYYY-MM-DD
-- Trigger: [symptom, mistake, or question]
-- Wrong: [incorrect assumption or behavior]
-- Right: [correct rule or approach]
-- Scope: [where this applies]
-- Evidence: [file, command, output, or user correction]
-- Action: [what to do next time]
-
-## Verification Results
-
-| Check | Result | Status |
-|-------|--------|--------|
-| [What was checked] | [Result] | PASS / FAIL |
-
-## Open Questions / Blockers
-
-- [ ] [Question or blocker]
-
-## Next Steps
-
-- [ ] [What remains]

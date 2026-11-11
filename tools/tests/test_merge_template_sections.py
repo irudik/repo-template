@@ -41,8 +41,74 @@ def section_by_title(contents: bytes, title: str) -> bytes:
     return next(section.contents for section in sections if section.title == title)
 
 
+OLD_AGENTS_TITLE = (
+    b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI"
+)
+OLD_CLAUDE_TITLE = b"# CLAUDE.md -- Academic Project Development with Claude Code"
+PROJECT_HEADER = b"\n\n**Project:** Example Project\n\n---\n\n"
+
+PROJECT_CORE = (
+    b"## Core Principles\n\n"
+    b"- **Match process to risk** -- earlier wording\n"
+    b"- **Single source of truth** -- the manuscript in `$MANUSCRIPT_DIR` "
+    b"is\n"
+    b"  authoritative for the paper and appendix\n"
+    b"- **Project rule** -- an earlier project bullet\n\n"
+    b"---\n\n"
+)
+PROJECT_AGENTS_SECTION = (
+    b"## Manuscript Location\n\n"
+    b"The manuscript stays in the coauthor's Overleaf checkout.\n\n"
+    b"---\n\n"
+)
+PROJECT_FOLDER_SECTION = (
+    b"## Folder Structure\n\n"
+    b"Project-owned folder description with exact spacing.  \n\n"
+    b"---\n\n"
+)
+PROJECT_AGENTS_COMMANDS = (
+    b"## Commands\n\n"
+    b"Project introduction that the shared path guidance replaces.\n\n"
+    b"```bash\n"
+    b"make project-agents-target\n"
+    b"```\n\n"
+    b"---\n\n"
+)
+PROJECT_CLAUDE_COMMANDS = (
+    b"## Commands\n\n"
+    b"```bash\n"
+    b"make project-claude-target\n"
+    b"```\n\n"
+    b"---\n\n"
+)
+PROJECT_CLAUDE_SECTION = (
+    b"## Git Authorization Boundary\n\n"
+    b"A push instruction does not authorize a commit.\n\n"
+)
+RETIRED_REPLICATION = (
+    b"## Replication-First Protocol\n\n"
+    b"Retired instructions.\n\n"
+    b"### Summary\n\n"
+    b"A retired summary instruction.\n\n"
+    b"## Replication Targets: [Paper Author (Year)]\n\n"
+    b"Unfilled table.\n\n"
+    b"## Results Comparison\n\n"
+    b"Retired comparison.\n\n"
+    b"## Discrepancies (if any)\n\n"
+    b"Retired discrepancy notes.\n\n"
+    b"## Environment\n\n"
+    b"Retired environment notes.\n\n"
+)
+
+
+def earlier_section(title: str) -> bytes:
+    """Return a section as an earlier template version would have carried it."""
+
+    return f"## {title}\n\nEarlier template text for {title}.\n\n---\n\n".encode()
+
+
 class TemplateSectionMergeTests(unittest.TestCase):
-    """Only template-owned root sections should be replaced or inserted."""
+    """Only template-owned root sections should be replaced, inserted, or retired."""
 
     def setUp(self) -> None:
         self.workspace = Path(tempfile.mkdtemp())
@@ -50,118 +116,41 @@ class TemplateSectionMergeTests(unittest.TestCase):
         self.target = self.workspace / "research-project"
         initialize_git_repository(self.target)
 
-    def build_hybrid_documents(self) -> tuple[bytes, bytes, bytes, bytes]:
-        """Write project documents with all merge cases represented."""
+    def build_earlier_documents(self) -> None:
+        """Write root files laid out as the longer earlier template had them."""
 
-        template_agents = (REPO_ROOT / "AGENTS.md").read_bytes()
-        template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()
-
-        agents_preamble, _ = merge_template_sections.parse_sections(template_agents)
-        claude_preamble, _ = merge_template_sections.parse_sections(template_claude)
-
-        project_core = (
-            b"## Core Principles\n\n"
-            b"- **Match process to risk** -- earlier wording\n"
-            b"- **Single source of truth** -- the manuscript in `$MANUSCRIPT_DIR` "
-            b"is\n"
-            b"  authoritative for the paper and appendix\n"
-            b"- **Project rule** -- retain the empirical appendix instructions\n\n"
-            b"---\n\n"
+        target_agents = (
+            OLD_AGENTS_TITLE
+            + PROJECT_HEADER
+            + PROJECT_CORE
+            + PROJECT_AGENTS_SECTION
+            + PROJECT_FOLDER_SECTION
+            + PROJECT_AGENTS_COMMANDS
+            + earlier_section("Quality Thresholds")
+            + earlier_section("Risk-Based Workflow")
+            + earlier_section("Solver Debugging Protocol")
+            + b"## Diagnosis\n\nExample heading inside the solver section.\n\n"
+            + RETIRED_REPLICATION
+            + earlier_section("General Trace Protocol")
+            + earlier_section("Quality Gates & Scoring Rubrics")
+            + earlier_section("Command Conventions")
+            + earlier_section("Workflow Quick Reference")
         )
-        project_agents_section = (
-            b"## Manuscript Location\n\n"
-            b"The manuscript stays in the coauthor's Overleaf checkout.\n\n"
-            b"---\n\n"
+        target_claude = (
+            OLD_CLAUDE_TITLE
+            + PROJECT_HEADER
+            + PROJECT_CORE
+            + PROJECT_CLAUDE_SECTION
+            + PROJECT_FOLDER_SECTION
+            + PROJECT_CLAUDE_COMMANDS
+            + earlier_section("Skills Quick Reference")
+            + earlier_section("Claude-Specific Notes")
+            + earlier_section("Kimi Code CLI")
+            + earlier_section("Gemini CLI")
+            + earlier_section("Explicit Codex Handoff")
         )
-        project_folder_section = (
-            b"## Folder Structure\n\n"
-            b"Project-owned folder description with exact spacing.  \n\n"
-            b"---\n\n"
-        )
-        earlier_quality = (
-            b"## Quality Thresholds\n\n"
-            b"Earlier shared thresholds.\n\n"
-            b"---\n\n"
-        )
-        project_agents_commands = (
-            b"## Commands\n\n"
-            b"Project introduction that the shared path guidance replaces.\n\n"
-            b"```bash\n"
-            b"make project-agents-target\n"
-            b"```\n\n"
-            b"---\n\n"
-        )
-        project_claude_commands = (
-            b"## Commands\n\n"
-            b"```bash\n"
-            b"make project-claude-target\n"
-            b"```\n\n"
-            b"---\n\n"
-        )
-        retired_replication = (
-            b"## Replication-First Protocol\n\n"
-            b"Retired instructions.\n\n"
-            b"### Summary\n\n"
-            b"A retired summary instruction.\n\n"
-            b"## Replication Targets: [Paper Author (Year)]\n\n"
-            b"Unfilled table.\n\n"
-            b"## Results Comparison\n\n"
-            b"Retired comparison.\n\n"
-            b"## Discrepancies (if any)\n\n"
-            b"Retired discrepancy notes.\n\n"
-            b"## Environment\n\n"
-            b"Retired environment notes.\n\n"
-        )
-
-        agents_core = section_by_title(template_agents, "Core Principles")
-        agents_folder = section_by_title(template_agents, "Folder Structure")
-        agents_commands = section_by_title(template_agents, "Commands")
-        agents_quality = section_by_title(template_agents, "Quality Thresholds")
-        general_trace = section_by_title(template_agents, "General Trace Protocol")
-        target_agents = template_agents.replace(
-            agents_core,
-            project_core + project_agents_section,
-            1,
-        )
-        target_agents = target_agents.replace(agents_folder, project_folder_section, 1)
-        target_agents = target_agents.replace(agents_commands, project_agents_commands, 1)
-        target_agents = target_agents.replace(agents_quality, earlier_quality, 1)
-        target_agents = target_agents.replace(
-            general_trace,
-            retired_replication + general_trace,
-            1,
-        )
-
-        project_claude_section = (
-            b"## Git Authorization Boundary\n\n"
-            b"A push instruction does not authorize a commit.\n\n"
-        )
-        claude_core = section_by_title(template_claude, "Core Principles")
-        claude_commands = section_by_title(template_claude, "Commands")
-        gemini_section = section_by_title(template_claude, "Gemini CLI")
-        retired_kimi_section = (
-            b"## Kimi Code CLI\n\n"
-            b"Retired Kimi section that should be replaced by Gemini CLI.\n\n"
-        )
-        target_claude = template_claude.replace(
-            claude_core,
-            project_core + project_claude_section,
-            1,
-        ).replace(claude_commands, project_claude_commands, 1)
-        target_claude = target_claude.replace(
-            gemini_section,
-            retired_kimi_section,
-            1,
-        )
-
         (self.target / "AGENTS.md").write_bytes(target_agents)
         (self.target / "CLAUDE.md").write_bytes(target_claude)
-        return (
-            agents_preamble,
-            claude_preamble,
-            project_agents_section,
-            project_folder_section,
-        )
 
     def test_commands_is_the_only_project_section_with_shared_fence_preamble(self) -> None:
         """No other project-owned fenced section needs a partial template merge."""
@@ -181,15 +170,34 @@ class TemplateSectionMergeTests(unittest.TestCase):
                 if opening_prose:
                     sections_with_opening_prose.append(section.title)
 
-            self.assertEqual(sections_with_opening_prose, ["Commands"])
+            self.assertEqual(
+                sections_with_opening_prose,
+                list(merge_template_sections.SHARED_PREAMBLE_SECTION_TITLES[file_name]),
+            )
+
+    def test_every_template_section_is_owned_or_a_shared_preamble(self) -> None:
+        """A template section nobody owns would never reach a project."""
+
+        for file_name, owned_titles in merge_template_sections.OWNED_SECTION_TITLES.items():
+            contents = (REPO_ROOT / file_name).read_bytes()
+            _, sections = merge_template_sections.parse_sections(contents)
+            known_titles = set(owned_titles) | set(
+                merge_template_sections.SHARED_PREAMBLE_SECTION_TITLES[file_name]
+            )
+
+            self.assertEqual(
+                [section.title for section in sections if section.title not in known_titles],
+                [],
+            )
+            self.assertEqual(
+                [title for title in owned_titles if title not in {s.title for s in sections}],
+                [],
+            )
 
     def test_merge_replaces_inserts_preserves_removes_and_repeats_cleanly(self) -> None:
-        (
-            agents_preamble,
-            claude_preamble,
-            project_agents_section,
-            project_folder_section,
-        ) = self.build_hybrid_documents()
+        self.build_earlier_documents()
+        template_agents = (REPO_ROOT / "AGENTS.md").read_bytes()
+        template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()
 
         first = merge_template_sections.merge_repository(
             REPO_ROOT,
@@ -207,105 +215,146 @@ class TemplateSectionMergeTests(unittest.TestCase):
         self.assertTrue(first.has_changes)
         self.assertFalse(second.has_changes)
         self.assertEqual(first.branch, "section-test-branch")
-        self.assertEqual(
-            merge_template_sections.parse_sections(merged_agents)[0],
-            agents_preamble,
+
+        # Titles are updated and the project's own header lines are kept.
+        self.assertTrue(
+            merged_agents.startswith(
+                b"# AGENTS.md -- Shared Instructions for Claude Code, Codex, and Antigravity"
+            )
         )
-        self.assertEqual(
-            merge_template_sections.parse_sections(merged_claude)[0],
-            claude_preamble,
-        )
+        self.assertTrue(merged_claude.startswith(b"# CLAUDE.md -- Claude Code Instructions"))
+        self.assertIn(b"**Project:** Example Project", merged_agents)
+
+        # Project sections are untouched.
         self.assertEqual(
             section_by_title(merged_agents, "Manuscript Location"),
-            project_agents_section,
+            PROJECT_AGENTS_SECTION,
         )
         self.assertEqual(
             section_by_title(merged_agents, "Folder Structure"),
-            project_folder_section,
-        )
-        self.assertIn(
-            b"the manuscript in `$MANUSCRIPT_DIR` is\n"
-            b"  authoritative for the paper and appendix",
-            section_by_title(merged_agents, "Core Principles"),
-        )
-        self.assertIn(
-            b"the manuscript in `$MANUSCRIPT_DIR` is\n"
-            b"  authoritative for the paper and appendix",
-            section_by_title(merged_claude, "Core Principles"),
+            PROJECT_FOLDER_SECTION,
         )
         self.assertEqual(
-            section_by_title(merged_agents, "Quality Thresholds"),
-            section_by_title((REPO_ROOT / "AGENTS.md").read_bytes(), "Quality Thresholds"),
+            section_by_title(merged_claude, "Git Authorization Boundary"),
+            PROJECT_CLAUDE_SECTION,
         )
+
+        # Shared sections take the template text, except the project's own
+        # statement of where the manuscript lives.
+        merged_core = section_by_title(merged_agents, "Core Principles")
+        self.assertIn(
+            b"the manuscript in `$MANUSCRIPT_DIR` is\n"
+            b"  authoritative for the paper and appendix",
+            merged_core,
+        )
+        self.assertIn(b"**The code is ours to change**", merged_core)
+        self.assertNotIn(b"an earlier project bullet", merged_core)
+        self.assertEqual(
+            section_by_title(merged_agents, "Risk-Based Workflow"),
+            section_by_title(template_agents, "Risk-Based Workflow"),
+        )
+
+        # Commands keeps the project's command list under the shared prose.
         merged_agents_commands = section_by_title(merged_agents, "Commands")
-        merged_claude_commands = section_by_title(merged_claude, "Commands")
         self.assertIn(
             b"Run all Make commands below from the repository root.",
-            merged_agents_commands,
-        )
-        self.assertIn(
-            b"`make -C path` changes Make's working directory",
             merged_agents_commands,
         )
         self.assertIn(b"make project-agents-target", merged_agents_commands)
-        self.assertNotIn(b"make project-claude-target", merged_agents_commands)
-        self.assertIn(
-            b"Run all Make commands below from the repository root.",
-            merged_claude_commands,
-        )
-        self.assertIn(
-            b"`make -C path` changes Make's working directory",
-            merged_claude_commands,
-        )
-        self.assertIn(b"make project-claude-target", merged_claude_commands)
-        self.assertNotIn(b"make project-agents-target", merged_claude_commands)
         self.assertNotIn(
             b"Project introduction that the shared path guidance replaces.",
             merged_agents_commands,
         )
         self.assertIn("AGENTS.md: Commands", first.replaced_sections)
-        self.assertIn("CLAUDE.md: Commands", first.replaced_sections)
-        self.assertIn("CLAUDE.md: Gemini CLI", first.inserted_sections)
-        self.assertIn("CLAUDE.md: ## Kimi Code CLI", first.removed_sections)
-        self.assertNotIn(b"## Kimi Code CLI", merged_claude)
+
+        # New sections arrive, in template order.
+        for title in (
+            "Where Things Are",
+            "Defects That Block a Commit or Merge",
+            "Changed Numbers in the Manuscript",
+            "Records",
+        ):
+            self.assertIn(f"AGENTS.md: {title}", first.inserted_sections)
         self.assertLess(
-            merged_claude.index(b"## Gemini CLI"),
-            merged_claude.index(b"## Explicit Codex Handoff"),
+            merged_agents.index(b"## Where Things Are"),
+            merged_agents.index(b"## Commands"),
         )
-        self.assertNotIn(b"## Replication-First Protocol", merged_agents)
-        self.assertNotIn(b"## Replication Targets: [Paper Author (Year)]", merged_agents)
-        self.assertNotIn(b"## Results Comparison", merged_agents)
+        self.assertLess(
+            merged_agents.index(b"## Risk-Based Workflow"),
+            merged_agents.index(b"## Records"),
+        )
+
+        # Retired sections leave both files.
+        for retired in (
+            b"## Quality Thresholds",
+            b"## Solver Debugging Protocol",
+            b"## Diagnosis",
+            b"## General Trace Protocol",
+            b"## Quality Gates & Scoring Rubrics",
+            b"## Command Conventions",
+            b"## Workflow Quick Reference",
+            b"## Replication-First Protocol",
+            b"## Replication Targets: [Paper Author (Year)]",
+            b"## Results Comparison",
+        ):
+            self.assertNotIn(retired, merged_agents)
+        for retired in (
+            b"## Core Principles",
+            b"## Skills Quick Reference",
+            b"## Claude-Specific Notes",
+            b"## Kimi Code CLI",
+            b"## Gemini CLI",
+            b"## Explicit Codex Handoff",
+        ):
+            self.assertNotIn(retired, merged_claude)
+        self.assertIn("CLAUDE.md: ## Kimi Code CLI", first.removed_sections)
+        self.assertIn("AGENTS.md: ## Quality Thresholds", first.removed_sections)
         self.assertTrue(
             any("Replication-First Protocol" in item for item in first.removed_sections)
         )
         self.assertTrue(any("### Summary" in item for item in first.removed_sections))
 
-    def test_crlf_retired_kimi_folder_lines_and_title_are_updated(self) -> None:
-        template_agents = (REPO_ROOT / "AGENTS.md").read_bytes()
-        template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()
-        old_agents = (
-            template_agents.replace(
-                b"# AGENTS.md -- Academic Project Development with Codex CLI and Gemini CLI",
-                b"# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI",
-            )
-            .replace(
-                "├── .agents/                     # Codex/Gemini skill wrappers (both tools scan this)\n"
-                "│   └── skills/                  # Skill definitions\n"
-                "├── .gemini/                     # Gemini CLI project settings\n"
-                "│   └── settings.json            # Context file names and command permissions\n".encode(
-                    "utf-8"
-                ),
-                "├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)\n"
-                "│   └── skills/                  # Skill definitions\n"
-                "├── .kimi-code/                  # Kimi Code CLI example config\n"
-                "│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml\n".encode(
-                    "utf-8"
-                ),
-            )
-            .replace(b"\n", b"\r\n")
+        # Root CLAUDE.md gains the import and the Claude-only notes.
+        self.assertEqual(
+            section_by_title(merged_claude, "Shared Instructions"),
+            section_by_title(template_claude, "Shared Instructions"),
         )
+        self.assertIn(b"@AGENTS.md", merged_claude)
+        self.assertIn("CLAUDE.md: Claude Code Notes", first.inserted_sections)
+
+        # Project sections that an older CLAUDE.md repeated stay and are reported.
+        self.assertEqual(
+            section_by_title(merged_claude, "Commands"),
+            PROJECT_CLAUDE_COMMANDS,
+        )
+        self.assertTrue(
+            any("'Commands'" in warning for warning in first.warnings),
+            first.warnings,
+        )
+        self.assertTrue(
+            any("'Folder Structure'" in warning for warning in first.warnings),
+            first.warnings,
+        )
+
+    def test_crlf_retired_kimi_folder_lines_and_title_are_updated(self) -> None:
+        kimi_folder_section = (
+            "## Folder Structure\n\n"
+            "```\n"
+            "├── .agents/                     # Codex/Kimi skill wrappers (both tools scan this)\n"
+            "│   └── skills/                  # Skill definitions\n"
+            "├── .kimi-code/                  # Kimi Code CLI example config\n"
+            "│   └── config.toml.example      # Permission rules to merge into ~/.kimi-code/config.toml\n"
+            "```\n\n"
+        ).encode("utf-8")
+        old_agents = (
+            b"# AGENTS.md -- Academic Project Development with Codex CLI and Kimi Code CLI"
+            + PROJECT_HEADER
+            + PROJECT_CORE
+            + kimi_folder_section
+            + PROJECT_AGENTS_COMMANDS
+        ).replace(b"\n", b"\r\n")
         (self.target / "AGENTS.md").write_bytes(old_agents)
-        (self.target / "CLAUDE.md").write_bytes(template_claude)
+        (self.target / "CLAUDE.md").write_bytes((REPO_ROOT / "CLAUDE.md").read_bytes())
 
         report = merge_template_sections.merge_repository(
             REPO_ROOT,
@@ -317,15 +366,18 @@ class TemplateSectionMergeTests(unittest.TestCase):
         self.assertTrue(report.has_changes)
         self.assertNotIn(b"Kimi", merged_agents)
         self.assertNotIn(b".kimi-code", merged_agents)
-        self.assertIn(b"Gemini CLI", merged_agents)
+        self.assertTrue(
+            merged_agents.startswith(
+                b"# AGENTS.md -- Shared Instructions for Claude Code, Codex, and Antigravity"
+            )
+        )
         self.assertIn("AGENTS.md: Folder Structure", report.replaced_sections)
 
     def test_departed_root_file_is_neither_changed_nor_added(self) -> None:
-        template_claude = (REPO_ROOT / "CLAUDE.md").read_bytes()
-        custom_claude = template_claude.replace(
-            section_by_title(template_claude, "Quality Thresholds"),
-            b"## Quality Thresholds\n\nProject thresholds.\n\n",
-            1,
+        custom_claude = (
+            OLD_CLAUDE_TITLE
+            + PROJECT_HEADER
+            + b"## Quality Thresholds\n\nProject thresholds.\n\n"
         )
         (self.target / "CLAUDE.md").write_bytes(custom_claude)
         tools_directory = self.target / "tools"

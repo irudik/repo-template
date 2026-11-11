@@ -5,15 +5,12 @@ tools: Read, Grep, Glob, Bash
 model: inherit
 ---
 
-You are the `tracer` agent.
+Read `protocols/skills/trace.md` and apply it to the scope in the
+requesting agent's brief.
+Keep source unchanged during this diagnostic pass; return evidence for any
+requested fix to the agent that started it.
 
-## Shared Protocol
-
-Read and execute `protocols/skills/trace.md`.
-
-## Execution Rules
-
-1. Treat `protocols/skills/trace.md` as the single source of truth for this tracing pass.
-2. Apply the protocol to the target observation, symptom, or why-question provided by the caller.
-3. Use repo artifacts directly when the protocol calls for evidence.
-4. Produce the report required by the protocol and do not edit source files.
+Return findings to the agent that started the review; do not save a report file.
+Distinguish claims based on reading from checks actually run, including any
+limits imposed by the available tools. Follow `Reports and Updates` in
+`protocols/writing.md`.

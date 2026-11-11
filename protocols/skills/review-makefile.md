@@ -1,105 +1,29 @@
-# Review Makefiles Protocol
+# Review Makefiles
 
-Run the comprehensive Makefile review protocol.
+Review the supplied files; `all` means all Makefiles in the project.
+Read `protocols/conventions/shared.md` and
+`protocols/conventions/makefile.md`. This review returns findings without source
+edits so the requesting agent can assess and apply corrections.
 
-## Steps
+- Check that `all` is the first default target, non-file targets are `.PHONY`,
+  `clean` is scoped, recipes use tabs, and expensive intermediates use
+  `.PRECIOUS` where needed.
+- Follow dependencies through input data and helper scripts; detect cycles,
+  missing prerequisites, and prerequisites without producing rules.
+- Check coverage of `.R`, `.jl`, `.do`, `.ado`, and `.m` scripts as prerequisites,
+  including helpers; report unexplained exclusions and orphaned scripts.
+- Check order-only directory prerequisites with `mkdir -p $@`, paths relative to
+  each Makefile, and recursive delegation through `$(MAKE) -C`.
+- For joint outputs, check that one script execution produces them consistently
+  and that a missing secondary output will be rebuilt without duplicate runs.
+- Check automatic variables and interpreter commands: `Rscript $<`, `julia $<`,
+  `$(STATA) -b do $<`, and `matlab -batch "run('$<')"` as appropriate.
+  Distinguish a dependency inferred from reading from behavior demonstrated by
+  a scoped dry run or build.
 
-1. **Identify Makefiles to review:**
-   - If an argument is a specific Makefile path, review that file only.
-   - If the argument is `all`, review all Makefiles in the project.
-
-2. **For each Makefile, follow the review protocol below:**
-   - Read `protocols/conventions/shared.md` and `protocols/conventions/makefile.md`.
-   - Scan scripts in the same directory for coverage checking.
-   - Derive `dir_name` from the Makefile's containing directory path relative to
-     the repo root, replacing `/` with `_`; use `root` for the repository root.
-   - Save the report to `quality_reports/[dir_name]_makefile_review.md`.
-
-3. **After all reviews complete, present a summary:**
-   - Total issues found per Makefile
-   - Breakdown by severity
-   - Orphaned scripts
-
-4. **Do not edit Makefiles.** Produce reports only.
-
-## Review Protocol
-
-You are a Senior Build Engineer with deep expertise in GNU Make for academic
-research pipelines.
-
-### Review Categories
-
-#### 1. Structure
-
-- `all` is the default first target
-- `clean` target exists
-- `.PHONY` declared for non-file targets
-- Logical ordering of variables, targets, rules, and clean
-
-#### 2. Directory Creation
-
-- Output directories use order-only prerequisites
-- Directories created with `mkdir -p $@`
-- Scripts do not create directories
-
-#### 3. Dependency Correctness
-
-- No circular dependencies
-- All prerequisites exist or have rules
-- Cross-directory dependencies use `$(MAKE) -C`
-- Input data files listed as prerequisites
-
-#### 4. Script Coverage
-
-- Every `.R`, `.jl`, `.do`, `.ado`, and `.m` file has a corresponding target
-- No orphaned scripts
-- Excluded helper scripts are documented
-
-#### 5. Joint Production
-
-- Multi-output scripts use one real recipe and secondary targets
-- No duplicate recipes for the same script
-
-#### 6. Recipe Conventions
-
-- `Rscript $<`, `julia $<`, `$(STATA) -b do $<`, and
-  `matlab -batch "run('$<')"` as appropriate
-- Automatic variables such as `$<` and `$@`
-- No absolute paths
-
-#### 7. Expensive Intermediates
-
-- `.PRECIOUS` used on files that are expensive to rebuild
-
-#### 8. Delegation
-
-- `$(MAKE) -C` used for subdirectories
-- Subdirectories stored in a variable
-
-#### 9. Professional Polish
-
-- Tabs, not spaces, in recipes
-- Comments on non-obvious targets
-- Variables declared near the top
-
-## Report Format
-
-Save the report to `quality_reports/[dir_name]_makefile_review.md`.
-
-For nested directories, flatten the relative path to derive `dir_name`; for
-example, `code/estimation/bootstrap/Makefile` maps to
-`quality_reports/code_estimation_bootstrap_makefile_review.md`.
-
-Include:
-
-- Issue counts by severity
-- File and line references
-- Concrete proposed fixes
-- A checklist summary by review category
-
-## Important Rules
-
-- Never edit Makefiles.
-- Include line numbers.
-- Every issue needs a concrete proposed fix.
-- Prioritize correctness over style.
+Return findings to the agent that started the review, distinguishing claims
+based on reading from checks actually run. Follow `Reports and Updates` in
+`protocols/writing.md`: give actionable findings with file and line references,
+evidence, proposed corrections, and verification limits, separating blocking
+defects under `Defects That Block a Commit or Merge` in root `AGENTS.md` from
+advisory items.

@@ -1,18 +1,14 @@
 ---
 name: review-r
-description: Run the R code review protocol on R scripts. Checks code quality, reproducibility, domain correctness, and professional standards. Produces a report without editing files.
+description: Review R analysis for estimand correctness, data integrity, and reproducibility. Use for requested reviews or substantive empirical changes.
 disable-model-invocation: true
 argument-hint: "[filename or 'all']"
 allowed-tools: ["Read", "Grep", "Glob", "Write", "Task"]
 ---
 
-# Review R Wrapper
-
-Use the shared protocol in `protocols/skills/review-r.md`.
-
-## Wrapper Workflow
-
-1. Resolve the target scope from `$ARGUMENTS`.
-2. Read `protocols/skills/review-r.md`.
-3. Launch one `r-reviewer` agent for the full approved target scope and instruct it to follow `protocols/skills/review-r.md`.
-4. Present a concise summary of the findings.
+Resolve `$ARGUMENTS` to the requested files. Launch one `r-reviewer` agent for the full approved target scope
+with a short, self-contained brief: files to review, what changed, what was
+already checked, and no conclusion. Instruct the reviewer to read
+`protocols/skills/review-r.md`; the main agent need not read that protocol
+before delegation. Present the returned findings under `Reports and Updates`
+in `protocols/writing.md`, saving a report only if the user requested one.

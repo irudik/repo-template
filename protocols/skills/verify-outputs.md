@@ -1,63 +1,44 @@
-# Verify Script Outputs Protocol
+# Compare Script Outputs
 
-Run checksum-based verification of script outputs to detect regressions.
+For a script or directory, discover outputs from Make targets and write calls:
+R (`write.csv`, `write_csv`, `saveRDS`, `ggsave`, `writeLines`), Julia
+(`CSV.write`, `jldsave`, `savefig`, `open`), Stata (`save`, `export delimited`,
+`putexcel`, `esttab`, `file write`), and MATLAB (`writetable`, `writematrix`,
+`save`, `saveas`). Resolve paths from the script's working directory.
 
-## Steps
+In baseline mode, run the relevant Make target, or the script from its directory
+if no Makefile governs it, and store stable-output MD5 checksums in a gitignored
+`.checksums.json` beside the outputs. In comparison mode, run the same targets
+with the same inputs and compare against that baseline, including missing and
+new outputs. A comparison without a reliable baseline is not a pass.
 
-### 1. Identify Targets
+## Formats
 
-- If the argument is a script path, verify outputs from that script.
-- If the argument is a directory, verify all scripts in that directory.
-- If the argument is `baseline`, record baseline checksums only.
+| Format | Comparison |
+|---|---|
+| CSV/TSV | MD5; CSV is the preferred stable format for style cleanup |
+| Generated `.tex` | MD5 or text diff |
+| RDS | Load with `all.equal()` or export values to CSV; bytes depend on R version |
+| `.dta` | Read with `haven::read_dta()` or export to CSV |
+| `.mat` | Load and compare named variables with explicit tolerances |
+| JLD2 | MD5 in a compatible Julia environment, otherwise load and compare |
+| PDF/PNG | Visual comparison; renderer differences make checksums unsuitable |
 
-### 2. Discover Output Paths
+Skip binary files in checksum mode except JLD2 in a compatible environment;
+perform needed value or visual comparisons separately and identify their
+coverage. If nothing is
+checksum-comparable, say that comparison was skipped and why.
 
-Scan target scripts for output write calls:
+## Research Tolerances
 
-- R: `write.csv`, `write_csv`, `saveRDS`, `ggsave`, `writeLines`
-- Julia: `CSV.write`, `jldsave`, `savefig`, `open(..., "w")`
-- Stata: `save`, `export delimited`, `putexcel`, `esttab`, `file write`
-- MATLAB: `writetable`, `writematrix`, `save`, `saveas`
+Use the project's documented tolerances and their rationale. Illustrative
+values are `1e-6` for point estimates (numerical precision), `1e-4` for standard
+errors (simulation variability), and `0.01` for coverage rates (Monte Carlo
+uncertainty depending on replication count); these are not project defaults.
+State absolute versus relative tolerance and justify it from the computation.
+Style cleanup still requires identical output; tolerances do not relax that rule.
 
-Also check Makefile targets when a Makefile exists.
-
-### 3. Record or Compare Checksums
-
-#### Baseline Mode
-
-1. Run via `make` when possible, otherwise directly.
-2. Checksum stable-format outputs: CSV, TSV, generated `.tex`.
-3. Skip unstable binary formats such as RDS, `.mat`, PDF, and PNG.
-4. If all discovered outputs are unstable binary formats, report that checksum
-   verification was skipped and explain why.
-5. Store the results in `.checksums.json` alongside outputs.
-
-#### Comparison Mode
-
-1. Run the scripts.
-2. Checksum outputs.
-3. If all outputs are unstable binary formats, report a SKIP result with the
-   reason instead of a pass/fail comparison.
-4. Compare against `.checksums.json`.
-5. Print a pass/fail table.
-
-### 4. Report
-
-```text
-## Output Verification: [script or directory]
-| File | Format | Status | Notes |
-|------|--------|--------|-------|
-| output/tables/results.csv | CSV | PASS | MD5 match |
-| output/figures/plot.pdf | PDF | SKIP | Not checksum-stable |
-```
-
-### 5. On Failure
-
-Report mismatches with brief CSV diffs. Do not attempt fixes.
-
-## Important
-
-- CSV is the gold standard for checksum comparisons.
-- Binary formats are skipped.
-- If every discovered output is binary-only, report an explicit SKIP reason.
-- Store `.checksums.json` alongside outputs and keep it gitignored.
+Follow `Reports and Updates` in `protocols/writing.md`: name the baseline,
+comparison coverage, mismatches with brief content differences, tolerances, and
+skipped outputs. Report discrepancies without changing analysis unless a fix
+was requested.

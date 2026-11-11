@@ -156,38 +156,31 @@ CODE_CONVENTION_ROUTES = {
     "makefile-reviewer": "protocols/conventions/makefile.md",
 }
 
+README_REQUIRED_SNIPPETS = (
+    "applies the risk-based workflow",
+    "When an agent-driven build can rewrite `output/numbers/`",
+)
+
+# Required text is limited to section headings and pointers to other files, so
+# the wording of a rule can change without a change here.
 WORKFLOW_REQUIRED_SNIPPETS = {
     "AGENTS.md": (
+        "## Core Principles",
         "## Risk-Based Workflow",
-        "### Selecting a Reviewer",
-        "**Workflow:** Risk-based",
-        "do not spawn one\nreviewer per file type",
-        "Use a full multi-agent loop only when the user explicitly requests it",
-        "Documentation or instruction-only changes do not require a Make dry run.",
-        "Do not perform a scoring exercise after every routine edit.",
-        "Whenever a generated numeric macro changes value, review every prose",
-        "pause until the user says\n  whether to continue in the current session",
-        "Gemini CLI loads this `AGENTS.md` hierarchy via `.gemini/settings.json`",
+        "### Working Without Stopping",
+        "### Ask the User When",
+        "### What Done Means",
+        "## Defects That Block a Commit or Merge",
+        "## Changed Numbers in the Manuscript",
+        "`protocols/solver-debugging.md`",
+        "`protocols/skills/resume-custom.md`",
     ),
     "CLAUDE.md": (
-        "routine work needs no plan",
-        "Start a fresh session, or use `/clear`, when changing task or branch",
-        "pause until the user says whether\n  to continue in the current session",
-        "Allow one\nCodex fix and one Claude re-review by default.",
+        "@AGENTS.md",
+        "`protocols/codex-handoff.md`",
         "Do not pin Claude's `effortLevel` or model in tracked Claude project",
-        "when a generated numeric macro changes value,",
-        "## Gemini CLI",
-        "`.gemini/settings.json`",
     ),
-    "README.md": (
-        "applies the risk-based workflow",
-        "choose at most one **opt-in review pass**",
-        "Do not score every routine edit.",
-        "Prefer user-level configuration or explicit session/CLI overrides",
-        "When an agent-driven build can rewrite `output/numbers/`",
-        "## Quick Start: Gemini CLI (5 minutes)",
-        "`.gemini/settings.json`",
-    ),
+    "README.md": README_REQUIRED_SNIPPETS,
     "latex/AGENTS.md": (
         "Whenever a generated numeric macro",
         "Keep generated macros value-only.",
@@ -195,7 +188,47 @@ WORKFLOW_REQUIRED_SNIPPETS = {
     "protocols/conventions/makefile.md": (
         "When a Makefile or dependency declaration changes, run a scoped `make -n`",
     ),
+    "protocols/codex-handoff.md": (
+        "Allow one Codex fix and\none Claude re-review by default.",
+    ),
 }
+
+# Numeric scoring was replaced by a short list of blocking defects in root
+# AGENTS.md. These patterns catch scoring text that returns.
+RETIRED_SCORING_PATTERN = re.compile(
+    r"Quality Thresholds|Scoring Rubric|Quality Score|\bScore < \d|/100\b"
+)
+
+RETIRED_SCORING_GLOBS = (
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "protocols/**/*.md",
+    "templates/*.md",
+    ".claude/agents/*.md",
+    ".claude/skills/*/SKILL.md",
+    ".agents/skills/*/SKILL.md",
+)
+
+# Hard limits on the instruction files each tool loads in every session.
+# Antigravity cuts a rule file at 24,000 bytes. Codex reads at most 32,768
+# bytes across the user-level, root, and nested AGENTS.md files together, so
+# the chain limit leaves room for a user-level file. Claude Code's guidance is
+# under 200 lines per CLAUDE.md.
+ROOT_AGENTS_BYTE_LIMIT = 20_000
+RULE_FILE_BYTE_LIMIT = 24_000
+AGENTS_CHAIN_BYTE_LIMIT = 26_000
+CLAUDE_LINE_LIMIT = 200
+
+NESTED_AGENTS_PATHS = ("code/AGENTS.md", "latex/AGENTS.md")
+CLAUDE_INSTRUCTION_PATHS = ("CLAUDE.md", "code/CLAUDE.md", "latex/CLAUDE.md")
+
+# Files whose backticked repository paths must exist.
+REFERENCE_CHECKED_PATHS = ("AGENTS.md", "CLAUDE.md")
+REFERENCE_PATTERN = re.compile(
+    r"`((?:protocols|templates|tools|\.claude|\.agents)/[^`\s]*|"
+    r"(?:code|latex)/(?:AGENTS|CLAUDE)\.md)`"
+)
 
 WORKFLOW_FORBIDDEN_PATTERNS = {
     "AGENTS.md": (re.compile(r"kimi", re.IGNORECASE),),
@@ -235,7 +268,7 @@ PROTOCOL_REQUIRED_SNIPPETS = {
     "protocols/skills/compare-branches.md": (
         "run `make -n`",
         "rebuild them with `make`",
-        "Output Verification Formats guidance in `AGENTS.md`",
+        "`protocols/skills/verify-outputs.md`",
     ),
     "protocols/skills/setup-makefile.md": (
         "`.R`, `.jl`, `.do`, `.ado`, and `.m`",
@@ -267,15 +300,6 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
     "AGENTS.md": (
         "Run all Make commands below from the repository root.",
         "`make -C path` changes Make's working directory",
-        "`code/[subdir]/` as the command's working directory",
-        "`Rscript script.R`",
-        "`julia script.jl`",
-        "`stata -b do script.do`",
-        "`matlab -batch \"run('script.m')\"`",
-    ),
-    "CLAUDE.md": (
-        "Run all Make commands below from the repository root.",
-        "`make -C path` changes Make's working directory",
     ),
     "code/AGENTS.md": (
         "../protocols/conventions/shared.md",
@@ -286,6 +310,11 @@ PATH_MODEL_REQUIRED_SNIPPETS = {
         "../protocols/conventions/makefile.md",
     ),
     "protocols/conventions/shared.md": (
+        "`code/[task_group]/` as the command's working directory",
+        "`Rscript script.R`",
+        "`julia script.jl`",
+        "`stata -b do script.do`",
+        "`matlab -batch \"run('script.m')\"`",
         "paths in task-group Makefiles",
         "the scripts they run are relative to the task-group directory",
         "Do not add a `PROJECT_ROOT` variable merely",
@@ -349,20 +378,20 @@ PATH_MODEL_FORBIDDEN_SNIPPETS = {
 
 CLAUDE_WRAPPER_REQUIRED_SNIPPETS = {
     "code/CLAUDE.md": (
-        "[AGENTS.md](./AGENTS.md)",
+        "@AGENTS.md",
         "source of truth",
         "../protocols/conventions/shared.md",
     ),
-    "latex/CLAUDE.md": ("[AGENTS.md](./AGENTS.md)", "source of truth"),
+    "latex/CLAUDE.md": ("@AGENTS.md", "source of truth"),
 }
 
 WRITING_GUIDE_REQUIRED_SNIPPETS = {
     "protocols/writing.md": (
         "## The Audience Test",
         "## Banned Programmer Vocabulary",
+        "## Reports and Updates",
         "| sanity check |",
     ),
-    "CLAUDE.md": ("protocols/writing.md",),
     "AGENTS.md": ("protocols/writing.md",),
     "latex/AGENTS.md": ("protocols/writing.md",),
     "protocols/conventions/shared.md": ("protocols/writing.md",),
@@ -441,27 +470,6 @@ def load_claude_bash_permissions() -> set[str]:
     return command_prefixes
 
 
-def load_claude_permission_patterns() -> set[str]:
-    """Return the complete allow-list patterns from the Claude settings example."""
-    settings_path = REPO_ROOT / ".claude/settings.json.example"
-    settings = json.loads(settings_path.read_text())
-
-    return set(settings["permissions"]["allow"])
-
-
-CLAUDE_ENV_ASSIGNMENT_RULE = re.compile(r"Bash\([A-Za-z_][A-Za-z0-9_]*=\*\)")
-GEMINI_SHELL_RULE = re.compile(r"run_shell_command\(([^ )]+)\)")
-
-
-def load_claude_translatable_permission_patterns() -> set[str]:
-    """Return Claude allow-list patterns that have a Gemini equivalent."""
-    return {
-        entry
-        for entry in load_claude_permission_patterns()
-        if not CLAUDE_ENV_ASSIGNMENT_RULE.fullmatch(entry)
-    }
-
-
 def load_codex_prefix_rules() -> set[str]:
     rules_path = REPO_ROOT / ".codex/rules/default.rules"
     pattern = re.compile(
@@ -477,77 +485,78 @@ def load_codex_prefix_rules() -> set[str]:
     return command_prefixes
 
 
-def translate_gemini_permission_entry(entry: object) -> str | None:
-    """Map one valid Gemini tool permission entry to its Claude pattern name."""
-    if entry == "replace":
-        return "Edit"
-    if entry == "write_file":
-        return "Write"
-    if isinstance(entry, str):
-        match = GEMINI_SHELL_RULE.fullmatch(entry)
-        if match and not match.group(1).endswith("="):
-            return f"Bash({match.group(1)} *)"
-    return None
+ANTIGRAVITY_SETTINGS_PATH = ".agents/antigravity-settings.example.json"
+ANTIGRAVITY_COMMAND_RULE = re.compile(r"command\(([^ )]+)\)")
 
 
-def load_gemini_permission_patterns(errors: list[str]) -> tuple[set[str], set[str]]:
-    """Return (allowed, denied) permission patterns from .gemini/settings.json."""
-    settings_path = REPO_ROOT / ".gemini/settings.json"
-    allowed: set[str] = set()
-    denied: set[str] = set()
+def load_antigravity_commands(errors: list[str]) -> set[str]:
+    """Return the command families allowed in the Antigravity settings example.
 
-    if skip_departed_check(".gemini/settings.json", "Gemini permission settings"):
-        return allowed, denied
+    Antigravity reads no project-level settings file. The repository carries
+    an example that a user passes with `agy --settings` or merges into the
+    user-level file, so its command list should match the other two tools.
+    """
 
+    commands: set[str] = set()
+    if skip_departed_check(
+        ANTIGRAVITY_SETTINGS_PATH,
+        "Antigravity permission settings",
+    ):
+        return commands
+
+    settings_path = REPO_ROOT / ANTIGRAVITY_SETTINGS_PATH
     try:
         settings = json.loads(settings_path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
-        errors.append(f".gemini/settings.json is not valid JSON: {exc}")
-        return allowed, denied
+        errors.append(f"{ANTIGRAVITY_SETTINGS_PATH} is not valid JSON: {exc}")
+        return commands
 
     if not isinstance(settings, dict):
-        errors.append(".gemini/settings.json must contain a JSON object")
-        return allowed, denied
+        errors.append(f"{ANTIGRAVITY_SETTINGS_PATH} must contain a JSON object")
+        return commands
 
-    tools = settings.get("tools")
-    if not isinstance(tools, dict):
-        errors.append(".gemini/settings.json must contain a tools object")
-        return allowed, denied
+    for forbidden_key in ("model", "effort"):
+        if forbidden_key in settings:
+            errors.append(
+                f"{ANTIGRAVITY_SETTINGS_PATH} pins Antigravity {forbidden_key}"
+            )
 
-    if "core" in tools:
-        errors.append(".gemini/settings.json must not restrict tools.core")
+    permissions = settings.get("permissions")
+    allowed = permissions.get("allow") if isinstance(permissions, dict) else None
+    if not isinstance(allowed, list):
+        errors.append(
+            f"{ANTIGRAVITY_SETTINGS_PATH} must contain a permissions.allow list"
+        )
+        return commands
 
-    raw_allowed = tools.get("allowed")
-    if not isinstance(raw_allowed, list):
-        errors.append(".gemini/settings.json must contain a tools.allowed list")
-        return allowed, denied
-
-    for entry in raw_allowed:
-        translated = translate_gemini_permission_entry(entry)
-        if translated is not None:
-            allowed.add(translated)
+    for entry in allowed:
+        match = (
+            ANTIGRAVITY_COMMAND_RULE.fullmatch(entry)
+            if isinstance(entry, str)
+            else None
+        )
+        if match:
+            commands.add(match.group(1))
         else:
-            allowed.add(f"invalid:{entry}")
+            errors.append(
+                f"{ANTIGRAVITY_SETTINGS_PATH} has an unrecognized permission "
+                f"entry: {entry!r}"
+            )
 
-    raw_excluded = tools.get("exclude", [])
-    if isinstance(raw_excluded, list):
-        for entry in raw_excluded:
-            if entry in {"run_shell_command", "ShellTool"}:
-                denied.update(
-                    pattern
-                    for pattern in load_claude_translatable_permission_patterns()
-                    if pattern.startswith("Bash(")
-                )
-                continue
-            translated = translate_gemini_permission_entry(entry)
-            if translated is not None:
-                denied.add(translated)
-            else:
-                denied.add(f"invalid:{entry}")
-    else:
-        errors.append(".gemini/settings.json tools.exclude must be a list when present")
+    return commands
 
-    return allowed, denied
+
+def check_no_tracked_gemini_settings(errors: list[str]) -> None:
+    """Flag the project settings file of the retired Gemini CLI."""
+
+    relative_path = ".gemini/settings.json"
+    if skip_departed_check(relative_path, "retired Gemini CLI settings"):
+        return
+    if git_tracks_path(relative_path):
+        errors.append(
+            f"{relative_path} is still tracked; Antigravity replaced Gemini CLI "
+            f"and reads no project settings file (see {ANTIGRAVITY_SETTINGS_PATH})"
+        )
 
 
 def collect_skill_names(base_dir: Path) -> set[str]:
@@ -676,36 +685,6 @@ def check_claude_project_defaults(errors: list[str]) -> None:
                 errors.append(
                     f"{settings_path.relative_to(REPO_ROOT)} pins Claude {forbidden_key}"
                 )
-
-
-def check_gemini_project_defaults(errors: list[str]) -> None:
-    relative_path = ".gemini/settings.json"
-    if skip_departed_check(relative_path, "Gemini project defaults"):
-        return
-
-    settings_path = REPO_ROOT / relative_path
-    try:
-        settings = json.loads(settings_path.read_text())
-    except (OSError, json.JSONDecodeError):
-        return
-
-    if not isinstance(settings, dict):
-        return
-
-    if "model" in settings:
-        errors.append(".gemini/settings.json pins Gemini model")
-
-    context = settings.get("context")
-    file_name = context.get("fileName") if isinstance(context, dict) else None
-    has_agents_context = file_name == "AGENTS.md" or (
-        isinstance(file_name, list)
-        and all(isinstance(item, str) for item in file_name)
-        and "AGENTS.md" in file_name
-    )
-    if not has_agents_context:
-        errors.append(
-            ".gemini/settings.json does not include AGENTS.md in context.fileName"
-        )
 
 
 def read_required_file(
@@ -923,6 +902,85 @@ def check_claude_rules_dir(errors: list[str]) -> None:
         errors.append(f".claude/rules still contains markdown files: {rule_files}")
 
 
+def check_instruction_file_sizes(errors: list[str]) -> None:
+    """Keep always-loaded instruction files inside each tool's hard limit."""
+
+    check_name = "instruction file size"
+    root_bytes = 0
+    root_path = REPO_ROOT / "AGENTS.md"
+    if root_path.is_file() and not skip_departed_check("AGENTS.md", check_name):
+        root_bytes = len(root_path.read_bytes())
+        if root_bytes > ROOT_AGENTS_BYTE_LIMIT:
+            errors.append(
+                f"AGENTS.md is {root_bytes} bytes; the limit is "
+                f"{ROOT_AGENTS_BYTE_LIMIT} (Antigravity cuts a rule file at "
+                f"{RULE_FILE_BYTE_LIMIT} bytes and Codex reads 32,768 bytes "
+                "across all AGENTS.md files)"
+            )
+
+    for relative_path in NESTED_AGENTS_PATHS:
+        nested_path = REPO_ROOT / relative_path
+        if not nested_path.is_file() or skip_departed_check(relative_path, check_name):
+            continue
+        nested_bytes = len(nested_path.read_bytes())
+        if nested_bytes > RULE_FILE_BYTE_LIMIT:
+            errors.append(
+                f"{relative_path} is {nested_bytes} bytes; Antigravity cuts a "
+                f"rule file at {RULE_FILE_BYTE_LIMIT} bytes"
+            )
+        if root_bytes + nested_bytes > AGENTS_CHAIN_BYTE_LIMIT:
+            errors.append(
+                f"AGENTS.md plus {relative_path} is {root_bytes + nested_bytes} "
+                f"bytes; the limit is {AGENTS_CHAIN_BYTE_LIMIT}, which leaves "
+                "room for a user-level file under the 32,768 bytes Codex reads"
+            )
+
+    for relative_path in CLAUDE_INSTRUCTION_PATHS:
+        claude_path = REPO_ROOT / relative_path
+        if not claude_path.is_file() or skip_departed_check(relative_path, check_name):
+            continue
+        line_count = len(claude_path.read_text().splitlines())
+        if line_count > CLAUDE_LINE_LIMIT:
+            errors.append(
+                f"{relative_path} is {line_count} lines; keep each CLAUDE.md "
+                f"under {CLAUDE_LINE_LIMIT} lines and put shared rules in AGENTS.md"
+            )
+
+
+def check_references_resolve(errors: list[str]) -> None:
+    """Confirm that files named in the root instructions exist."""
+
+    for relative_path in REFERENCE_CHECKED_PATHS:
+        file_text = read_present_file(relative_path, check_name="file references")
+        if file_text is None:
+            continue
+        for referenced_path in sorted(set(REFERENCE_PATTERN.findall(file_text))):
+            if any(character in referenced_path for character in "<[*"):
+                continue
+            if not path_applies(referenced_path):
+                continue
+            if not (REPO_ROOT / referenced_path).exists():
+                errors.append(
+                    f"{relative_path} refers to {referenced_path}, which does not exist"
+                )
+
+
+def check_no_retired_scoring(errors: list[str]) -> None:
+    """Catch numeric scoring text after its replacement by blocking defects."""
+
+    for pattern in RETIRED_SCORING_GLOBS:
+        for file_path in sorted(REPO_ROOT.glob(pattern)):
+            relative_path = file_path.relative_to(REPO_ROOT).as_posix()
+            if skip_departed_check(relative_path, "retired numeric scoring"):
+                continue
+            match = RETIRED_SCORING_PATTERN.search(file_path.read_text())
+            if match:
+                errors.append(
+                    f"{relative_path} still contains numeric scoring text: "
+                    f"{match.group(0)!r}"
+                )
+
+
 def check_no_kimi_config(errors: list[str]) -> None:
     relative_path = ".kimi-code/config.toml.example"
     if skip_departed_check(relative_path, "retired Kimi configuration"):
@@ -937,16 +995,7 @@ def main() -> int:
 
     claude_permissions = load_claude_bash_permissions()
     codex_permissions = load_codex_prefix_rules()
-    claude_translatable_patterns = load_claude_translatable_permission_patterns()
-    gemini_allowed_patterns, gemini_denied_patterns = load_gemini_permission_patterns(
-        errors
-    )
-    bash_rule = re.compile(r"Bash\((.+) \*\)")
-    gemini_permissions = {
-        match.group(1)
-        for match in (bash_rule.fullmatch(p) for p in gemini_allowed_patterns)
-        if match
-    }
+    antigravity_permissions = load_antigravity_commands(errors)
 
     only_in_claude = sorted(claude_permissions - codex_permissions)
     only_in_codex = sorted(codex_permissions - claude_permissions)
@@ -960,47 +1009,28 @@ def main() -> int:
     if only_in_codex and not skip_claude_codex_command_parity:
         errors.append(f"Commands allowed only in Codex config: {only_in_codex}")
 
-    only_in_gemini = sorted(gemini_permissions - claude_permissions - codex_permissions)
-    missing_in_gemini = sorted(
-        (claude_permissions | codex_permissions) - gemini_permissions
+    only_in_antigravity = sorted(
+        antigravity_permissions - claude_permissions - codex_permissions
     )
-    skip_gemini_command_parity = skip_if_any_path_departed(
+    missing_in_antigravity = sorted(
+        (claude_permissions | codex_permissions) - antigravity_permissions
+    )
+    skip_antigravity_command_parity = skip_if_any_path_departed(
         (
             ".claude/settings.json.example",
             ".codex/rules/default.rules",
-            ".gemini/settings.json",
+            ANTIGRAVITY_SETTINGS_PATH,
         ),
-        "Gemini command-family permission parity",
+        "Antigravity command-family permission parity",
     )
 
-    if only_in_gemini and not skip_gemini_command_parity:
-        errors.append(f"Commands allowed only in Gemini config: {only_in_gemini}")
-    if missing_in_gemini and not skip_gemini_command_parity:
-        errors.append(f"Commands missing from Gemini config: {missing_in_gemini}")
-
-    only_in_claude_patterns = sorted(
-        claude_translatable_patterns - gemini_allowed_patterns
-    )
-    only_in_gemini_patterns = sorted(
-        gemini_allowed_patterns - claude_translatable_patterns
-    )
-    denied_in_gemini = sorted(gemini_denied_patterns & claude_translatable_patterns)
-    skip_full_permission_parity = skip_if_any_path_departed(
-        (".claude/settings.json.example", ".gemini/settings.json"),
-        "Claude and Gemini full permission parity",
-    )
-
-    if only_in_claude_patterns and not skip_full_permission_parity:
+    if only_in_antigravity and not skip_antigravity_command_parity:
         errors.append(
-            f"Permissions allowed only in Claude config: {only_in_claude_patterns}"
+            f"Commands allowed only in Antigravity settings: {only_in_antigravity}"
         )
-    if only_in_gemini_patterns and not skip_full_permission_parity:
+    if missing_in_antigravity and not skip_antigravity_command_parity:
         errors.append(
-            f"Permissions allowed only in Gemini config: {only_in_gemini_patterns}"
-        )
-    if denied_in_gemini and not skip_full_permission_parity:
-        errors.append(
-            f"Permissions allowed in Claude but denied in Gemini config: {denied_in_gemini}"
+            f"Commands missing from Antigravity settings: {missing_in_antigravity}"
         )
 
     protocol_names = collect_protocol_names()
@@ -1058,7 +1088,7 @@ def main() -> int:
     check_review_skill_agent_scope(errors)
     check_code_convention_routes(errors)
     check_claude_project_defaults(errors)
-    check_gemini_project_defaults(errors)
+    check_no_tracked_gemini_settings(errors)
     check_workflow_policy(errors)
     check_commit_protocol_branch_policy(errors)
     check_protocol_required_snippets(errors)
@@ -1068,6 +1098,9 @@ def main() -> int:
     check_no_legacy_rule_refs(errors)
     check_claude_rules_dir(errors)
     check_no_kimi_config(errors)
+    check_instruction_file_sizes(errors)
+    check_references_resolve(errors)
+    check_no_retired_scoring(errors)
 
     if errors:
         print("Template consistency check failed:")
@@ -1081,9 +1114,7 @@ def main() -> int:
     print(f"- Codex skill wrappers: {len(codex_skill_names)}")
     print(f"- Reviewed agent mappings: {len(REVIEW_AGENT_PROTOCOLS)}")
     permission_checks_skipped = (
-        skip_claude_codex_command_parity
-        or skip_gemini_command_parity
-        or skip_full_permission_parity
+        skip_claude_codex_command_parity or skip_antigravity_command_parity
     )
     if permission_checks_skipped:
         print(
@@ -1093,7 +1124,7 @@ def main() -> int:
     else:
         print(
             f"- Allowed command families: {len(claude_permissions)} "
-            "(Claude/Codex/Gemini in parity)"
+            "(Claude/Codex/Antigravity in parity)"
         )
     if SKIPPED_DEPARTURE_CHECKS:
         print(

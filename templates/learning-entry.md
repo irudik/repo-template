@@ -1,8 +1,6 @@
 [LEARN:category]
-- Date: YYYY-MM-DD
-- Trigger: [symptom, mistake, or question]
-- Wrong: [incorrect assumption or behavior]
-- Right: [correct rule or approach]
-- Scope: [where this applies]
+- Rule: [what to do, where it applies, and the exception if any]
+- Reason: [why the rule holds]
 - Evidence: [file, command, output, or user correction]
-- Action: [what to do next time]
+- Date: YYYY-MM-DD
+- Review by: [YYYY-MM-DD, or the event that would make the entry obsolete]

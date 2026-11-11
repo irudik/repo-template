@@ -1,135 +1,53 @@
-# Review and Address PR Comments Protocol
+# Address PR Review Comments
 
-Fetch unresolved review threads from a pull request, categorize by confidence,
-implement fixes, commit modularly, reply with commit hashes, resolve threads,
-and report uncertain items back to the user.
+Use only when the user asks for it. This workflow implements supported fixes,
+commits and pushes them, replies with commit hashes, and resolves addressed
+threads; a review-only request limits it to findings.
 
-## Steps
-
-### Step 1: Parse the PR Reference
-
-Extract the PR number from the argument. Error if it is missing.
-
-Derive owner and repo:
+Run each command separately. Replace bracketed values with actual values from
+preceding results; do not rely on shell variables or command substitution.
 
 ```bash
-OWNER=$(gh repo view --json owner -q '.owner.login')
-REPO=$(gh repo view --json name -q '.name')
+gh repo view --json name,owner
+gh pr view <pr-number> --json number,headRefName,baseRefName,url
+git status
+gh pr checkout <pr-number>
 ```
 
-### Step 2: Check Out the PR Branch
+Preserve pre-existing changes when checking out. Use the PR's working branch
+rather than `main` so fixes stay on the reviewed change; if it points to `main`,
+leave it unchanged and report the branch problem.
+
+Fetch threads with literal owner, repository, and PR values:
 
 ```bash
-gh pr checkout $PR_NUM
+gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") { pullRequest(number: <pr-number>) { reviewThreads(first: 100) { pageInfo { hasNextPage endCursor } nodes { id isResolved isOutdated path line comments(first: 100) { pageInfo { hasNextPage endCursor } nodes { id databaseId body author { login } } } } } } } }'
 ```
 
-Abort if the checked-out branch is `main`.
-
-### Step 3: Fetch Unresolved Threads via GraphQL
-
-```bash
-THREADS_JSON=$(gh api graphql -f query='
-query($owner: String!, $repo: String!, $pr: Int!) {
-  repository(owner: $owner, name: $repo) {
-    pullRequest(number: $pr) {
-      reviewThreads(first: 100) {
-        nodes {
-          id
-          isResolved
-          isOutdated
-          path
-          line
-          comments(first: 50) {
-            nodes {
-              body
-              author { login }
-              databaseId
-              createdAt
-            }
-          }
-        }
-      }
-    }
-  }
-}' -F owner="$OWNER" -F repo="$REPO" -F pr=$PR_NUM)
-```
-
-### Step 4: Filter and Categorize
-
-- Skip resolved threads.
-- Flag outdated threads as informational only.
-- For each actionable HIGH- or MEDIUM-confidence thread, keep the matching
-  thread JSON object so you can extract IDs later.
-- Classify remaining threads:
-
-| Confidence | Criteria | Action |
-|------------|----------|--------|
-| HIGH | Clear code fix | Implement, commit, resolve |
-| MEDIUM | Ambiguous but likely | Implement, stage, ask user |
-| LOW | Design question or unclear | Report only |
-
-### Step 5: Group by File Path
-
-Group actionable HIGH and MEDIUM threads by file path. Each group becomes one
-atomic commit unit.
-
-For each HIGH-confidence thread selected for reply and resolution, extract the
-IDs from the saved thread JSON object:
+Follow pagination for both threads and comments using returned cursors. Skip
+resolved threads; leave outdated threads untouched unless the user requests
+otherwise. Assess each remaining claim against code and specification. Implement
+clear corrections in related groups; leave ambiguous research or design choices
+unchanged and explain the uncertainty. Apply relevant checks and resolve blocking
+defects under root `AGENTS.md` before committing; treat style items as advisory.
 
 ```bash
-THREAD_ID=$(echo "$THREAD_JSON" | jq -r '.id')
-COMMENT_DB_ID=$(echo "$THREAD_JSON" | jq -r '.comments.nodes[-1].databaseId')
-```
-
-If a thread has multiple comments, set `COMMENT_DB_ID` to the specific review
-comment you are addressing rather than assuming the last comment is correct.
-
-### Step 6: Implement, Verify, and Commit per Group
-
-1. Implement the file-group changes.
-2. Verify with `make -n` and a relevant build when applicable.
-3. Run the appropriate review skill when applicable.
-4. Apply quality gates.
-5. For HIGH-confidence groups that pass, commit:
-
-```bash
-git add <files in group>
-git commit -m "<message referencing the review comment>"
-```
-
-6. Reply and resolve HIGH-confidence threads:
-
-```bash
-gh api repos/$OWNER/$REPO/pulls/$PR_NUM/comments/$COMMENT_DB_ID/replies \
-  -X POST -f body="Addressed in $(git rev-parse --short HEAD)."
-
-gh api graphql -f query='
-mutation($threadId: ID!) {
-  resolveReviewThread(input: { threadId: $threadId }) {
-    thread { isResolved }
-  }
-}' -F threadId="$THREAD_ID"
-```
-
-### Step 7: Push
-
-```bash
+git add <specific-files>
+git commit -m "<message explaining the correction>"
+git rev-parse --short HEAD
 git push
 ```
 
-### Step 8: Present a Summary Table
+Exclude secrets and unrelated changes. After a fix is committed and pushed,
+reply to the specific comment addressed, using its `databaseId` and the actual
+commit hash, then resolve that thread by its GraphQL `id`:
 
-Report four sections:
+```bash
+gh api repos/<owner>/<repo>/pulls/<pr-number>/comments/<comment-database-id>/replies -X POST -f body='Addressed in <commit-hash>.'
+gh api graphql -f query='mutation { resolveReviewThread(input: { threadId: "<thread-id>" }) { thread { isResolved } } }'
+```
 
-- Addressed
-- Needs approval
-- Needs user input
-- Outdated
-
-## Important
-
-- Never commit to `main`.
-- Never resolve a thread without a committed fix.
-- Keep one commit per file group.
-- Do not stage sensitive files.
-- Do not touch outdated threads.
+Resolve a thread only when its concern has been addressed with a committed fix;
+leave questions or disputed requests open unless the user directs otherwise.
+Follow `Reports and Updates` in `protocols/writing.md`: explain addressed concerns
+with commit links, verification, and items left open with reasons.

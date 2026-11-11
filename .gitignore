@@ -20,9 +20,7 @@ Thumbs.db
 !.codex/rules
 .codex/rules/*
 !.codex/rules/default.rules
-# Gemini CLI -- track project settings, ignore local state
-.gemini/*
-!.gemini/settings.json
+.gemini/
 .tokensave/
 
 # LaTeX build artifacts

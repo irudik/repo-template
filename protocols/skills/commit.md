@@ -1,97 +1,37 @@
-# Commit, PR, and Merge Protocol
+# Commit, PR, and Merge
 
-Stage changes, commit with a descriptive message, create a PR, and merge to `main`.
+Use only when the user asks for it. Invoking `/commit` authorizes the standard
+commit, push, PR, and merge cycle; a narrower request limits the work to that
+step. A requested commit or merge needs no second confirmation.
 
-## Steps
+1. Inspect the branch, working tree, diff, and recent commits. Identify the
+   requested changes and exclude unrelated work and secrets from staging.
+2. If the current branch is a non-`main` branch, keep using it.
+   If the current branch is `main`, detached, or the user explicitly asks for a
+   new branch, create one with `git switch -c <branch-name>`.
+   Keep branch naming tool-neutral. Use a working branch for commits so the
+   changes can be reviewed before merging, unless the user requests otherwise.
+3. Choose Make verification in proportion to the files being committed:
+   - Changed Makefiles or dependencies: scoped dry run, then affected target.
+   - Source under an unchanged Makefile: relevant target, using existing
+     successful results unless further changes invalidate them.
+   - Cross-cutting work: root `make -n` when the full dependency plan helps.
+   - Documentation and instruction-only changes require no Make dry run.
+4. Resolve blocking defects under `Defects That Block a Commit or Merge` in
+   root `AGENTS.md`; distinguish advisory items from those defects.
+5. For a template-maintenance merge, first remove this branch's ad hoc plans,
+   handoffs, logs, reports, and scratch files; keep intentional template
+   assets and `.gitkeep` files. Include tracked removals in the commit.
+   Stage explicit paths with `git add <paths>` to avoid unrelated changes.
+   Exclude secrets and local tool state such as `.claude/settings.local.json`.
+   Use the supplied commit message exactly, or write one explaining the change,
+   then create the commit with `git commit -m "<message>"`.
+6. Push the working branch, setting its upstream on first push with
+   `git push -u origin <branch-name>`. Create or update its PR with the final
+   scope and relevant validation; use `--body-file` for multiline descriptions.
+7. Merge with
+   `gh pr merge <pr-number> --merge --delete-branch`, unless the user requested
+   another merge method, then switch to `main` and pull.
 
-1. **Check current state:**
-
-```bash
-git branch --show-current
-git status
-git diff --stat
-git log --oneline -5
-```
-
-Choose Make verification in proportion to the files being committed:
-
-- If a Makefile, dependency declaration, or build configuration changed, run a
-  scoped dry run for the affected target before building it.
-- For ordinary source changes under an unchanged Makefile, run the relevant
-  target directly if it has not already been verified; a separate dry run is
-  optional.
-- Use a root `make -n` only for cross-cutting or pre-merge work when the full
-  dependency plan adds useful coverage.
-- Documentation and instruction-only changes require no Make dry run.
-
-If a required check shows stale targets or fails, warn the user before
-proceeding. This remains a soft commit gate unless another project rule makes
-the build mandatory.
-
-2. **Choose the working branch:**
-
-- If the current branch is a non-`main` branch, keep using it.
-- If the current branch is `main`, detached, or the user explicitly asks for a
-  new branch, create one first:
-
-  ```bash
-  git switch -c <short-descriptive-branch-name>
-  ```
-
-- Never commit directly to `main`.
-
-3. **Stage files** with specific `git add` targets. Never use `git add -A`.
-
-Do not stage `.claude/settings.local.json`, `.codex/` local state, or any files
-containing secrets.
-
-4. **Commit** with a descriptive message.
-
-If a commit-message argument is provided, use it exactly. Otherwise, analyze the
-staged changes and write a message that explains why the change exists, not just
-what changed.
-
-```bash
-git commit -m "<commit message>"
-```
-
-5. **Push and create the PR:**
-
-- Push the branch you committed on. If it does not already track a remote branch,
-  set the upstream on first push:
-
-  ```bash
-  git push -u origin <branch-name>
-  gh pr create --title "<short title>" --body "<summary and test plan>"
-  ```
-
-6. **Merge and clean up:**
-
-- For template-maintenance branches in this repository, remove branch-specific
-  working artifacts before merging to `main`. In particular, clear ad hoc files
-  under `quality_reports/plans/`, `quality_reports/session_logs/`,
-  `quality_reports/merges/`, and any scratch directories unless they are
-  intentional template assets.
-  Keep placeholder `.gitkeep` files and durable templates.
-
-```bash
-gh pr merge <pr-number> --merge --delete-branch
-git switch main
-git pull
-```
-
-7. **Report** the PR URL and what was merged.
-
-## Important
-
-- Reuse the current non-`main` branch by default.
-- Create a new branch only when on `main`, in detached HEAD, or when the user
-  explicitly asks for one.
-- Keep branch naming tool-neutral. Any Codex or Claude client naming
-  preferences are local constraints, not shared protocol rules.
-- For template-maintenance work in this repo, merge back to `main` with a fresh
-  tree: branch-local `quality_reports` artifacts should not land on `main`
-  unless they are intentional template files.
-- Exclude sensitive files from staging.
-- Use `--merge` unless the user explicitly asks for `--squash` or `--rebase`.
-- If a commit-message argument is provided, use it exactly.
+Follow `Reports and Updates` in `protocols/writing.md`: report the commit or
+PR link, what was included, and unresolved advisory items or verification limits.

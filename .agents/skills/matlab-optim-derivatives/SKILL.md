@@ -1,28 +1,7 @@
 ---
 name: matlab-optim-derivatives
-description: Audit MATLAB optimization derivatives and KNITRO integration with finite-difference validation
-workflow_stage: solver-debug
-compatibility:
-  - codex
-  - claude-code
-  - cursor
-  - gemini-cli
-version: 1.0.0
-tags:
-  - matlab
-  - optimization
-  - knitro
-  - gradient
-  - hessian
+description: Audit MATLAB gradients, Hessians, constraint Jacobians, and KNITRO callbacks. Use for suspected derivative errors, solver failures, or validation before translating numerical code.
 ---
 
-# MATLAB Derivative Audit Wrapper
-
-Use the shared protocol in `protocols/skills/matlab-optim-derivatives.md`.
-
-## Wrapper Workflow
-
-1. Read `protocols/skills/matlab-optim-derivatives.md`.
-2. Treat that file as the single source of truth for the substantive workflow.
-3. Apply the protocol to the provided argument(s).
-4. Keep this file limited to Codex metadata and wrapper guidance.
+Read `protocols/skills/matlab-optim-derivatives.md` and apply it to the request. That file
+is shared with Claude Code and holds the whole procedure.
